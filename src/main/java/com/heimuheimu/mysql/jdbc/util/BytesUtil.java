@@ -36,7 +36,19 @@ import java.util.Arrays;
 public class BytesUtil {
 
     /**
-     * 将字节数组中指定长度的字节转换为无符号整数后返回，字节数组的顺序应为 {@link java.nio.ByteOrder#LITTLE_ENDIAN}。
+     * 存储字节长度与对应的最大无符号整数
+     */
+    private static final long[] MAXIMUM_INTEGER_VALUE_ARRAY;
+
+    static {
+        MAXIMUM_INTEGER_VALUE_ARRAY = new long[8];
+        for (int i = 0; i < 8; i++) {
+            MAXIMUM_INTEGER_VALUE_ARRAY[i] = (long) (Math.pow(2, ((i + 1) * 8)) - 1);
+        }
+    }
+
+    /**
+     * 将字节数组中指定长度的字节转换为无符号整数后返回，字节数组的顺序应为 {@link java.nio.ByteOrder#LITTLE_ENDIAN}
      *
      * @param src 字节数组，不允许为 {@code null}
      * @param offset 起始索引，允许的范围为：[0, {@code src.length})
@@ -47,7 +59,7 @@ public class BytesUtil {
      * @throws IllegalArgumentException 如果 {@code offset} 或者 {@code length} 的值没有在允许的范围内，将会抛出此异常
      * @throws IllegalArgumentException 如果读取的字节长度为 8，且 {@code src[offset + 7]} 的值小于 0（long 类型溢出），将会抛出此异常
      */
-    public static long toUnsignedInteger(byte[] src, int offset, int length) throws NullPointerException,
+    public static long decodeUnsignedInteger(byte[] src, int offset, int length) throws NullPointerException,
             ArrayIndexOutOfBoundsException, IllegalArgumentException {
         if (src == null) {
             throw new NullPointerException("Convert bytes to unsigned integer failed: `src could not be null`. `src`:`null`. `offset`:`"
@@ -74,5 +86,45 @@ public class BytesUtil {
             value |= ((long) src[offset + i] & 0xff) << (i * 8);
         }
         return value;
+    }
+
+    /**
+     * 将无符号整数转换为指定长度的字节数组后写入目标字节数组的指定位置中，字节数组的顺序应为 {@link java.nio.ByteOrder#LITTLE_ENDIAN}
+     *
+     * @param length 字节数组长度，允许的范围为: [1, 8]
+     * @param value 无符号整数，不允许小于 0
+     * @throws IllegalArgumentException 如果 {@code length} 的值没有在允许的范围内，将会抛出此异常
+     * @throws IllegalArgumentException 如果 {@code value} 小于 0 或者转换后的字节长度将超过 {@code length}，将会抛出此异常
+     */
+    public static void encodeUnsignedInteger(byte[] target, int offset, int length, long value) throws NullPointerException,
+            ArrayIndexOutOfBoundsException, IllegalArgumentException {
+        if (target == null) {
+            throw new NullPointerException("Convert unsigned integer to bytes failed: `target could not be null`. `target`:`null`. `offset`:`"
+                    + offset + "`. `length`:`" + length + "`. `value`:`" + value + "`.");
+        }
+        if (offset < 0 || offset >= target.length) {
+            throw new IllegalArgumentException("Convert unsigned integer to bytes failed: `invalid offset`. `target`:`"
+                    + Arrays.toString(target) + "`. `offset`:`" + offset + "`. `length`:`" + length + "`. `value`:`" + value + "`.");
+        }
+        if (length < 1 || length > 8) {
+            throw new IllegalArgumentException("Convert unsigned integer to bytes failed: `invalid length`. `target`:`"
+                    + Arrays.toString(target) + "`. `offset`:`" + offset + "`. `length`:`" + length + "`. `value`:`" + value + "`.");
+        }
+        if ((offset + length) > target.length) {
+            throw new ArrayIndexOutOfBoundsException("Convert unsigned integer to bytes failed: `index is greater than or equal to the size of the array`. `target`:`"
+                    + Arrays.toString(target) + "`. `offset`:`" + offset + "`. `length`:`" + length + "`. `value`:`" + value + "`.");
+        }
+        if (value < 0) {
+            throw new IllegalArgumentException("Convert unsigned integer to bytes failed: `negative value`. `target`:`"
+                    + Arrays.toString(target) + "`. `offset`:`" + offset + "`. `length`:`" + length + "`. `value`:`" + value + "`.");
+        }
+        if (value > MAXIMUM_INTEGER_VALUE_ARRAY[length - 1]) {
+            throw new IllegalArgumentException("Convert unsigned integer to bytes failed: `value is too large`. `target`:`"
+                    + Arrays.toString(target) + "`. `offset`:`" + offset + "`. `length`:`" + length + "`. `value`:`"
+                    + value + "`. `validMaximumValue`:`" + MAXIMUM_INTEGER_VALUE_ARRAY[length - 1] + "`.");
+        }
+        for (int i = 0; i < length; i++) {
+            target[offset + i] = (byte) (value >>> (i * 8));
+        }
     }
 }

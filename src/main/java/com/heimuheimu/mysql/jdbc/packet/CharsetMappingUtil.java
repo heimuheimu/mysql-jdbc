@@ -22,36 +22,25 @@
  * SOFTWARE.
  */
 
-package com.heimuheimu.mysql.jdbc.packet.connection.auth;
+package com.heimuheimu.mysql.jdbc.packet;
+
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
- * Mysql 客户端授权插件，用于对数据库密码进行加密。
- *
- * <p>
- * 更多信息请参考：
- * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_connection_phase_authentication_methods.html">
- *     Authentication Methods
- * </a>
- * </p>
+ * 提供工具方法用于 Mysql 字符集编码和 Java 字符集编码之间的映射。
  *
  * @author heimuheimu
  */
-public interface AuthenticationPlugin {
+public class CharsetMappingUtil {
 
     /**
-     * 获得插件名称。
+     * 根据 Mysql 字符集编码 ID 获得对应的 Java 字符集编码，该方法不会返回 {@code null}。
      *
-     * @return 插件名称
+     * @param mysqlCharacterId Mysql 字符集编码 ID
+     * @return Java 字符集编码，不会为 {@code null}
      */
-    String getName();
-
-    /**
-     * 根据 Mysql 数据库密码生成的加密字节数组。
-     *
-     * @param password Mysql 数据库密码，允许为 {@code null} 或空
-     * @param authPluginData 插件用于密码加密的字节数组
-     * @return 加密字节数组
-     * @throws IllegalArgumentException 如果 {@code authPluginData} 不正确，将抛出此异常
-     */
-    byte[] encode(String password, byte[] authPluginData) throws IllegalArgumentException;
+    public static Charset getJavaCharset(int mysqlCharacterId) {
+        return StandardCharsets.UTF_8;
+    }
 }

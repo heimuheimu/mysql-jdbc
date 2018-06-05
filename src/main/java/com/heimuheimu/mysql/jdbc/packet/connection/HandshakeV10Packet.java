@@ -56,7 +56,7 @@ public class HandshakeV10Packet {
     private long connectionId = -1;
 
     /**
-     * Mysql 服务端默认编码 ID，ID 对应的编码可通过数据库表 "information_schema.collations" 进行查询
+     * Mysql 服务端默认字符集编码 ID，ID 对应的编码可通过数据库表 "information_schema.collations" 进行查询
      */
     private int serverCharacterId = -1;
 
@@ -117,18 +117,18 @@ public class HandshakeV10Packet {
     }
 
     /**
-     * 获得 Mysql 服务端默认编码 ID，ID 对应的编码可通过数据库表 "information_schema.collations" 进行查询。
+     * 获得 Mysql 服务端默认字符集编码 ID，ID 对应的编码可通过数据库表 "information_schema.collations" 进行查询。
      *
-     * @return Mysql 服务端默认编码 ID
+     * @return Mysql 服务端默认字符集编码 ID
      */
     public int getServerCharacterId() {
         return serverCharacterId;
     }
 
     /**
-     * 设置 Mysql 服务端默认编码 ID。
+     * 设置 Mysql 服务端默认字符集编码 ID。
      *
-     * @param serverCharacterId Mysql 服务端默认编码 ID
+     * @param serverCharacterId Mysql 服务端默认字符集编码 ID
      */
     public void setServerCharacterId(int serverCharacterId) {
         this.serverCharacterId = serverCharacterId;
@@ -246,7 +246,7 @@ public class HandshakeV10Packet {
         capabilitiesFlags |= packet.readFixedLengthInteger(2) << 16;
         handshakeV10Packet.setCapabilitiesFlags(capabilitiesFlags);
         int authPluginDataLength = 0;
-        if (CapabilitiesFlagsUtil.isClientPluginAuthEnabled(capabilitiesFlags)) {
+        if (CapabilitiesFlagsUtil.isCapabilityEnabled(capabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_PLUGIN_AUTH)) {
             authPluginDataLength = (int) packet.readFixedLengthInteger(1);
         } else {
             long constantAuthPluginDataLength = packet.readFixedLengthInteger(1);
@@ -258,13 +258,14 @@ public class HandshakeV10Packet {
         packet.setPosition(packet.getPosition() + 10); // read reserved string. All 0s.
         authPluginDataLength = Math.max(13, authPluginDataLength - 8);
         byte[] authPluginDataPart2 = packet.readFixedLengthBytes(authPluginDataLength);
-        if (CapabilitiesFlagsUtil.isClientPluginAuthEnabled(capabilitiesFlags)) {
+        if (CapabilitiesFlagsUtil.isCapabilityEnabled(capabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_PLUGIN_AUTH)) {
             byte[] authPluginData = new byte[authPluginDataPart1.length + authPluginDataPart2.length];
             System.arraycopy(authPluginDataPart1, 0, authPluginData, 0, authPluginDataPart1.length);
             System.arraycopy(authPluginDataPart2, 0, authPluginData, authPluginDataPart1.length, authPluginDataPart2.length);
             handshakeV10Packet.setAuthPluginData(authPluginData);
 
-            String restOfPacketString = packet.readRestOfPacketString(StandardCharsets.US_ASCII);
+            // the Authentication Method used by the client to generate auth-response value in this packet. This is an UTF-8 string.
+            String restOfPacketString = packet.readRestOfPacketString(StandardCharsets.UTF_8);
             int nullTerminatedIndex = restOfPacketString.indexOf(0x0000);
             if (nullTerminatedIndex < 0) {
                 handshakeV10Packet.setAuthPluginName(restOfPacketString);

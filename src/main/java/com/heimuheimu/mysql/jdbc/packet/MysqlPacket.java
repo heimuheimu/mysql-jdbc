@@ -35,7 +35,7 @@ import java.util.Arrays;
  * <p>
  * 更多信息请参考：
  * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_packets.html">
- *     https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_packets.html
+ *     MySQL Packets
  * </a>
  * </p>
  *
@@ -128,7 +128,14 @@ public class MysqlPacket {
     }
 
     /**
-     * 读取 N 字节长度的无符号整数，长度允许的范围为: [1, 8]
+     * 读取 "Protocol::FixedLengthInteger" 类型的无符号整数，长度允许的范围为: [1, 8]。
+     *
+     * <p>
+     * 更多信息请参考：
+     * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_dt_integers.html">
+     *     Protocol::FixedLengthInteger
+     * </a>
+     * </p>
      *
      * @param length 字节长度
      * @return 无符号整数
@@ -136,18 +143,52 @@ public class MysqlPacket {
      * @throws IllegalArgumentException 如果 {@code length} 的值没有在允许的范围内，将会抛出此异常
      */
     public long readFixedLengthInteger(int length) throws ArrayIndexOutOfBoundsException, IllegalArgumentException {
-        long value = BytesUtil.toUnsignedInteger(payload, position, length);
+        long value = BytesUtil.decodeUnsignedInteger(payload, position, length);
         position += length;
         return value;
     }
 
     /**
-     * 读取以 '0x0000' 作为结束标志位的字符串。
+     * 读取 "Protocol::LengthEncodedInteger" 类型的无符号整数。
      *
-     * @param charset 字符编码
-     * @return 以 '0x0000' 作为结束标志位的字符串
+     * <p>
+     * 更多信息请参考：
+     * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_dt_integers.html">
+     *     Protocol::LengthEncodedInteger
+     * </a>
+     * </p>
+     *
+     * @return 无符号整数
+     * @throws ArrayIndexOutOfBoundsException 如果访问数组越界，将会抛出此异常
      */
-    public String readNullTerminatedString(Charset charset) {
+    public long readLengthEncodedInteger() throws ArrayIndexOutOfBoundsException {
+        long magicValue = readFixedLengthInteger(1);
+        if (magicValue == 0xFC) {
+            return readFixedLengthInteger(2);
+        } else if (magicValue == 0xFD) {
+            return readFixedLengthInteger(3);
+        } else if (magicValue == 0xFE) {
+            return readFixedLengthInteger(8);
+        } else {
+            return magicValue;
+        }
+    }
+
+    /**
+     * 读取 "Protocol::NullTerminatedString" 类型的字符串。
+     *
+     * <p>
+     * 更多信息请参考：
+     * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_dt_strings.html">
+     *     Protocol::NullTerminatedString
+     * </a>
+     * </p>
+     *
+     * @param charset 字符集编码
+     * @return "Protocol::NullTerminatedString" 类型的字符串
+     * @throws ArrayIndexOutOfBoundsException 如果访问数组越界，将会抛出此异常
+     */
+    public String readNullTerminatedString(Charset charset) throws ArrayIndexOutOfBoundsException {
         int length = 0;
         int startPosition = position;
         while (payload[position++] != 0) {
@@ -157,16 +198,46 @@ public class MysqlPacket {
     }
 
     /**
-     * 读取固定长度的字符串。
+     * 读取 "Protocol::LengthEncodedString" 类型的字符串，该方法不会返回 {@code null}。
+     *
+     * <p>
+     * 更多信息请参考：
+     * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_dt_strings.html">
+     *     Protocol::LengthEncodedString
+     * </a>
+     * </p>
+     *
+     * @param charset 字符集编码
+     * @return "Protocol::LengthEncodedString" 类型的字符串
+     * @throws ArrayIndexOutOfBoundsException 如果访问数组越界，将会抛出此异常
+     */
+    public String readLengthEncodedString(Charset charset) throws ArrayIndexOutOfBoundsException {
+        int length = (int) readLengthEncodedInteger();
+        return readFixedLengthString(length, charset);
+    }
+
+    /**
+     * 读取 "Protocol::FixedLengthString" 类型的字符串，该方法不会返回 {@code null}。
+     *
+     * <p>
+     * 更多信息请参考：
+     * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_dt_strings.html">
+     *     Protocol::FixedLengthString
+     * </a>
+     * </p>
      *
      * @param length 字符串长度
-     * @param charset 字符编码
-     * @return 固定长度的字符串
-     * @throws IllegalArgumentException 如果 {@code length} 小于等于 0，将会抛出此异常
+     * @param charset 字符集编码
+     * @return "Protocol::FixedLengthString" 类型的字符串
+     * @throws ArrayIndexOutOfBoundsException 如果访问数组越界，将会抛出此异常
+     * @throws IllegalArgumentException 如果 {@code length} 小于 0，将会抛出此异常
      */
-    public String readFixedLengthString(int length, Charset charset) throws IllegalArgumentException {
-        if (length <= 0) {
+    public String readFixedLengthString(int length, Charset charset) throws ArrayIndexOutOfBoundsException, IllegalArgumentException {
+        if (length < 0) {
             throw new IllegalArgumentException("Read fixed length string failed: `invalid length`. `length`:`" + length + "`.");
+        }
+        if (length == 0) {
+            return "";
         }
         int startPosition = position;
         position += length;
@@ -174,10 +245,17 @@ public class MysqlPacket {
     }
 
     /**
-     * 读取所有剩余字节的字符串。
+     * 读取 "Protocol::RestOfPacketString" 类型的字符串，可能返回 {@code null}。
+     *
+     * <p>
+     * 更多信息请参考：
+     * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_dt_strings.html">
+     *     Protocol::RestOfPacketString
+     * </a>
+     * </p>
      *
      * @param charset 字符编码
-     * @return 所有剩余字节的字符串
+     * @return "Protocol::FixedLengthString" 类型的字符串
      */
     public String readRestOfPacketString(Charset charset) {
         if (position < payload.length) {
@@ -190,6 +268,145 @@ public class MysqlPacket {
         }
     }
 
+    /**
+     * 写入固定长度的字节数组。
+     *
+     * @param src 需要写入的字节数组，不允许为 {@code null}
+     * @return 当前 {@code MysqlPacket} 实例
+     * @throws IndexOutOfBoundsException 如果访问数组越界，将会抛出此异常
+     * @throws NullPointerException 如果 {@code src} 为 {@code null}，将会抛出此异常
+     */
+    public MysqlPacket writeFixedLengthBytes(byte[] src) throws IndexOutOfBoundsException, NullPointerException {
+        if (src == null) {
+            throw new IllegalArgumentException("Write fixed length bytes failed: `src is null`.");
+        } else if (src.length > 0) {
+            System.arraycopy(src, 0, payload, position, src.length);
+            position += src.length;
+        }
+        return this;
+    }
+
+    /**
+     * 以字节形式写入 "Protocol::FixedLengthInteger" 类型的无符号整数。
+     *
+     * <p>
+     * 更多信息请参考：
+     * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_dt_integers.html">
+     *     Protocol::FixedLengthInteger
+     * </a>
+     * </p>
+     *
+     * @param length 字节长度
+     * @param value 无符号整数
+     * @return 当前 {@code MysqlPacket} 实例
+     * @throws ArrayIndexOutOfBoundsException 如果访问数组越界，将会抛出此异常
+     * @throws IllegalArgumentException 如果 {@code length} 或 {@code value} 的值没有在允许的范围内，将会抛出此异常
+     */
+    public MysqlPacket writeFixedLengthInteger(int length, long value) throws ArrayIndexOutOfBoundsException,
+            IllegalArgumentException {
+        BytesUtil.encodeUnsignedInteger(payload, position, length, value);
+        position += length;
+        return this;
+    }
+
+    /**
+     * 以字节形式写入 "Protocol::LengthEncodedInteger" 类型的无符号整数。
+     *
+     * <p>
+     * 更多信息请参考：
+     * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_dt_integers.html">
+     *     Protocol::LengthEncodedInteger
+     * </a>
+     * </p>
+     *
+     * @param value 无符号整数
+     * @return 当前 {@code MysqlPacket} 实例
+     * @throws ArrayIndexOutOfBoundsException 如果访问数组越界，将会抛出此异常
+     * @throws IllegalArgumentException 如果 {@code value} 的值为负数，将会抛出此异常
+     */
+    public MysqlPacket writeLengthEncodedInteger(long value) throws ArrayIndexOutOfBoundsException, IllegalArgumentException {
+        if (value < 251) {
+            BytesUtil.encodeUnsignedInteger(payload, position++, 1, value);
+        } else if (value < 65536) {
+            BytesUtil.encodeUnsignedInteger(payload, position++, 1, 0xFC);
+            BytesUtil.encodeUnsignedInteger(payload, position, 2, value);
+            position += 2;
+        } else if (value < 16777216) {
+            BytesUtil.encodeUnsignedInteger(payload, position++, 1, 0xFD);
+            BytesUtil.encodeUnsignedInteger(payload, position, 3, value);
+            position += 3;
+        } else {
+            BytesUtil.encodeUnsignedInteger(payload, position++, 1, 0xFE);
+            BytesUtil.encodeUnsignedInteger(payload, position, 8, value);
+            position += 8;
+        }
+        return this;
+    }
+
+    /**
+     * 以字节形式写入 "Protocol::NullTerminatedString" 类型的字符串。
+     *
+     * <p>
+     * 更多信息请参考：
+     * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_dt_strings.html">
+     *     Protocol::NullTerminatedString
+     * </a>
+     * </p>
+     *
+     * @param text 字符串字节数组
+     * @return 当前 {@code MysqlPacket} 实例
+     * @throws ArrayIndexOutOfBoundsException 如果访问数组越界，将会抛出此异常
+     * @throws IllegalArgumentException 如果 {@code text} 为 {@code null}，将会抛出此异常
+     */
+    public MysqlPacket writeNullTerminatedString(byte[] text) throws ArrayIndexOutOfBoundsException, IllegalArgumentException {
+        if (text == null) {
+            throw new IllegalArgumentException("Write null terminated string failed: `text is null`.");
+        }
+        writeFixedLengthBytes(text);
+        payload[position++] = 0;
+        return this;
+    }
+
+    /**
+     * 以字节形式写入 "Protocol::LengthEncodedString" 类型的字符串。
+     *
+     * @param text 字符串字节数组
+     * @return 当前 {@code MysqlPacket} 实例
+     * @throws ArrayIndexOutOfBoundsException 如果访问数组越界，将会抛出此异常
+     * @throws IllegalArgumentException 如果 {@code text} 为 {@code null}，将会抛出此异常
+     */
+    public MysqlPacket writeLengthEncodedString(byte[] text) throws ArrayIndexOutOfBoundsException, IllegalArgumentException {
+        if (text == null) {
+            throw new IllegalArgumentException("Write length encoded string failed: `text is null`.");
+        }
+        writeLengthEncodedInteger(text.length);
+        writeFixedLengthBytes(text);
+        return this;
+    }
+
+    /**
+     * 根据已写入的内容信息，组装成 MYSQL 数据包字节数组。
+     *
+     * <p>
+     * 更多信息请参考：
+     * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_packets.html">
+     *     MySQL Packets
+     * </a>
+     * </p>
+     *
+     * @return MYSQL 数据包字节数组
+     * @throws IllegalArgumentException 如果已写入的内容信息为空，即 {@link #getPosition()} 为 0，将会抛出此异常
+     */
+    public byte[] buildMysqlPacketBytes() throws IllegalArgumentException {
+        if (position == 0) {
+            throw new IllegalArgumentException("Build mysql packet bytes failed: `payload is empty`.");
+        }
+        byte[] packetBytes = new byte[4 + position];
+        BytesUtil.encodeUnsignedInteger(packetBytes, 0, 3, position);
+        System.arraycopy(payload, 0, packetBytes, 4, position);
+        return packetBytes;
+    }
+
     @Override
     public String toString() {
         return "MysqlPacket{" +
@@ -197,5 +414,31 @@ public class MysqlPacket {
                 ", payload=" + Arrays.toString(payload) +
                 ", position=" + position +
                 '}';
+    }
+
+    /**
+     * 将该无符号整数转换为 "Protocol::LengthEncodedInteger" 类型所需的字节长度。
+     *
+     * <p>
+     * 更多信息请参考：
+     * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_dt_integers.html">
+     *     Protocol::LengthEncodedInteger
+     * </a>
+     * </p>
+     *
+     * @param value 无符号整数
+     * @return 转换为 "Protocol::LengthEncodedInteger" 类型所需的字节长度
+     * @see #writeLengthEncodedInteger(long)
+     */
+    public static int getBytesLengthForLengthEncodedInteger(long value) {
+        if (value < 251) {
+            return 1;
+        } else if (value < 65536) {
+            return 3;
+        } else if (value < 16777216) {
+            return 4;
+        } else {
+            return 9;
+        }
     }
 }

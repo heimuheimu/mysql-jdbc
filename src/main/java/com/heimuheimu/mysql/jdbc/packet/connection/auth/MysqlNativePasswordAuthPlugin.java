@@ -71,13 +71,10 @@ public class MysqlNativePasswordAuthPlugin implements AuthenticationPlugin {
             md.reset();
             md.update(authPluginData, 0, AUTH_PLUGIN_DATA_LENGTH);
             md.update(passwordHashStage2);
-
             byte[] encodedBytes = md.digest();
-
             for (int i = 0; i < encodedBytes.length; i++) {
                 encodedBytes[i] = (byte) (encodedBytes[i] ^ passwordHashStage1[i]);
             }
-
             return encodedBytes;
         } catch (Exception e) {
             throw new RuntimeException("Encode password failed: `" + e.getMessage() + "`. `authPluginData`:`"

@@ -87,8 +87,8 @@ public class MysqlPacketReader {
         if (readBytes < 0) { // 流已经关闭，返回null
             return null;
         }
-        int payloadLength = (int) BytesUtil.toUnsignedInteger(header, 0, 3);
-        int sequenceId = (int) BytesUtil.toUnsignedInteger(header, 3, 1);
+        int payloadLength = (int) BytesUtil.decodeUnsignedInteger(header, 0, 3);
+        int sequenceId = (int) BytesUtil.decodeUnsignedInteger(header, 3, 1);
 
         // 读取内容信息字节
         byte[] payload = new byte[payloadLength];
