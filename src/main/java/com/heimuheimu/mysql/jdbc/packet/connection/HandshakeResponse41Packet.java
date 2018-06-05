@@ -307,7 +307,7 @@ public class HandshakeResponse41Packet {
         handshakeResponse41Packet.writeFixedLengthInteger(4, capabilitiesFlags);
         handshakeResponse41Packet.writeFixedLengthInteger(4, MAX_PACKET_SIZE);
         handshakeResponse41Packet.writeFixedLengthInteger(1, clientCharacterId);
-        handshakeResponse41Packet.setPosition(handshakeResponse41Packet.getPosition() + 23); // filler to the size of the handhshake response packet. All 0s.
+        handshakeResponse41Packet.setPosition(handshakeResponse41Packet.getPosition() + 23); // filler to the size of the handshake response packet. All 0s.
         handshakeResponse41Packet.writeNullTerminatedString(usernameBytes);
         if (CapabilitiesFlagsUtil.isCapabilityEnabled(capabilitiesFlags,
                 CapabilitiesFlagsUtil.INDEX_CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA)) {

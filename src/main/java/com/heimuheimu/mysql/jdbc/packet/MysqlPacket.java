@@ -85,7 +85,7 @@ public class MysqlPacket {
      *
      * <p><strong>注意：</strong>请勿直接修改内容信息字节数组中的内容。</p>
      *
-     * @return
+     * @return 内容信息字节数组
      */
     public byte[] getPayload() {
         return payload;
