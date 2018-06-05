@@ -403,6 +403,7 @@ public class MysqlPacket {
         }
         byte[] packetBytes = new byte[4 + position];
         BytesUtil.encodeUnsignedInteger(packetBytes, 0, 3, position);
+        BytesUtil.encodeUnsignedInteger(packetBytes, 3, 1, sequenceId);
         System.arraycopy(payload, 0, packetBytes, 4, position);
         return packetBytes;
     }

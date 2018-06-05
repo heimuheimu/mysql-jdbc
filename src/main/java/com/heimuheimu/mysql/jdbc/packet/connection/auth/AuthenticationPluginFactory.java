@@ -52,7 +52,7 @@ public class AuthenticationPluginFactory {
      * @return Mysql 客户端授权插件
      * @throws IllegalArgumentException 如果无法找到该名称对应的 Mysql 客户端授权插件，将会抛出此异常
      */
-    public AuthenticationPlugin get(String authPluginName) throws IllegalArgumentException {
+    public static AuthenticationPlugin get(String authPluginName) throws IllegalArgumentException {
         AuthenticationPlugin plugin = AUTHENTICATION_PLUGIN_MAP.get(authPluginName);
         if (plugin == null) {
             throw new IllegalArgumentException("There is no authentication plugin for name: `" + authPluginName + "`.");

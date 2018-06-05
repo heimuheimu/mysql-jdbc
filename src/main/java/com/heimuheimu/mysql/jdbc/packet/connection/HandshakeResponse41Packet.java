@@ -303,7 +303,7 @@ public class HandshakeResponse41Packet {
             mysqlPacketPayloadLength += bytesLengthOfAllAttributes + 9;
         }
 
-        MysqlPacket handshakeResponse41Packet = new MysqlPacket(0, new byte[mysqlPacketPayloadLength]);
+        MysqlPacket handshakeResponse41Packet = new MysqlPacket(1, new byte[mysqlPacketPayloadLength]);
         handshakeResponse41Packet.writeFixedLengthInteger(4, capabilitiesFlags);
         handshakeResponse41Packet.writeFixedLengthInteger(4, MAX_PACKET_SIZE);
         handshakeResponse41Packet.writeFixedLengthInteger(1, clientCharacterId);
@@ -347,6 +347,18 @@ public class HandshakeResponse41Packet {
         }
         if (databaseName != null && !databaseName.isEmpty()) {
             enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_CONNECT_WITH_DB);
+        }
+        if (CapabilitiesFlagsUtil.isCapabilityEnabled(serverCapabilitiesFlags,
+                CapabilitiesFlagsUtil.INDEX_CLIENT_LONG_PASSWORD)) {
+            enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_LONG_PASSWORD);
+        }
+        if (CapabilitiesFlagsUtil.isCapabilityEnabled(serverCapabilitiesFlags,
+                CapabilitiesFlagsUtil.INDEX_CLIENT_RESERVED)) {
+            enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_RESERVED);
+        }
+        if (CapabilitiesFlagsUtil.isCapabilityEnabled(serverCapabilitiesFlags,
+                CapabilitiesFlagsUtil.INDEX_CLIENT_RESERVED2)) {
+            enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_RESERVED2);
         }
     }
 
