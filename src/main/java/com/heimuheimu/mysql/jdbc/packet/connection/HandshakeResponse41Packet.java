@@ -350,6 +350,16 @@ public class HandshakeResponse41Packet {
         if (databaseName != null && !databaseName.isEmpty()) {
             enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_CONNECT_WITH_DB, true);
         }
+
+        // capabilitiesFlags 可能由外部进行设置，将 Mysql 服务端不支持的特性关闭后重新赋值
+        long clientCapabilitiesFlags = 0;
+        for (int i = 0; i < 32; i++) {
+            if (CapabilitiesFlagsUtil.isCapabilityEnabled(serverCapabilitiesFlags, i) &&
+                    CapabilitiesFlagsUtil.isCapabilityEnabled(capabilitiesFlags, i)) {
+                clientCapabilitiesFlags = CapabilitiesFlagsUtil.enableCapability(clientCapabilitiesFlags, i);
+            }
+        }
+        this.capabilitiesFlags = clientCapabilitiesFlags;
     }
 
     private void enableClientCapability(long serverCapabilitiesFlags, int capabilityIndex, boolean required) throws IllegalStateException {
