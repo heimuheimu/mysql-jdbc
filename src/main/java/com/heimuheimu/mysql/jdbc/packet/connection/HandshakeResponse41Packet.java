@@ -336,30 +336,31 @@ public class HandshakeResponse41Packet {
     }
 
     private void initializeCapabilitiesFlags(long serverCapabilitiesFlags) {
-        enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_PROTOCOL_41);
-        enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_PLUGIN_AUTH);
-        enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_RESERVED);
-        enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_RESERVED2);
-        if (CapabilitiesFlagsUtil.isCapabilityEnabled(serverCapabilitiesFlags,
-                CapabilitiesFlagsUtil.INDEX_CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA)) {
-            enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA);
+        enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_PROTOCOL_41, true);
+        enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_PLUGIN_AUTH, true);
+        enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_RESERVED, false);
+        enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_RESERVED2, true);
+
+        enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA, false);
+
+        if (!clientConnectionAttributeMap.isEmpty()) {
+            enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_CONNECT_ATTRS, false);
         }
-        if (!clientConnectionAttributeMap.isEmpty() &&
-                CapabilitiesFlagsUtil.isCapabilityEnabled(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_CONNECT_ATTRS)) {
-            enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_CONNECT_ATTRS);
-        }
+
         if (databaseName != null && !databaseName.isEmpty()) {
-            enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_CONNECT_WITH_DB);
+            enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_CONNECT_WITH_DB, true);
         }
     }
 
-    private void enableClientCapability(long serverCapabilitiesFlags, int capabilityIndex) throws IllegalStateException {
+    private void enableClientCapability(long serverCapabilitiesFlags, int capabilityIndex, boolean required) throws IllegalStateException {
         if (CapabilitiesFlagsUtil.isCapabilityEnabled(serverCapabilitiesFlags, capabilityIndex)) {
             capabilitiesFlags = CapabilitiesFlagsUtil.enableCapability(capabilitiesFlags, capabilityIndex);
         } else {
-            throw new IllegalStateException("Enable capability `" + CapabilitiesFlagsUtil.getCapabilityName(capabilityIndex)
-                    + "` failed: `the capability is disabled at mysql server side`. `capabilityIndex`:`" + capabilityIndex
-                    + "`. `serverCapabilitiesFlags`:`" + serverCapabilitiesFlags + "`. " + this);
+            if (required) {
+                throw new IllegalStateException("Enable capability `" + CapabilitiesFlagsUtil.getCapabilityName(capabilityIndex)
+                        + "` failed: `the capability is disabled at mysql server side`. `capabilityIndex`:`" + capabilityIndex
+                        + "`. `serverCapabilitiesFlags`:`" + serverCapabilitiesFlags + "`. " + this);
+            }
         }
     }
 
