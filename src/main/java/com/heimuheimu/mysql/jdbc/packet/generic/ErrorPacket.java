@@ -26,6 +26,8 @@ package com.heimuheimu.mysql.jdbc.packet.generic;
 
 import com.heimuheimu.mysql.jdbc.packet.MysqlPacket;
 
+import java.nio.charset.Charset;
+
 /**
  * "ERR_Packet" 数据包信息，当 Mysql 服务端执行错误时，将通过该数据包进行响应，更多信息请参考：
  * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_err_packet.html">
@@ -112,14 +114,14 @@ public class ErrorPacket {
     /**
      * 判断该 Mysql 数据包是否为 "ERR_Packet" 数据包。
      *
-     * @param mysqlPacket Mysql 数据包
+     * @param packet Mysql 数据包
      * @return 是否为 "ERR_Packet" 数据包
      */
-    public static boolean isErrorPacket(MysqlPacket mysqlPacket) {
-        int initialPosition = mysqlPacket.getPosition();
-        mysqlPacket.setPosition(0);
-        int header = (int) mysqlPacket.readFixedLengthInteger(1);
-        mysqlPacket.setPosition(initialPosition);
+    public static boolean isErrorPacket(MysqlPacket packet) {
+        int initialPosition = packet.getPosition();
+        packet.setPosition(0);
+        int header = (int) packet.readFixedLengthInteger(1);
+        packet.setPosition(initialPosition);
         return header == 0xFF;
     }
 
@@ -130,10 +132,29 @@ public class ErrorPacket {
      * </a>
      *
      * @param packet "ERR_Packet" 数据包
+     * @param charset 字符集编码
      * @return {@code ErrorPacket} 实例
      * @throws IllegalArgumentException 如果 Mysql 数据包不是正确的 "ERR_Packet" 数据包，将会抛出此异常
      */
-    public static ErrorPacket parse(MysqlPacket packet) throws IllegalArgumentException {
-        return null;
+    public static ErrorPacket parse(MysqlPacket packet, Charset charset) throws IllegalArgumentException {
+        packet.setPosition(0);
+        int header = (int) packet.readFixedLengthInteger(1);
+        if (header == 0xFF) {
+            int errorCode = (int) packet.readFixedLengthInteger(2);
+            String sqlState;
+            String errorMessage;
+            String restOfPacketString = packet.readRestOfPacketString(charset);
+            if (restOfPacketString.charAt(0) == '#' && restOfPacketString.length() > 6) {
+                sqlState = restOfPacketString.substring(1, 6);
+                errorMessage = restOfPacketString.substring(6);
+            } else {
+                sqlState = "";
+                errorMessage = restOfPacketString;
+            }
+            return new ErrorPacket(errorCode, sqlState, errorMessage);
+        } else {
+            throw new IllegalArgumentException("Invalid ERR_Packet header byte: `" + Integer.toString(header, 16)
+                    + "`. Expected value: `0xFF`. " + packet);
+        }
     }
 }

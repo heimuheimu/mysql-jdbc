@@ -263,13 +263,13 @@ public class HandshakeResponse41Packet {
             usernameBytes = username.getBytes(charset);
             mysqlPacketPayloadLength += usernameBytes.length + 1;
         } else {
-            throw new IllegalArgumentException("Build mysql packet `HandshakeResponse41` failed: `username is empty`. " + this);
+            throw new IllegalArgumentException("Build `HandshakeResponse41` packet failed: `username is empty`. " + this);
         }
 
         if (authResponse != null) {
             mysqlPacketPayloadLength += authResponse.length + 9;
         } else {
-            throw new IllegalArgumentException("Build mysql packet `HandshakeResponse41` failed: `authResponse is null`. " + this);
+            throw new IllegalArgumentException("Build `HandshakeResponse41` packet failed: `authResponse is null`. " + this);
         }
 
         byte[] databaseNameBytes = new byte[0];
@@ -284,7 +284,7 @@ public class HandshakeResponse41Packet {
             authPluginNameBytes = authPluginName.getBytes(StandardCharsets.UTF_8);
             mysqlPacketPayloadLength += authPluginNameBytes.length + 1;
         } else {
-            throw new IllegalArgumentException("Build mysql packet `HandshakeResponse41` failed: `authPluginName is empty`. " + this);
+            throw new IllegalArgumentException("Build `HandshakeResponse41` packet failed: `authPluginName is empty`. " + this);
         }
 
         byte[][] clientConnectionAttributeBytes = null;
@@ -337,6 +337,8 @@ public class HandshakeResponse41Packet {
     private void initializeCapabilitiesFlags(long serverCapabilitiesFlags) {
         enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_PROTOCOL_41);
         enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_PLUGIN_AUTH);
+        enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_RESERVED);
+        enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_RESERVED2);
         if (CapabilitiesFlagsUtil.isCapabilityEnabled(serverCapabilitiesFlags,
                 CapabilitiesFlagsUtil.INDEX_CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA)) {
             enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA);
@@ -347,18 +349,6 @@ public class HandshakeResponse41Packet {
         }
         if (databaseName != null && !databaseName.isEmpty()) {
             enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_CONNECT_WITH_DB);
-        }
-        if (CapabilitiesFlagsUtil.isCapabilityEnabled(serverCapabilitiesFlags,
-                CapabilitiesFlagsUtil.INDEX_CLIENT_LONG_PASSWORD)) {
-            enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_LONG_PASSWORD);
-        }
-        if (CapabilitiesFlagsUtil.isCapabilityEnabled(serverCapabilitiesFlags,
-                CapabilitiesFlagsUtil.INDEX_CLIENT_RESERVED)) {
-            enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_RESERVED);
-        }
-        if (CapabilitiesFlagsUtil.isCapabilityEnabled(serverCapabilitiesFlags,
-                CapabilitiesFlagsUtil.INDEX_CLIENT_RESERVED2)) {
-            enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_RESERVED2);
         }
     }
 

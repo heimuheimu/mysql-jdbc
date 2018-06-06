@@ -230,14 +230,14 @@ public class HandshakeV10Packet {
         HandshakeV10Packet handshakeV10Packet = new HandshakeV10Packet();
         long protocolVersion = packet.readFixedLengthInteger(1);
         if (protocolVersion != 10) {
-            throw new IllegalArgumentException("Invalid protocol version: `" + protocolVersion + "`. Expected value: `10`. " + packet);
+            throw new IllegalArgumentException("Invalid HandshakeV10Packet protocol version: `" + protocolVersion + "`. Expected value: `10`. " + packet);
         }
         handshakeV10Packet.setServerVersion(packet.readNullTerminatedString(StandardCharsets.US_ASCII));
         handshakeV10Packet.setConnectionId(packet.readFixedLengthInteger(4));
         byte[] authPluginDataPart1 = packet.readFixedLengthBytes(8);
         long filter = packet.readFixedLengthInteger(1);
         if (filter != 0) {
-            throw new IllegalArgumentException("Invalid filter: `0x" + Long.toString(filter, 16)
+            throw new IllegalArgumentException("Invalid HandshakeV10Packet filter: `0x" + Long.toString(filter, 16)
                     + "`. Expected value: `0x00`. " + packet);
         }
         long capabilitiesFlags = packet.readFixedLengthInteger(2);
@@ -251,7 +251,7 @@ public class HandshakeV10Packet {
         } else {
             long constantAuthPluginDataLength = packet.readFixedLengthInteger(1);
             if ( constantAuthPluginDataLength != 0) {
-                throw new IllegalArgumentException("Invalid auth plugin data length constant value: `0x"
+                throw new IllegalArgumentException("Invalid HandshakeV10Packet auth plugin data length constant value: `0x"
                         + Long.toString(constantAuthPluginDataLength, 16) + "`. Expected value: `0x00`. " + packet);
             }
         }
