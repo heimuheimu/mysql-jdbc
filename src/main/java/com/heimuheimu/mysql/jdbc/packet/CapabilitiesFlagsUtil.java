@@ -24,6 +24,9 @@
 
 package com.heimuheimu.mysql.jdbc.packet;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 提供 Mysql 客户端可使用的特性数值解析和生成方法。
  *
@@ -190,7 +193,7 @@ public class CapabilitiesFlagsUtil {
      */
     public static boolean isCapabilityEnabled(long capabilitiesFlags, int capabilityIndex) throws IllegalArgumentException {
         if (capabilityIndex < 0 || capabilityIndex > 31) {
-            throw new IllegalArgumentException("Check capability flag failed: `invalid capability index.` `capabilitiesFlags`:`"
+            throw new IllegalArgumentException("Check capability flag failed: `invalid capability index`. `capabilitiesFlags`:`"
                 + capabilitiesFlags + "`. `capabilityIndex`:`" + capabilityIndex + "`.");
         }
         return (capabilitiesFlags & (1L << capabilityIndex)) != 0;
@@ -206,7 +209,7 @@ public class CapabilitiesFlagsUtil {
      */
     public static long enableCapability(long capabilitiesFlags, int capabilityIndex) throws IllegalArgumentException {
         if (capabilityIndex < 0 || capabilityIndex > 31) {
-            throw new IllegalArgumentException("Set capability flag failed: `invalid capability index.` `capabilitiesFlags`:`"
+            throw new IllegalArgumentException("Set capability flag failed: `invalid capability index`. `capabilitiesFlags`:`"
                     + capabilitiesFlags + "`. `capabilityIndex`:`" + capabilityIndex + "`.");
         }
         return capabilitiesFlags | (1L << capabilityIndex);
@@ -217,6 +220,7 @@ public class CapabilitiesFlagsUtil {
      *
      * @param capabilityIndex 特性对应的比特位索引位置，允许的值为：[0, 31]
      * @return 特性名称
+     * @throws IllegalArgumentException 如果特性对应的比特位索引位置没有在允许的范围内，将会抛出此异常
      */
     public static String getCapabilityName(int capabilityIndex) throws IllegalArgumentException {
         switch (capabilityIndex) {
@@ -277,8 +281,28 @@ public class CapabilitiesFlagsUtil {
             case INDEX_CLIENT_REMEMBER_OPTIONS:
                 return "CLIENT_REMEMBER_OPTIONS";
             default:
-                throw new IllegalArgumentException("Get capability name failed: `invalid capability index.` `capabilityIndex`:`"
+                throw new IllegalArgumentException("Get capability name failed: `invalid capability index`. `capabilityIndex`:`"
                         + capabilityIndex + "`.");
         }
+    }
+
+    /**
+     * 返回 Mysql 客户端可使用的特性数值中已开启的特性名称列表，该方法不会返回 {@code null}。
+     *
+     * @param capabilitiesFlags Mysql 客户端可使用的特性数值
+     * @return 开启的特性名称列表
+     */
+    public static List<String> getEnabledCapabilitiesNames(long capabilitiesFlags) {
+        List<String> enabledCapabilitiesNames = new ArrayList<>();
+        for (int i = 0; i < 32; i++) {
+            if (i > 25 && i < 30) {
+                continue;
+            } else {
+                if (isCapabilityEnabled(capabilitiesFlags, i)) {
+                    enabledCapabilitiesNames.add(getCapabilityName(i));
+                }
+            }
+        }
+        return enabledCapabilitiesNames;
     }
 }

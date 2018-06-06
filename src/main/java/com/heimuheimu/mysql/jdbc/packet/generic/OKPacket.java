@@ -26,6 +26,7 @@ package com.heimuheimu.mysql.jdbc.packet.generic;
 
 import com.heimuheimu.mysql.jdbc.packet.CapabilitiesFlagsUtil;
 import com.heimuheimu.mysql.jdbc.packet.MysqlPacket;
+import com.heimuheimu.mysql.jdbc.packet.ServerStatusFlagsUtil;
 
 import java.nio.charset.Charset;
 
@@ -220,7 +221,8 @@ public class OKPacket {
                 if (packet.hasRemaining()) {
                     if (CapabilitiesFlagsUtil.isCapabilityEnabled(capabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_SESSION_TRACK)) {
                         okPacket.setInfo(packet.readLengthEncodedString(charset));
-                        if (packet.hasRemaining() && true) {
+                        if (packet.hasRemaining() && ServerStatusFlagsUtil.isServerStatusEnabled(okPacket.getServerStatusFlags(),
+                                ServerStatusFlagsUtil.INDEX_SERVER_SESSION_STATE_CHANGED)) {
                             okPacket.setSessionStateInfo(packet.readLengthEncodedString(charset));
                         }
                     } else {
