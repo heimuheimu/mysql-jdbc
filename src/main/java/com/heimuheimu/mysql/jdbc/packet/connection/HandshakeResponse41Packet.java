@@ -33,14 +33,10 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 
 /**
- * 客户端在收到 {@link HandshakeV10Packet} 数据包后，将发送该响应数据包至 Mysql 服务端。
- *
- * <p>
- * 更多信息请参考：
+ * "HandshakeResponse41Packet" 数据包信息，Mysql 客户端在收到 {@link HandshakeV10Packet} 数据包后，将发送该响应数据包至服务端，更多信息请参考：
  * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_connection_phase_packets_protocol_handshake_response.html">
  *     Protocol::HandshakeResponse41
  * </a>
- * </p>
  *
  * <p><strong>说明：</strong>{@code HandshakeResponse41Packet} 类是非线程安全的，不允许多个线程使用同一个实例。</p>
  *
@@ -246,13 +242,17 @@ public class HandshakeResponse41Packet {
     }
 
     /**
-     * 根据当前的 {@code HandshakeResponse41Packet} 实例信息，创建一个 Mysql 数据包。
+     * 根据当前 {@code HandshakeResponse41Packet} 实例信息，生成对应的 Mysql "HandshakeResponse41Packet" 数据包字节数组，
+     * "HandshakeResponse41Packet" 数据包格式定义：
+     * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_connection_phase_packets_protocol_handshake_response.html">
+     *     Protocol::HandshakeResponse41
+     * </a>
      *
-     * @return {@code HandshakeResponse41Packet} 实例对应的Mysql 数据包
+     * @return "HandshakeResponse41Packet" 数据包字节数组
      * @throws IllegalArgumentException 如果 {@code HandshakeResponse41Packet} 中关键字段信息尚未设置，将会抛出此异常
      * @throws IllegalStateException 如果指定的 Mysql 客户端特性在 Mysql 服务端未启用，将会抛出此异常
      */
-    public byte[] buildMysqlPacket(long serverCapabilitiesFlags) throws IllegalArgumentException, IllegalStateException {
+    public byte[] buildMysqlPacketBytes(long serverCapabilitiesFlags) throws IllegalArgumentException, IllegalStateException {
         initializeCapabilitiesFlags(serverCapabilitiesFlags);
 
         Charset charset = CharsetMappingUtil.getJavaCharset(clientCharacterId);

@@ -30,14 +30,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 /**
- * Mysql 服务端将在客户端连接成功后，发送该数据包至客户端。
- *
- * <p>
- * 更多信息请参考：
+ * "HandshakeV10" 数据包信息，Mysql 服务端将在客户端连接成功后，发送该数据包至客户端，更多信息请参考：
  * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_connection_phase_packets_protocol_handshake_v10.html">
  *     Protocol::HandshakeV10
  * </a>
- * </p>
  *
  * <p><strong>说明：</strong>{@code HandshakeV10Packet} 类是非线程安全的，不允许多个线程使用同一个实例。</p>
  *
@@ -220,13 +216,17 @@ public class HandshakeV10Packet {
     }
 
     /**
-     * 解析 {@code HandshakeV10Packet} 数据包。
+     * 对 Mysql "HandshakeV10Packet" 数据包进行解析，生成对应的 {@code HandshakeV10Packet} 实例，"HandshakeV10Packet" 数据包格式定义：
+     * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_connection_phase_packets_protocol_handshake_v10.html">
+     *     Protocol::HandshakeV10
+     * </a>
      *
-     * @param packet 被解析的 Mysql 数据包
-     * @return {@code HandshakeV10Packet} 数据包
-     * @throws IllegalArgumentException 如果解析过程中发生错误，将会抛出此异常
+     * @param packet "HandshakeV10Packet" 数据包
+     * @return {@code HandshakeV10Packet} 实例
+     * @throws IllegalArgumentException 如果 Mysql 数据包不是正确的 "HandshakeV10Packet" 数据包，将会抛出此异常
      */
     public static HandshakeV10Packet parse(MysqlPacket packet) throws IllegalArgumentException {
+        packet.setPosition(0);
         HandshakeV10Packet handshakeV10Packet = new HandshakeV10Packet();
         long protocolVersion = packet.readFixedLengthInteger(1);
         if (protocolVersion != 10) {

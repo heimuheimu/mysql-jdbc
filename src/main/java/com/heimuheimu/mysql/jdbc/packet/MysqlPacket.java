@@ -385,14 +385,10 @@ public class MysqlPacket {
     }
 
     /**
-     * 根据已写入的内容信息，组装成 MYSQL 数据包字节数组。
-     *
-     * <p>
-     * 更多信息请参考：
+     * 根据已写入的内容信息，生成 MYSQL 数据包字节数组，MYSQL 数据包格式定义：
      * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_packets.html">
      *     MySQL Packets
      * </a>
-     * </p>
      *
      * @return MYSQL 数据包字节数组
      * @throws IllegalArgumentException 如果已写入的内容信息为空，即 {@link #getPosition()} 为 0，将会抛出此异常
