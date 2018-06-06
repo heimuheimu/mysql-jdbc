@@ -110,6 +110,15 @@ public class MysqlPacket {
     }
 
     /**
+     * 判断 position 的值是否小于 payload 的长度。
+     *
+     * @return position 的值是否小于 payload 的长度
+     */
+    public boolean hasRemaining() {
+        return position < payload.length;
+    }
+
+    /**
      * 读取固定长度的字节数组。
      *
      * @param length 字节长度

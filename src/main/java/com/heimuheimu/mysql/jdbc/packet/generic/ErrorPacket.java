@@ -41,7 +41,7 @@ import java.nio.charset.Charset;
  * </a>
  * </p>
  *
- * <p><strong>说明：</strong>{@code ErrorPacket} 类是非线程安全的，不允许多个线程使用同一个实例。</p>
+ * <p><strong>说明：</strong>{@code ErrorPacket} 类是线程安全的，可在多个线程中使用同一个实例。</p>
  *
  * @author heimuheimu
  */
@@ -138,23 +138,27 @@ public class ErrorPacket {
      */
     public static ErrorPacket parse(MysqlPacket packet, Charset charset) throws IllegalArgumentException {
         packet.setPosition(0);
-        int header = (int) packet.readFixedLengthInteger(1);
-        if (header == 0xFF) {
-            int errorCode = (int) packet.readFixedLengthInteger(2);
-            String sqlState;
-            String errorMessage;
-            String restOfPacketString = packet.readRestOfPacketString(charset);
-            if (restOfPacketString.charAt(0) == '#' && restOfPacketString.length() > 6) {
-                sqlState = restOfPacketString.substring(1, 6);
-                errorMessage = restOfPacketString.substring(6);
-            } else {
-                sqlState = "";
-                errorMessage = restOfPacketString;
+        int firstByte = (int) packet.readFixedLengthInteger(1);
+        if (firstByte == 0xFF) {
+            try {
+                int errorCode = (int) packet.readFixedLengthInteger(2);
+                String sqlState;
+                String errorMessage;
+                String restOfPacketString = packet.readRestOfPacketString(charset);
+                if (restOfPacketString.charAt(0) == '#' && restOfPacketString.length() > 6) {
+                    sqlState = restOfPacketString.substring(1, 6);
+                    errorMessage = restOfPacketString.substring(6);
+                } else {
+                    sqlState = "";
+                    errorMessage = restOfPacketString;
+                }
+                return new ErrorPacket(errorCode, sqlState, errorMessage);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Parse ERR_Packet failed: `invalid format`. " + packet, e);
             }
-            return new ErrorPacket(errorCode, sqlState, errorMessage);
         } else {
-            throw new IllegalArgumentException("Invalid ERR_Packet header byte: `" + Integer.toString(header, 16)
-                    + "`. Expected value: `0xFF`. " + packet);
+            throw new IllegalArgumentException("Parse ERR_Packet failed: `invalid first byte[0x" + Integer.toString(firstByte, 16)
+                    + "]`. Expected value: `0xFF`. " + packet);
         }
     }
 }

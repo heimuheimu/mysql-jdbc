@@ -24,8 +24,13 @@
 
 package com.heimuheimu.mysql.jdbc.packet.generic;
 
+import com.heimuheimu.mysql.jdbc.packet.CapabilitiesFlagsUtil;
+import com.heimuheimu.mysql.jdbc.packet.MysqlPacket;
+
+import java.nio.charset.Charset;
+
 /**
- * Mysql OK 响应数据包，更多信息请参考：
+ * "OK_Packet" 数据包信息，当 Mysql 服务端执行成功时，将通过该数据包进行响应，更多信息请参考：
  * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_ok_packet.html">
  *     OK_Packet
  * </a>
@@ -35,4 +40,200 @@ package com.heimuheimu.mysql.jdbc.packet.generic;
  * @author heimuheimu
  */
 public class OKPacket {
+
+    /**
+     * 变更的记录行数
+     */
+    private long affectedRows = 0;
+
+    /**
+     * 最后插入的主键 ID
+     */
+    private long lastInsertId = -1;
+
+    /**
+     * Mysql 服务端状态数值，每个比特位可代表不同的服务端状态
+     */
+    private int serverStatusFlags = 0;
+
+    /**
+     * 警告信息数量
+     */
+    private int warnings = 0;
+
+    /**
+     * Mysql 服务端状态信息
+     */
+    private String info = "";
+
+    /**
+     * Mysql 服务端 Session 状态信息
+     */
+    private String sessionStateInfo = "";
+
+    /**
+     * 获得变更的记录行数。
+     *
+     * @return 变更的记录行数
+     */
+    public long getAffectedRows() {
+        return affectedRows;
+    }
+
+    /**
+     * 设置变更的记录行数。
+     *
+     * @param affectedRows 变更的记录行数
+     */
+    public void setAffectedRows(long affectedRows) {
+        this.affectedRows = affectedRows;
+    }
+
+    /**
+     * 获得最后插入的主键 ID。
+     *
+     * @return 最后插入的主键 ID
+     */
+    public long getLastInsertId() {
+        return lastInsertId;
+    }
+
+    /**
+     * 设置最后插入的主键 ID。
+     *
+     * @param lastInsertId 最后插入的主键 ID
+     */
+    public void setLastInsertId(long lastInsertId) {
+        this.lastInsertId = lastInsertId;
+    }
+
+    /**
+     * 获得 Mysql 服务端状态数值，每个比特位可代表不同的服务端状态。
+     *
+     * @return Mysql 服务端状态数值
+     */
+    public int getServerStatusFlags() {
+        return serverStatusFlags;
+    }
+
+    /**
+     * 设置 Mysql 服务端状态数值。
+     *
+     * @param serverStatusFlags Mysql 服务端状态数值
+     */
+    public void setServerStatusFlags(int serverStatusFlags) {
+        this.serverStatusFlags = serverStatusFlags;
+    }
+
+    /**
+     * 获得警告信息数量。
+     *
+     * @return 警告信息数量
+     */
+    public int getWarnings() {
+        return warnings;
+    }
+
+    /**
+     * 设置警告信息数量。
+     *
+     * @param warnings 警告信息数量
+     */
+    public void setWarnings(int warnings) {
+        this.warnings = warnings;
+    }
+
+    /**
+     * 获得 Mysql 服务端状态信息。
+     *
+     * @return Mysql 服务端状态信息
+     */
+    public String getInfo() {
+        return info;
+    }
+
+    /**
+     * 设置 Mysql 服务端状态信息。
+     *
+     * @param info Mysql 服务端状态信息
+     */
+    public void setInfo(String info) {
+        this.info = info;
+    }
+
+    /**
+     * 获得 Mysql 服务端 Session 状态信息。
+     *
+     * @return Mysql 服务端 Session 状态信息
+     */
+    public String getSessionStateInfo() {
+        return sessionStateInfo;
+    }
+
+    /**
+     * 设置 Mysql 服务端 Session 状态信息。
+     *
+     * @param sessionStateInfo Mysql 服务端 Session 状态信息
+     */
+    public void setSessionStateInfo(String sessionStateInfo) {
+        this.sessionStateInfo = sessionStateInfo;
+    }
+
+    @Override
+    public String toString() {
+        return "OKPacket{" +
+                "affectedRows=" + affectedRows +
+                ", lastInsertId=" + lastInsertId +
+                ", serverStatusFlags=" + serverStatusFlags +
+                ", warnings=" + warnings +
+                ", info='" + info + '\'' +
+                ", sessionStateInfo='" + sessionStateInfo + '\'' +
+                '}';
+    }
+
+    /**
+     * 对 Mysql "OK_Packet" 数据包进行解析，生成对应的 {@code OKPacket} 实例，"OK_Packet" 数据包格式定义：
+     * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_ok_packet.html">
+     *     OK_Packet
+     * </a>
+     *
+     * @param packet "OK_Packet" 数据包
+     * @param capabilitiesFlags Mysql 客户端可使用的特性数值，每个比特位可代表不同的特性是否支持
+     * @param charset 字符集编码
+     * @return {@code OKPacket} 实例
+     * @throws IllegalArgumentException 如果 Mysql 数据包不是正确的 "OK_Packet" 数据包，将会抛出此异常
+     */
+    public static OKPacket parse(MysqlPacket packet, long capabilitiesFlags, Charset charset) {
+        packet.setPosition(0);
+        int firstByte = (int) packet.readFixedLengthInteger(1);
+        if (firstByte == 0x00 || firstByte == 0xFE) {
+            try {
+                OKPacket okPacket = new OKPacket();
+                okPacket.setAffectedRows(packet.readLengthEncodedInteger());
+                okPacket.setLastInsertId(packet.readLengthEncodedInteger());
+                if (CapabilitiesFlagsUtil.isCapabilityEnabled(capabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_PROTOCOL_41)) {
+                    okPacket.setServerStatusFlags((int) packet.readFixedLengthInteger(2));
+                    okPacket.setWarnings((int) packet.readFixedLengthInteger(2));
+                } else if (CapabilitiesFlagsUtil.isCapabilityEnabled(capabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_TRANSACTIONS)) {
+                    okPacket.setServerStatusFlags((int) packet.readFixedLengthInteger(2));
+                }
+                if (packet.hasRemaining()) {
+                    if (CapabilitiesFlagsUtil.isCapabilityEnabled(capabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_SESSION_TRACK)) {
+                        okPacket.setInfo(packet.readLengthEncodedString(charset));
+                        if (packet.hasRemaining() && true) {
+                            okPacket.setSessionStateInfo(packet.readLengthEncodedString(charset));
+                        }
+                    } else {
+                        okPacket.setInfo(packet.readRestOfPacketString(charset));
+                    }
+                }
+                return okPacket;
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Parse OK_Packet failed: `invalid format`. " + packet, e);
+            }
+        } else {
+            throw new IllegalArgumentException("Parse OK_Packet failed: `invalid first byte[0x" + Integer.toString(firstByte, 16)
+                    + "]`. Expected value: `0x00 or 0xFE`. " + packet);
+        }
+    }
 }

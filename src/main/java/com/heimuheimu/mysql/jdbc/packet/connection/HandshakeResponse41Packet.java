@@ -24,6 +24,7 @@
 
 package com.heimuheimu.mysql.jdbc.packet.connection;
 
+import com.heimuheimu.mysql.jdbc.packet.CapabilitiesFlagsUtil;
 import com.heimuheimu.mysql.jdbc.packet.CharsetMappingUtil;
 import com.heimuheimu.mysql.jdbc.packet.MysqlPacket;
 

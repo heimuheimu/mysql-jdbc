@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package com.heimuheimu.mysql.jdbc.packet.connection;
+package com.heimuheimu.mysql.jdbc.packet;
 
 /**
  * 提供 Mysql 客户端可使用的特性数值解析和生成方法。
