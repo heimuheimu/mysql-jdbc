@@ -193,6 +193,23 @@ public class OKPacket {
     }
 
     /**
+     * 判断该 Mysql 数据包是否为 "OK_Packet" 数据包。
+     *
+     * @param packet Mysql 数据包
+     * @return 是否为 "OK_Packet" 数据包
+     */
+    public static boolean isOkPacket(MysqlPacket packet) {
+        if (packet.getPayload().length >= 7) {
+            int initialPosition = packet.getPosition();
+            packet.setPosition(0);
+            int firstByte = (int) packet.readFixedLengthInteger(1);
+            packet.setPosition(initialPosition);
+            return firstByte == 0x00 || firstByte == 0xFE;
+        }
+        return false;
+    }
+
+    /**
      * 对 Mysql "OK_Packet" 数据包进行解析，生成对应的 {@code OKPacket} 实例，"OK_Packet" 数据包格式定义：
      * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_ok_packet.html">
      *     OK_Packet
@@ -205,10 +222,9 @@ public class OKPacket {
      * @throws IllegalArgumentException 如果 Mysql 数据包不是正确的 "OK_Packet" 数据包，将会抛出此异常
      */
     public static OKPacket parse(MysqlPacket packet, long capabilitiesFlags, Charset charset) {
-        packet.setPosition(0);
-        int firstByte = (int) packet.readFixedLengthInteger(1);
-        if (firstByte == 0x00 || firstByte == 0xFE) {
+        if (isOkPacket(packet)) {
             try {
+                packet.setPosition(1);
                 OKPacket okPacket = new OKPacket();
                 okPacket.setAffectedRows(packet.readLengthEncodedInteger());
                 okPacket.setLastInsertId(packet.readLengthEncodedInteger());
@@ -234,8 +250,8 @@ public class OKPacket {
                 throw new IllegalArgumentException("Parse OK_Packet failed: `invalid format`. " + packet, e);
             }
         } else {
-            throw new IllegalArgumentException("Parse OK_Packet failed: `invalid first byte[0x" + Integer.toString(firstByte, 16)
-                    + "]`. Expected value: `0x00 or 0xFE`. " + packet);
+            throw new IllegalArgumentException("Parse OK_Packet failed: `invalid first byte[0x" +
+                    Integer.toString(packet.getPayload()[0], 16) + "]`. Expected value: `0x00 or 0xFE`. " + packet);
         }
     }
 }

@@ -120,9 +120,9 @@ public class ErrorPacket {
     public static boolean isErrorPacket(MysqlPacket packet) {
         int initialPosition = packet.getPosition();
         packet.setPosition(0);
-        int header = (int) packet.readFixedLengthInteger(1);
+        int firstByte = (int) packet.readFixedLengthInteger(1);
         packet.setPosition(initialPosition);
-        return header == 0xFF;
+        return firstByte == 0xFF;
     }
 
     /**
@@ -137,10 +137,9 @@ public class ErrorPacket {
      * @throws IllegalArgumentException 如果 Mysql 数据包不是正确的 "ERR_Packet" 数据包，将会抛出此异常
      */
     public static ErrorPacket parse(MysqlPacket packet, Charset charset) throws IllegalArgumentException {
-        packet.setPosition(0);
-        int firstByte = (int) packet.readFixedLengthInteger(1);
-        if (firstByte == 0xFF) {
+        if (isErrorPacket(packet)) {
             try {
+                packet.setPosition(1);
                 int errorCode = (int) packet.readFixedLengthInteger(2);
                 String sqlState;
                 String errorMessage;
@@ -157,8 +156,8 @@ public class ErrorPacket {
                 throw new IllegalArgumentException("Parse ERR_Packet failed: `invalid format`. " + packet, e);
             }
         } else {
-            throw new IllegalArgumentException("Parse ERR_Packet failed: `invalid first byte[0x" + Integer.toString(firstByte, 16)
-                    + "]`. Expected value: `0xFF`. " + packet);
+            throw new IllegalArgumentException("Parse ERR_Packet failed: `invalid first byte[0x"
+                    + Integer.toString(packet.getPayload()[0], 16) + "]`. Expected value: `0xFF`. " + packet);
         }
     }
 }

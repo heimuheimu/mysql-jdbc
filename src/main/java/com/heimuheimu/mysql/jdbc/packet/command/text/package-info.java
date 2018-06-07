@@ -23,11 +23,11 @@
  */
 
 /**
- * 提供 Mysql 服务端和客户端建立连接期间使用的数据包，更多信息请参考：
- * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_connection_phase_packets.html">
- *     Connection Phase Packets
+ * 提供 Mysql 文本命令数据包，更多信息请参考：
+ * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_command_phase_text.html">
+ *     Text Protocol
  * </a>
  *
  * @author heimuheimu
  */
-package com.heimuheimu.mysql.jdbc.packet.connection;
+package com.heimuheimu.mysql.jdbc.packet.command.text;
