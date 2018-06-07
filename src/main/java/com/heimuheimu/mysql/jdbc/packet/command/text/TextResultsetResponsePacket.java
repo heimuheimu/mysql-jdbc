@@ -61,6 +61,24 @@ public class TextResultsetResponsePacket {
     }
 
     /**
+     * 判断是否跟有 "ColumnDefinitionResponsePacket" 数据包。
+     *
+     * @return 是否跟有 "ColumnDefinitionResponsePacket" 数据包
+     */
+    public boolean isMetadataFollows() {
+        return isMetadataFollows;
+    }
+
+    /**
+     * 获得列数量。
+     *
+     * @return 列数量
+     */
+    public int getColumnCount() {
+        return columnCount;
+    }
+
+    /**
      * 对 Mysql "TextResultset" 数据包进行解析，生成对应的 {@code TextResultsetResponsePacket} 实例，"TextResultset" 数据包格式定义：
      * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_connection_phase_packets_protocol_handshake_response.html">
      *     TextResultset
