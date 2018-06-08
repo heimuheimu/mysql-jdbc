@@ -74,7 +74,7 @@ public class TextResultsetRowResponsePacket {
                 if (value != null) {
                     buffer.append("\"").append(new String(value, StandardCharsets.UTF_8)).append("\", ");
                 } else {
-                    buffer.append("null");
+                    buffer.append("null, ");
                 }
             }
             buffer.delete(buffer.length() - 2, buffer.length());
