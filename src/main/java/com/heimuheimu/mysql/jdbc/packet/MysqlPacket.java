@@ -124,16 +124,19 @@ public class MysqlPacket {
      * @param length 字节长度
      * @return 固定长度的字节数组
      * @throws ArrayIndexOutOfBoundsException 如果访问数组越界，将会抛出此异常
-     * @throws IllegalArgumentException 如果 {@code length} 小于等于 0，将会抛出此异常
+     * @throws IllegalArgumentException 如果 {@code length} 小于 0，将会抛出此异常
      */
     public byte[] readFixedLengthBytes(int length) throws IndexOutOfBoundsException, IllegalArgumentException {
-        if (length <= 0) {
+        if (length < 0) {
             throw new IllegalArgumentException("Read fixed length bytes failed: `invalid length`. `length`:`" + length + "`.");
+        } else if (length == 0) {
+            return new byte[0];
+        } else {
+            byte[] value = new byte[length];
+            System.arraycopy(payload, position, value, 0, length);
+            position += length;
+            return value;
         }
-        byte[] value = new byte[length];
-        System.arraycopy(payload, position, value, 0, length);
-        position += length;
-        return value;
     }
 
     /**

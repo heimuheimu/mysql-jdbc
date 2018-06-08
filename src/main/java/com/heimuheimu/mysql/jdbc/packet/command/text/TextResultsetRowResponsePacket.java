@@ -71,7 +71,11 @@ public class TextResultsetRowResponsePacket {
         buffer.append("TextResultsetRowResponsePacket{columnsValues=[");
         if (!columnsValues.isEmpty()) {
             for (byte[] value : columnsValues) {
-                buffer.append(new String(value, StandardCharsets.UTF_8)).append(", ");
+                if (value != null) {
+                    buffer.append("\"").append(new String(value, StandardCharsets.UTF_8)).append("\", ");
+                } else {
+                    buffer.append("null");
+                }
             }
             buffer.delete(buffer.length() - 2, buffer.length());
         }
