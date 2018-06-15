@@ -63,7 +63,7 @@ public class HandshakeV10Packet {
     private int serverStatusFlags = 0;
 
     /**
-     * Mysql 客户端可使用的特性数值，每个比特位可代表不同的特性是否支持
+     * Mysql 服务端支持的特性数值，每个比特位可代表不同的特性是否支持
      */
     private long capabilitiesFlags = 0;
 
@@ -150,18 +150,18 @@ public class HandshakeV10Packet {
     }
 
     /**
-     * Mysql 客户端可使用的特性数值，每个比特位可代表不同的特性是否支持。
+     * 获得 Mysql 服务端支持的特性数值，每个比特位可代表不同的特性是否支持。
      *
-     * @return Mysql 客户端可使用的特性数值
+     * @return Mysql 服务端支持的特性数值
      */
     public long getCapabilitiesFlags() {
         return capabilitiesFlags;
     }
 
     /**
-     * 设置 Mysql 客户端可使用的特性数值。
+     * 设置 Mysql 服务端支持的特性数值，每个比特位可代表不同的特性是否支持。
      *
-     * @param capabilitiesFlags Mysql 客户端可使用的特性数值
+     * @param capabilitiesFlags Mysql 服务端支持的特性数值
      */
     public void setCapabilitiesFlags(long capabilitiesFlags) {
         this.capabilitiesFlags = capabilitiesFlags;

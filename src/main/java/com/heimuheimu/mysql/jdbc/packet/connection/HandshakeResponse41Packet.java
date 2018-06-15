@@ -249,6 +249,8 @@ public class HandshakeResponse41Packet {
      *     Protocol::HandshakeResponse41
      * </a>
      *
+     * <p><strong>注意：</strong>调用该方法后，{@link #capabilitiesFlags} 将会被重新赋值，默认特性将被开启，已指定开启但 Mysql 服务端不支持的特性将会被关闭。</p>
+     *
      * @return "HandshakeResponse41Packet" 数据包字节数组
      * @throws IllegalArgumentException 如果 {@code HandshakeResponse41Packet} 中关键字段信息尚未设置，将会抛出此异常
      * @throws IllegalStateException 如果指定的 Mysql 客户端特性在 Mysql 服务端未启用，将会抛出此异常
