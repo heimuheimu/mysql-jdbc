@@ -45,6 +45,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.Socket;
 import java.sql.SQLException;
+import java.sql.SQLTimeoutException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -152,6 +153,16 @@ public class MysqlChannel implements Closeable {
         return state == BeanStatusEnum.NORMAL;
     }
 
+    /**
+     * 发送一个 Mysql 命令，并返回响应数据列表，如果等待响应数据超时，当前 {@code MysqlChannel} 将会被直接关闭。
+     *
+     * @param command Mysql 命令
+     * @param timeout 超时时间，单位：毫秒
+     * @return 该命令对应的响应数据列表，不会返回 {@code null}
+     * @throws NullPointerException 如果 {@code command} 为 {@code null}，将会抛出此异常
+     * @throws SQLTimeoutException 如果等待响应数据超时，将抛出此异常
+     * @throws SQLException 如果当前 {@code MysqlChannel} 未初始化或已关闭，将会抛出此异常
+     */
     public List<MysqlPacket> send(Command command, long timeout) throws NullPointerException, SQLException {
         if (command == null) {
             String errorMessage = "Execute mysql command failed: `command should not be null`. Host: `" +
@@ -168,7 +179,20 @@ public class MysqlChannel implements Closeable {
             LOG.error(errorMessage);
             throw new SQLException(errorMessage);
         }
-        return command.getResponsePacketList(timeout);
+        try {
+            return command.getResponsePacketList(timeout);
+        } catch (SQLTimeoutException e) {
+            MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `execute command timeout`. Host: `{}`. Connection info: `{}`. Timeout: `{}ms`. Command: `{}`.",
+                    connectionConfiguration.getHost(), connectionInfo, timeout, command);
+            LOG.error("Execute mysql command failed: `wait response packet timeout, MysqlChannel need to be closed`. Host: `" + connectionConfiguration.getHost()
+                    + "`. Connection info: `" + connectionInfo + "`. Timeout: `" + timeout + "ms`. Command: `" + command + "`.", e);
+            close();
+            throw e;
+        } catch (Exception e) {
+            LOG.error("Execute mysql command failed: `" + e.getMessage() + "`. Host: `" + connectionConfiguration.getHost() + "`. Connection info: `"
+                    + connectionInfo + "`. Timeout: `" + timeout + "ms`. Command: `" + command + "`.", e);
+            throw e;
+        }
     }
 
     /**
@@ -230,6 +254,9 @@ public class MysqlChannel implements Closeable {
         }
     }
 
+    /**
+     * Mysql IO 线程
+     */
     private class MysqlIOTask extends Thread {
 
         private final MonitoredSocketOutputStream outputStream;

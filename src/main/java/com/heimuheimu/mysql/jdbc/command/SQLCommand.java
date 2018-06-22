@@ -24,26 +24,36 @@
 
 package com.heimuheimu.mysql.jdbc.command;
 
-import com.heimuheimu.mysql.jdbc.ConnectionInfo;
 import com.heimuheimu.mysql.jdbc.packet.MysqlPacket;
 import com.heimuheimu.mysql.jdbc.packet.command.text.CommandQueryPacket;
 import com.heimuheimu.mysql.jdbc.packet.generic.EOFPacket;
 import com.heimuheimu.mysql.jdbc.packet.generic.ErrorPacket;
 import com.heimuheimu.mysql.jdbc.packet.generic.OKPacket;
 
+import java.nio.charset.Charset;
 import java.sql.SQLException;
 
+/**
+ * Mysql SQL 命令，用于执行任何合法的 SQL 语句。
+ *
+ * <p><strong>注意：</strong>{@code SQLCommand} 不支持 "LOAD DATA INFILE" 语句。</p>
+ *
+ * <p><strong>说明：</strong>{@code SQLCommand} 类是线程安全的，可在多个线程中使用同一个实例。</p>
+ *
+ * @author heimuheimu
+ * @see CommandQueryPacket
+ */
 public class SQLCommand extends AbstractCommand {
 
     /**
-     * SQL 命令
+     * SQL 语句
      */
     private final String sql;
 
     /**
-     * 执行当前 SQL 命令的 Mysql 数据库连接信息
+     * Java 字符集编码
      */
-    private final ConnectionInfo connectionInfo;
+    private final Charset charset;
 
     /**
      * SQL 命令数据包字节数组
@@ -56,21 +66,23 @@ public class SQLCommand extends AbstractCommand {
     private volatile int receivedEOFPacketCount = 0;
 
     /**
-     * @param sql SQL 命令
-     * @param connectionInfo 执行当前 SQL 命令的 Mysql 数据库连接信息
+     * 构造一个 Mysql SQL 命令，用于执行任何合法的 SQL 语句。
+     *
+     * @param sql SQL 语句
+     * @param charset Java 字符集编码
      */
-    public SQLCommand(String sql, ConnectionInfo connectionInfo) {
+    public SQLCommand(String sql, Charset charset) {
         this.sql = sql;
-        this.connectionInfo = connectionInfo;
+        this.charset = charset;
         CommandQueryPacket commandQueryPacket = new CommandQueryPacket(sql);
-        this.requestByteArray = commandQueryPacket.buildMysqlPacketBytes(connectionInfo.getJavaCharset());
+        this.requestByteArray = commandQueryPacket.buildMysqlPacketBytes(charset);
     }
 
     @Override
     protected boolean isLastPacket(MysqlPacket responsePacket) throws SQLException {
         if (responsePacket.getPayload()[0] == 0xFB) {
             throw new SQLException("Receive response packet for `SQLCommand` failed: `LOCAL INFILE Request is not supported`. Sql: `" +
-                    sql + "`. Connection info:`" + connectionInfo + "`. Invalid response packet:`" + responsePacket + "`.");
+                    sql + "`. Charset:`" + charset + "`. Invalid response packet:`" + responsePacket + "`.");
         }
         if (OKPacket.isOkPacket(responsePacket)) {
             return true;
@@ -88,5 +100,13 @@ public class SQLCommand extends AbstractCommand {
     @Override
     public byte[] getRequestByteArray() {
         return requestByteArray;
+    }
+
+    @Override
+    public String toString() {
+        return "SQLCommand{" +
+                "sql='" + sql + '\'' +
+                ", charset=" + charset +
+                '}';
     }
 }
