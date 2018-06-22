@@ -26,12 +26,15 @@ package com.heimuheimu.mysql.jdbc.channel;
 
 import com.heimuheimu.mysql.jdbc.ConnectionConfiguration;
 import com.heimuheimu.mysql.jdbc.ConnectionInfo;
+import com.heimuheimu.mysql.jdbc.command.Command;
+import com.heimuheimu.mysql.jdbc.command.PingCommand;
 import com.heimuheimu.mysql.jdbc.constant.BeanStatusEnum;
 import com.heimuheimu.mysql.jdbc.facility.UnusableServiceNotifier;
 import com.heimuheimu.mysql.jdbc.monitor.SocketMonitorFactory;
 import com.heimuheimu.mysql.jdbc.net.BuildSocketException;
 import com.heimuheimu.mysql.jdbc.net.SocketBuilder;
 import com.heimuheimu.mysql.jdbc.net.SocketConfiguration;
+import com.heimuheimu.mysql.jdbc.packet.MysqlPacket;
 import com.heimuheimu.mysql.jdbc.packet.MysqlPacketReader;
 import com.heimuheimu.naivemonitor.facility.MonitoredSocketOutputStream;
 import com.heimuheimu.naivemonitor.monitor.SocketMonitor;
@@ -41,6 +44,11 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.Socket;
+import java.sql.SQLException;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 基于 Mysql Client/Server 协议与 Mysql 服务进行数据交互的管道。协议定义请参考文档：
@@ -96,6 +104,11 @@ public class MysqlChannel implements Closeable {
     private MysqlIOTask ioTask = null;
 
     /**
+     * 等待发送的 Mysql 命令队列
+     */
+    private final LinkedBlockingQueue<Command> commandQueue = new LinkedBlockingQueue<>();
+
+    /**
      * 构造一个与 Mysql 服务进行数据交互的管道。
      *
      * @param configuration 建立 Mysql 数据库连接使用的配置信息，不允许 {@code null}
@@ -137,6 +150,25 @@ public class MysqlChannel implements Closeable {
      */
     public boolean isAvailable() {
         return state == BeanStatusEnum.NORMAL;
+    }
+
+    public List<MysqlPacket> send(Command command, long timeout) throws NullPointerException, SQLException {
+        if (command == null) {
+            String errorMessage = "Execute mysql command failed: `command should not be null`. Host: `" +
+                    connectionConfiguration.getHost() + "`. Connection config: `" + connectionConfiguration + "`.";
+            LOG.error(errorMessage);
+            throw new NullPointerException(errorMessage);
+        }
+        if (state == BeanStatusEnum.NORMAL) {
+            commandQueue.add(command);
+        } else {
+            String errorMessage = "Execute mysql command failed: `MysqlChannel is not initialized or has been closed`. State: `"
+                    + state + "`. Host: `" + connectionConfiguration.getHost() + "`. Command: `" + command + "`. Connection config: `"
+                    + connectionConfiguration + "`.";
+            LOG.error(errorMessage);
+            throw new SQLException(errorMessage);
+        }
+        return command.getResponsePacketList(timeout);
     }
 
     /**
@@ -206,6 +238,11 @@ public class MysqlChannel implements Closeable {
 
         private volatile boolean stopSignal = false;
 
+        /**
+         * 等待响应数据包的 Mysql 命令队列
+         */
+        private final LinkedList<Command> waitingQueue = new LinkedList<>();
+
         private MysqlIOTask(Integer receiveBufferSize) throws IOException {
             this.outputStream = new MonitoredSocketOutputStream(socket.getOutputStream(), socketMonitor);
 
@@ -214,6 +251,89 @@ public class MysqlChannel implements Closeable {
 
             HandshakeProcessor handshakeProcessor = new HandshakeProcessor(connectionConfiguration, outputStream, reader);
             connectionInfo = handshakeProcessor.doHandshake();
+        }
+
+        @Override
+        public void run() {
+            int pingPeriod = connectionConfiguration.getPingPeriod();
+            Command command;
+            while (!stopSignal) {
+                try {
+                    if (pingPeriod <= 0) {
+                        command = commandQueue.take();
+                    } else {
+                        command = commandQueue.poll(pingPeriod, TimeUnit.SECONDS);
+                        if (command == null) { // 如果心跳检测时间内没有请求，创建一个 Ping 命令进行发送
+                            long pingCommandStartTime = System.currentTimeMillis();
+                            PingCommand pingCommand = new PingCommand();
+                            Thread pingCheckThread = new Thread(() -> { // 启动一个异步线程检查心跳是否有正常返回
+                                try {
+                                    if ( pingCommand.isSuccess(5000) ) {
+                                        LOG.debug("Execute `PingCommand` success. Cost: `{}ms`. Host: `{}`. Connection info: `{}`.",
+                                                System.currentTimeMillis() - pingCommandStartTime,
+                                                connectionConfiguration.getHost(), connectionInfo);
+                                    } else { //should not happen
+                                        MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `execute PingCommand failed`. Host: `{}`. Connection info: `{}`.",
+                                                connectionConfiguration.getHost(), connectionInfo);
+                                        LOG.error("MysqlChannel need to be closed: `execute PingCommand failed`. Host: `{}`. Connection info: `{}`.",
+                                                connectionConfiguration.getHost(), connectionInfo);
+                                        MysqlChannel.this.close();
+                                    }
+                                } catch (Exception e) {
+                                    MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `execute PingCommand failed`. Host: `{}`. Connection info: `{}`.",
+                                            connectionConfiguration.getHost(), connectionInfo);
+                                    LOG.error("MysqlChannel need to be closed: `execute PingCommand failed`. Host: `"
+                                                    + connectionConfiguration.getHost() + "`. Connection info: `"
+                                                    + connectionInfo + "`.", e);
+                                    MysqlChannel.this.close();
+                                }
+                            });
+                            String socketAddress = connectionConfiguration.getHost() + "/" + socket.getLocalPort();
+                            pingCheckThread.setName("mysql-ping-check-" + socketAddress);
+                            pingCheckThread.start();
+                            command = pingCommand;
+                        }
+                    }
+
+                    byte[] requestPacket = command.getRequestByteArray();
+                    outputStream.write(requestPacket);
+                    outputStream.flush();
+
+                    if (command.hasResponsePacket()) {
+                        waitingQueue.add(command);
+                    }
+
+                    // 如果该连接某个命令一直等待不到返回，可能会一直阻塞
+                    while (waitingQueue.size() > 0) {
+                        command = waitingQueue.peek();
+                        MysqlPacket responsePacket = reader.read();
+                        if (responsePacket != null) {
+                            command.receiveResponsePacket(responsePacket);
+                            if (!command.hasResponsePacket()) {
+                                waitingQueue.poll();
+                            }
+                        } else {
+                            MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `end of the input stream has been reached`. Host: `{}`. Connection info: `{}`.",
+                                    connectionConfiguration.getHost(), connectionInfo);
+                            close();
+                        }
+                    }
+                } catch (InterruptedException ignored) { // do nothing
+
+                } catch (Exception e) {
+                    MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `{}`. Host: `{}`. Connection info: `{}`.",
+                            e.getMessage(), connectionConfiguration.getHost(), connectionInfo);
+                    LOG.error("MysqlChannel need to be closed: `" + e.getMessage() + "`. Host: `{}`. Connection info: `{}`.",
+                            connectionConfiguration.getHost(), connectionInfo);
+                    close();
+                }
+            }
+            while ((command = waitingQueue.poll()) != null) {
+                command.close();
+            }
+            while ((command = commandQueue.poll()) != null) {
+                command.close();
+            }
         }
     }
 }

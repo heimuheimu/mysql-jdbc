@@ -24,6 +24,10 @@
 
 package com.heimuheimu.mysql.jdbc;
 
+import com.heimuheimu.mysql.jdbc.packet.CharsetMappingUtil;
+
+import java.nio.charset.Charset;
+
 /**
  * Mysql 数据库连接信息。
  *
@@ -136,6 +140,15 @@ public class ConnectionInfo {
     }
 
     /**
+     * 获得和当前 Mysql 连接使用的字符集编码 ID 对应的 Java 编码。
+     *
+     * @return 和当前 Mysql 连接使用的字符集编码 ID 对应的 Java 编码
+     */
+    public Charset getJavaCharset() {
+        return CharsetMappingUtil.getJavaCharset(characterId);
+    }
+
+    /**
      * 获得当前 Mysql 连接支持的特性数值，每个比特位可代表不同的特性是否支持。
      *
      * @return 当前 Mysql 连接支持的特性数值
@@ -161,6 +174,7 @@ public class ConnectionInfo {
                 ", serverCharacterId=" + serverCharacterId +
                 ", serverCapabilitiesFlags=" + serverCapabilitiesFlags +
                 ", characterId=" + characterId +
+                ", javaCharset='" + getJavaCharset() + '\'' +
                 ", capabilitiesFlags=" + capabilitiesFlags +
                 ", databaseName='" + databaseName + '\'' +
                 '}';
