@@ -338,6 +338,9 @@ public class HandshakeResponse41Packet {
     }
 
     private void initializeCapabilitiesFlags(long serverCapabilitiesFlags) {
+        this.capabilitiesFlags = CapabilitiesFlagsUtil.disableCapability(this.capabilitiesFlags,
+                CapabilitiesFlagsUtil.INDEX_CLIENT_DEPRECATE_EOF); // 关闭不使用 EOF 包特性，简化 ResultSet 判断
+
         enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_PROTOCOL_41, true);
         enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_PLUGIN_AUTH, true);
         enableClientCapability(serverCapabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_RESERVED, false);

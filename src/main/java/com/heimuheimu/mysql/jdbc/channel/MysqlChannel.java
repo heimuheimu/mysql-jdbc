@@ -348,10 +348,12 @@ public class MysqlChannel implements Closeable {
                 } catch (InterruptedException ignored) { // do nothing
 
                 } catch (Exception e) {
-                    MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `{}`. Host: `{}`. Connection info: `{}`.",
-                            e.getMessage(), connectionConfiguration.getHost(), connectionInfo);
-                    LOG.error("MysqlChannel need to be closed: `" + e.getMessage() + "`. Host: `{}`. Connection info: `{}`.",
-                            connectionConfiguration.getHost(), connectionInfo);
+                    if (connectionInfo != null) {
+                        MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `{}`. Host: `{}`. Connection info: `{}`.",
+                                e.getMessage(), connectionConfiguration.getHost(), connectionInfo);
+                        LOG.error("MysqlChannel need to be closed: `" + e.getMessage() + "`. Host: `" + connectionConfiguration.getHost()
+                                        + "`. Connection info: `" + connectionInfo + "`.", e);
+                    }
                     close();
                 }
             }

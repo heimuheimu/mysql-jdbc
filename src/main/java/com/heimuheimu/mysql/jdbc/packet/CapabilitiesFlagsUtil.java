@@ -209,10 +209,27 @@ public class CapabilitiesFlagsUtil {
      */
     public static long enableCapability(long capabilitiesFlags, int capabilityIndex) throws IllegalArgumentException {
         if (capabilityIndex < 0 || capabilityIndex > 31) {
-            throw new IllegalArgumentException("Set capability flag failed: `invalid capability index`. `capabilitiesFlags`:`"
+            throw new IllegalArgumentException("Enable capability flag failed: `invalid capability index`. `capabilitiesFlags`:`"
                     + capabilitiesFlags + "`. `capabilityIndex`:`" + capabilityIndex + "`.");
         }
         return capabilitiesFlags | (1L << capabilityIndex);
+    }
+
+    /**
+     * 关闭指定的 Mysql 客户端特性，并保留特性数值的其它特性设置。
+     *
+     * @param capabilitiesFlags Mysql 客户端可使用的特性数值
+     * @param capabilityIndex 特性对应的比特位索引位置，允许的值为：[0, 31]
+     * @return 关闭指定的 Mysql 客户端特性后的特性数值
+     * @throws IllegalArgumentException 如果特性对应的比特位索引位置没有在允许的范围内，将会抛出此异常
+     */
+    public static long disableCapability(long capabilitiesFlags, int capabilityIndex) throws IllegalArgumentException {
+        if (capabilityIndex < 0 || capabilityIndex > 31) {
+            throw new IllegalArgumentException("Disable capability flag failed: `invalid capability index`. `capabilitiesFlags`:`"
+                    + capabilitiesFlags + "`. `capabilityIndex`:`" + capabilityIndex + "`.");
+        }
+        long maskCapability = ~enableCapability(0, capabilityIndex);
+        return capabilitiesFlags & maskCapability;
     }
 
     /**
