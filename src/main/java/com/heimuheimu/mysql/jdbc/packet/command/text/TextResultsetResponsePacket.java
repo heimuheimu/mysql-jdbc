@@ -102,4 +102,12 @@ public class TextResultsetResponsePacket {
             throw new IllegalArgumentException("Parse TextResultset failed: `invalid format`. " + packet, e);
         }
     }
+
+    @Override
+    public String toString() {
+        return "TextResultsetResponsePacket{" +
+                "isMetadataFollows=" + isMetadataFollows +
+                ", columnCount=" + columnCount +
+                '}';
+    }
 }

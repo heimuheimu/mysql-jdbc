@@ -28,11 +28,26 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 /**
- * 提供工具方法用于 Mysql 字符集编码和 Java 字符集编码之间的映射。
+ * 提供工具方法用于 Mysql 字符集编码和 Java 字符集编码之间的映射，Mysql 字符集定义请参考：
+ * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_character_set.html">
+ *     Character Set
+ * </a>
+ *
+ * <p><strong>说明：</strong>{@code CharsetMappingUtil} 类是线程安全的，可在多个线程中使用同一个实例。</p>
  *
  * @author heimuheimu
  */
 public class CharsetMappingUtil {
+
+    /**
+     * 判断 Mysql 字符集编码 ID 对应的编码是否为 binary。
+     *
+     * @param mysqlCharacterId Mysql 字符集编码 ID
+     * @return 是否为 binary 编码
+     */
+    public static boolean isBinary(int mysqlCharacterId) {
+        return mysqlCharacterId == 63;
+    }
 
     /**
      * 根据 Mysql 字符集编码 ID 获得对应的 Java 字符集编码，该方法不会返回 {@code null}。

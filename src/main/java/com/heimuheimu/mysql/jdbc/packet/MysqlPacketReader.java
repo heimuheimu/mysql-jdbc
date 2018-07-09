@@ -82,19 +82,30 @@ public class MysqlPacketReader {
      */
     public MysqlPacket read() throws IOException {
         // 读取头部字节
+        int headerPos = 0;
         byte[] header = new byte[4];
-        int readBytes = inputStream.read(header);
-        if (readBytes < 0) { // 流已经关闭，返回null
-            return null;
+        while (headerPos < 4) {
+            int readBytes = inputStream.read(header, headerPos, 4 - headerPos);
+            if (readBytes >= 0) {
+                headerPos += readBytes;
+            } else { // 流已经关闭，返回 null
+                return null;
+            }
         }
+
         int payloadLength = (int) BytesUtil.decodeUnsignedInteger(header, 0, 3);
         int sequenceId = (int) BytesUtil.decodeUnsignedInteger(header, 3, 1);
 
         // 读取内容信息字节
+        int payloadPos = 0;
         byte[] payload = new byte[payloadLength];
-        readBytes = inputStream.read(payload);
-        if (readBytes < 0) { // 流已经关闭，返回null
-            return null;
+        while (payloadPos < payloadLength) {
+            int readBytes = inputStream.read(payload, payloadPos, payloadLength - payloadPos);
+            if (readBytes >= 0) {
+                payloadPos += readBytes;
+            } else { // 流已经关闭，返回 null
+                return null;
+            }
         }
 
         return new MysqlPacket(sequenceId, payload);

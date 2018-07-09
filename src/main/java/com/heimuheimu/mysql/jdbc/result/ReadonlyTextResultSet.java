@@ -645,7 +645,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
             columnValue = (T) (Byte) getByte(columnIndex);
         } else {
             String errorMessage = "Get column object value failed: `unsupported java type`. Column index: `" + columnIndex
-                    + "`. type: `null`. Current row: `" + getRow() + "`. Connection info: `" + connectionInfo + "`.";
+                    + "`. type: `" + type + "`. Current row: `" + getRow() + "`. Connection info: `" + connectionInfo + "`.";
             LOG.error(errorMessage);
             throw new SQLException(errorMessage);
         }

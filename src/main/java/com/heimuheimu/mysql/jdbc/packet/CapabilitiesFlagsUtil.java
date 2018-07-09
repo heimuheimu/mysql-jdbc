@@ -28,14 +28,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 提供 Mysql 客户端可使用的特性数值解析和生成方法。
- *
- * <p>
- * 更多信息请参考：
+ * 提供 Mysql 客户端可使用的特性数值解析和生成方法，更多信息请参考：
  * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/group__group__cs__capabilities__flags.html">
  *     Capabilities Flags
  * </a>
- * </p>
  *
  * <p><strong>说明：</strong>{@code CapabilitiesFlagsUtil} 类是线程安全的，可在多个线程中使用同一个实例。</p>
  *

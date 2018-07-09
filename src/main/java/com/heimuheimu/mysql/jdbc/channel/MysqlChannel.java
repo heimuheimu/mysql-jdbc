@@ -343,6 +343,7 @@ public class MysqlChannel implements Closeable {
                             MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `end of the input stream has been reached`. Host: `{}`. Connection info: `{}`.",
                                     connectionConfiguration.getHost(), connectionInfo);
                             close();
+                            break;
                         }
                     }
                 } catch (InterruptedException ignored) { // do nothing
