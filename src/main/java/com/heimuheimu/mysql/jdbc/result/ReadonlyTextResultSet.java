@@ -25,6 +25,7 @@
 package com.heimuheimu.mysql.jdbc.result;
 
 import com.heimuheimu.mysql.jdbc.ConnectionInfo;
+import com.heimuheimu.mysql.jdbc.packet.ColumnTypeMappingUtil;
 import com.heimuheimu.mysql.jdbc.packet.MysqlPacket;
 import com.heimuheimu.mysql.jdbc.packet.command.text.ColumnDefinition41ResponsePacket;
 import com.heimuheimu.mysql.jdbc.packet.command.text.TextResultsetResponsePacket;
@@ -598,12 +599,23 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
 
     @Override
     public Object getObject(int columnIndex) throws SQLException {
-        return null;
+        if (columnIndex >= 0 && columnIndex < columnDefinition41ResponsePacketList.size()) {
+            ColumnDefinition41ResponsePacket columnDefinition41ResponsePacket = columnDefinition41ResponsePacketList.get(columnIndex);
+            Class<?> javaType = ColumnTypeMappingUtil.getJavaType(columnDefinition41ResponsePacket.getColumnType(),
+                    columnDefinition41ResponsePacket.getColumnDefinitionFlags());
+            return getObject(columnIndex, javaType);
+        } else {
+            String errorMessage = "Get column object value failed: `columnIndex out of range`. Invalid column index: `" +
+                    columnIndex + "`. Columns size: `" + columnDefinition41ResponsePacketList.size() + "`. Current row: `" +
+                    getRow() + "`. Rows size: `" + rowsSize + "`. Connection info: `" + connectionInfo + "`.";
+            LOG.error(errorMessage);
+            throw new SQLException(errorMessage);
+        }
     }
 
     @Override
     public Object getObject(String columnLabel) throws SQLException {
-        return null;
+        return getObject(findColumn(columnLabel));
     }
 
     @Override
@@ -663,12 +675,29 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
 
     @Override
     public Object getObject(int columnIndex, Map<String, Class<?>> map) throws SQLException {
-        return null;
+        if (columnIndex >= 0 && columnIndex < columnDefinition41ResponsePacketList.size()) {
+            ColumnDefinition41ResponsePacket definition4Packet = columnDefinition41ResponsePacketList.get(columnIndex);
+            String columnTypeName = ColumnTypeMappingUtil.getTypeName(definition4Packet.getColumnType(),
+                    definition4Packet.getColumnDefinitionFlags(), definition4Packet.getMaximumColumnLength());
+            Class<?> javaType = map.get(columnTypeName);
+            if (javaType == null) {
+                javaType = ColumnTypeMappingUtil.getJavaType(definition4Packet.getColumnType(),
+                        definition4Packet.getColumnDefinitionFlags());
+            }
+            return getObject(columnIndex, javaType);
+        } else {
+            String errorMessage = "Get column object value failed: `columnIndex out of range`. Invalid column index: `" +
+                    columnIndex + "`. Columns size: `" + columnDefinition41ResponsePacketList.size() + "`. Current row: `" +
+                    getRow() + "`. Rows size: `" + rowsSize + "`. javaClassMap: `" + map + "`. Connection info: `" +
+                    connectionInfo + "`.";
+            LOG.error(errorMessage);
+            throw new SQLException(errorMessage);
+        }
     }
 
     @Override
     public Object getObject(String columnLabel, Map<String, Class<?>> map) throws SQLException {
-        return null;
+        return getObject(findColumn(columnLabel), map);
     }
 
     @Override
@@ -678,7 +707,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
 
     @Override
     public ResultSetMetaData getMetaData() throws SQLException {
-        return null;
+        return new TextResultSetMetaData(columnDefinition41ResponsePacketList);
     }
 
     @Override

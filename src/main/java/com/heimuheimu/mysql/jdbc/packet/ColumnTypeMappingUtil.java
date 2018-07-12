@@ -30,6 +30,7 @@ import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -163,11 +164,46 @@ public class ColumnTypeMappingUtil {
      * 根据 Mysql 列类型 ID，获得对应的名称，如果列类型 ID 未被定义，将会返回 "UNKNOWN"。
      *
      * @param columnType 列类型 ID
-     * @param columnCharacterId 列使用的字符集编码 ID
+     * @param columnDefinitionFlags 列定义数值
+     * @param maximumColumnLength 列最大长度
      * @return 列类型名称
      */
-    public static String getTypeName(int columnType, int columnCharacterId) {
-        if (MYSQL_TYPE_NAME_MAP.containsKey(columnType)) {
+    public static String getTypeName(int columnType, int columnDefinitionFlags, long maximumColumnLength) {
+        if (columnType == MYSQL_TYPE_STRING) {
+            if (ColumnDefinitionFlagsUtil.isColumnDefinitionEnabled(columnDefinitionFlags,
+                    ColumnDefinitionFlagsUtil.INDEX_ENUM_FLAG)) {
+                return "ENUM";
+            } else if (ColumnDefinitionFlagsUtil.isColumnDefinitionEnabled(columnDefinitionFlags,
+                    ColumnDefinitionFlagsUtil.INDEX_SET_FLAG)) {
+                return "SET";
+            } else if (ColumnDefinitionFlagsUtil.isColumnDefinitionEnabled(columnDefinitionFlags,
+                    ColumnDefinitionFlagsUtil.INDEX_BINARY_FLAG)) {
+                return "BINARY";
+            } else {
+                return "CHAR";
+            }
+        } else if (columnType == MYSQL_TYPE_VAR_STRING) {
+            if (ColumnDefinitionFlagsUtil.isColumnDefinitionEnabled(columnDefinitionFlags,
+                    ColumnDefinitionFlagsUtil.INDEX_BINARY_FLAG)) {
+                return "VARBINARY";
+            } else {
+                return "VARCHAR";
+            }
+        } else if (columnType == MYSQL_TYPE_BLOB) {
+            String blobTypeName = ColumnDefinitionFlagsUtil.isColumnDefinitionEnabled(columnDefinitionFlags,
+                    ColumnDefinitionFlagsUtil.INDEX_BINARY_FLAG) ? "BLOB" : "TEXT";
+            String sizeName;
+            if (maximumColumnLength < 65535L) {
+                sizeName = "TINY";
+            } else if (maximumColumnLength < 16777215L) {
+                sizeName = "";
+            } else if (maximumColumnLength < 4294967295L) {
+                sizeName = "MEDIUM";
+            } else {
+                sizeName = "LONG";
+            }
+            return sizeName + blobTypeName;
+        } else if (MYSQL_TYPE_NAME_MAP.containsKey(columnType)) {
             return MYSQL_TYPE_NAME_MAP.get(columnType);
         } else {
             return "UNKNOWN";
@@ -175,13 +211,13 @@ public class ColumnTypeMappingUtil {
     }
 
     /**
-     * 根据 Mysql 列类型 ID 和该列使用的字符集编码 ID，获得对应的 Java 类型。
+     * 根据 Mysql 列类型获得对应的 Java 类型。
      *
      * @param columnType 列类型 ID
-     * @param columnCharacterId 列使用的字符集编码 ID
+     * @param columnDefinitionFlags 列定义数值
      * @return 列对应的 Java 类型
      */
-    public static Class<?> getJavaClass(int columnType, int columnCharacterId) {
+    public static Class<?> getJavaType(int columnType, int columnDefinitionFlags) {
         if (columnType == MYSQL_TYPE_TINY || columnType == MYSQL_TYPE_SHORT
                 || columnType == MYSQL_TYPE_INT24 || columnType == MYSQL_TYPE_LONG) {
             return Integer.class;
@@ -200,11 +236,64 @@ public class ColumnTypeMappingUtil {
         } else if (columnType == MYSQL_TYPE_TIMESTAMP || columnType == MYSQL_TYPE_DATETIME) {
             return Timestamp.class;
         } else {
-            if (CharsetMappingUtil.isBinary(columnCharacterId)) {
+            if (ColumnDefinitionFlagsUtil.isColumnDefinitionEnabled(columnDefinitionFlags,
+                    ColumnDefinitionFlagsUtil.INDEX_BINARY_FLAG)) {
                 return byte[].class;
             } else {
                 return String.class;
             }
+        }
+    }
+
+    /**
+     * 根据 Mysql 列类型获得对应的 JDBC 类型 ID。
+     *
+     * @param columnType 列类型 ID
+     * @param columnDefinitionFlags 列定义数值
+     * @param maximumColumnLength 列最大长度
+     * @return JDBC 类型 ID
+     * @see Types
+     */
+    public static int getJDBCType(int columnType, int columnDefinitionFlags, long maximumColumnLength) {
+        String typeName = getTypeName(columnType, columnDefinitionFlags, maximumColumnLength);
+        if ("TINYINT".equals(typeName)) {
+            return Types.TINYINT;
+        } else if ("SMALLINT".equals(typeName)) {
+            return Types.SMALLINT;
+        } else if ("MEDIUMINT".equals(typeName)) {
+            return Types.INTEGER;
+        } else if ("INT".equals(typeName)) {
+            return Types.INTEGER;
+        } else if ("BIGINT".equals(typeName)) {
+            return Types.BIGINT;
+        } else if ("FLOAT".equals(typeName)) {
+            return Types.FLOAT;
+        } else if ("DOUBLE".equals(typeName)) {
+            return Types.DOUBLE;
+        } else if ("DECIMAL".equals(typeName)) {
+            return Types.DECIMAL;
+        } else if ("BIT".equals(typeName)) {
+            return Types.BIT;
+        } else if ("YEAR".equals(typeName) || "DATE".equals(typeName)) {
+            return Types.DATE;
+        } else if ("TIME".equals(typeName)) {
+            return Types.TIME;
+        } else if ("TIMESTAMP".equals(typeName) || "DATETIME".equals(typeName)) {
+            return Types.TIMESTAMP;
+        } else if ("ENUM".equals(typeName) || "SET".equals(typeName) || "CHAR".equals(typeName)) {
+            return Types.CHAR;
+        } else if ("VARCHAR".equals(typeName) || "TINYTEXT".equals(typeName)) {
+            return Types.VARCHAR;
+        } else if ("TEXT".equals(typeName) || "MEDIUMTEXT".equals(typeName) || "LONGTEXT".equals(typeName)) {
+            return Types.LONGVARCHAR;
+        } else if ("BINARY".equals(typeName)) {
+            return Types.BINARY;
+        } else if ("VARBINARY".equals(typeName) || "TINYBLOB".equals(typeName)) {
+            return Types.VARBINARY;
+        } else if ("BLOB".equals(typeName) || "MEDIUMBLOB".equals(typeName) || "LONGBLOB".equals(typeName)) {
+            return Types.LONGVARBINARY;
+        } else {
+            return Types.OTHER;
         }
     }
 }
