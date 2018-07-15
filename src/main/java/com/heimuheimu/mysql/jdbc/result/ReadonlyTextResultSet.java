@@ -25,6 +25,7 @@
 package com.heimuheimu.mysql.jdbc.result;
 
 import com.heimuheimu.mysql.jdbc.ConnectionInfo;
+import com.heimuheimu.mysql.jdbc.facility.SQLFeatureNotSupportedExceptionBuilder;
 import com.heimuheimu.mysql.jdbc.packet.ColumnTypeMappingUtil;
 import com.heimuheimu.mysql.jdbc.packet.MysqlPacket;
 import com.heimuheimu.mysql.jdbc.packet.command.text.ColumnDefinition41ResponsePacket;
@@ -722,82 +723,82 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
 
     @Override
     public String getCursorName() throws SQLException {
-        throw new SQLFeatureNotSupportedException("mysql-jdbc does not support this method.");
+        throw SQLFeatureNotSupportedExceptionBuilder.build("ReadonlyTextResultSet#getCursorName()");
     }
 
     @Override
     public SQLXML getSQLXML(int columnIndex) throws SQLException {
-        throw new SQLFeatureNotSupportedException("mysql-jdbc does not support this method.");
+        throw SQLFeatureNotSupportedExceptionBuilder.build("ReadonlyTextResultSet#getSQLXML(int columnIndex)");
     }
 
     @Override
     public SQLXML getSQLXML(String columnLabel) throws SQLException {
-        throw new SQLFeatureNotSupportedException("mysql-jdbc does not support this method.");
+        throw SQLFeatureNotSupportedExceptionBuilder.build("ReadonlyTextResultSet#getSQLXML(String columnLabel)");
     }
 
     @Override
     public RowId getRowId(int columnIndex) throws SQLException {
-        throw new SQLFeatureNotSupportedException("mysql-jdbc does not support this method.");
+        throw SQLFeatureNotSupportedExceptionBuilder.build("ReadonlyTextResultSet#getRowId(int columnIndex)");
     }
 
     @Override
     public RowId getRowId(String columnLabel) throws SQLException {
-        throw new SQLFeatureNotSupportedException("mysql-jdbc does not support this method.");
+        throw SQLFeatureNotSupportedExceptionBuilder.build("ReadonlyTextResultSet#getRowId(String columnLabel)");
     }
 
     @Override
     public Ref getRef(int columnIndex) throws SQLException {
-        throw new SQLFeatureNotSupportedException("mysql-jdbc does not support this method.");
+        throw SQLFeatureNotSupportedExceptionBuilder.build("ReadonlyTextResultSet#getRef(int columnIndex)");
     }
 
     @Override
     public Ref getRef(String columnLabel) throws SQLException {
-        throw new SQLFeatureNotSupportedException("mysql-jdbc does not support this method.");
+        throw SQLFeatureNotSupportedExceptionBuilder.build("ReadonlyTextResultSet#getRef(String columnLabel)");
     }
 
     @Override
     public Blob getBlob(int columnIndex) throws SQLException {
-        throw new SQLFeatureNotSupportedException("mysql-jdbc does not support this method.");
+        throw SQLFeatureNotSupportedExceptionBuilder.build("ReadonlyTextResultSet#getBlob(int columnIndex)");
     }
 
     @Override
     public Blob getBlob(String columnLabel) throws SQLException {
-        throw new SQLFeatureNotSupportedException("mysql-jdbc does not support this method.");
+        throw SQLFeatureNotSupportedExceptionBuilder.build("ReadonlyTextResultSet#getBlob(String columnLabel)");
     }
 
     @Override
     public Clob getClob(int columnIndex) throws SQLException {
-        throw new SQLFeatureNotSupportedException("mysql-jdbc does not support this method.");
+        throw SQLFeatureNotSupportedExceptionBuilder.build("ReadonlyTextResultSet#getClob(int columnIndex)");
     }
 
     @Override
     public Clob getClob(String columnLabel) throws SQLException {
-        throw new SQLFeatureNotSupportedException("mysql-jdbc does not support this method.");
+        throw SQLFeatureNotSupportedExceptionBuilder.build("ReadonlyTextResultSet#getClob(String columnLabel)");
     }
 
     @Override
     public NClob getNClob(int columnIndex) throws SQLException {
-        throw new SQLFeatureNotSupportedException("mysql-jdbc does not support this method.");
+        throw SQLFeatureNotSupportedExceptionBuilder.build("ReadonlyTextResultSet#getNClob(int columnIndex)");
     }
 
     @Override
     public NClob getNClob(String columnLabel) throws SQLException {
-        throw new SQLFeatureNotSupportedException("mysql-jdbc does not support this method.");
+        throw SQLFeatureNotSupportedExceptionBuilder.build("ReadonlyTextResultSet#getNClob(String columnLabel)");
     }
 
     @Override
     public Array getArray(int columnIndex) throws SQLException {
-        throw new SQLFeatureNotSupportedException("mysql-jdbc does not support this method.");
+        throw SQLFeatureNotSupportedExceptionBuilder.build("ReadonlyTextResultSet#getArray(int columnIndex)");
     }
 
     @Override
     public Array getArray(String columnLabel) throws SQLException {
-        throw new SQLFeatureNotSupportedException("mysql-jdbc does not support this method.");
+        throw SQLFeatureNotSupportedExceptionBuilder.build("ReadonlyTextResultSet#getArray(String columnLabel)");
     }
 
     @Override
     public int getHoldability() throws SQLException {
-        throw new SQLFeatureNotSupportedException("mysql-jdbc does not support this method.");
+        throw SQLFeatureNotSupportedExceptionBuilder.build("ReadonlyTextResultSet#getHoldability()");
     }
 
     @Override
