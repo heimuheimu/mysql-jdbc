@@ -99,6 +99,11 @@ public abstract class AbstractCommand implements Command {
         latch.countDown();
     }
 
+    @Override
+    public MysqlServerStatusInfo getServerStatusInfo() {
+        return null;
+    }
+
     /**
      * 判断收到的响应数据包是否为该命令的最后一个数据包。
      *

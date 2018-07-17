@@ -79,4 +79,11 @@ public interface Command {
      * 关闭该命令，如果该命令处于等待响应数据包状态，应立刻释放。
      */
     void close();
+
+    /**
+     * Mysql 命令执行完后，返回的 Mysql 服务端状态信息，该方法允许返回 {@code null}。
+     *
+     * @return Mysql 服务端状态信息，允许返回 {@code null}
+     */
+    MysqlServerStatusInfo getServerStatusInfo();
 }

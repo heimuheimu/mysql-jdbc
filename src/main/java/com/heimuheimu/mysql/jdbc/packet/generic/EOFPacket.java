@@ -40,7 +40,7 @@ import com.heimuheimu.mysql.jdbc.packet.MysqlPacket;
 public class EOFPacket {
 
     /**
-     * Mysql 服务端状态数值，每个比特位可代表不同的服务端状态
+     * Mysql 服务端状态数值，每个比特位可代表不同的服务端状态，如果 EOF 包没有该信息，则值为 -1
      */
     private final int serverStatusFlags;
 
@@ -52,7 +52,7 @@ public class EOFPacket {
     /**
      * 构造一个 Mysql EOF 响应数据包信息。
      *
-     * @param serverStatusFlags Mysql 服务端状态数值，每个比特位可代表不同的服务端状态
+     * @param serverStatusFlags Mysql 服务端状态数值，每个比特位可代表不同的服务端状态，如果 EOF 包没有该信息，则值为 -1
      * @param warnings 警告信息数量
      */
     public EOFPacket(int serverStatusFlags, int warnings) {
@@ -61,7 +61,7 @@ public class EOFPacket {
     }
 
     /**
-     * 获得 Mysql 服务端状态数值，每个比特位可代表不同的服务端状态。
+     * 获得 Mysql 服务端状态数值，每个比特位可代表不同的服务端状态，如果 EOF 包没有该信息，则值为 -1。
      *
      * @return Mysql 服务端状态数值
      */
@@ -119,7 +119,7 @@ public class EOFPacket {
             try {
                 packet.setPosition(1);
                 int warnings = 0;
-                int serverStatusFlags = 0;
+                int serverStatusFlags = -1;
                 if (CapabilitiesFlagsUtil.isCapabilityEnabled(capabilitiesFlags, CapabilitiesFlagsUtil.INDEX_CLIENT_PROTOCOL_41)) {
                     warnings = (int) packet.readFixedLengthInteger(2);
                     serverStatusFlags = (int) packet.readFixedLengthInteger(2);

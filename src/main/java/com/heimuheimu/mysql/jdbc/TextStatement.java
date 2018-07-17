@@ -24,14 +24,50 @@
 
 package com.heimuheimu.mysql.jdbc;
 
+import com.heimuheimu.mysql.jdbc.channel.MysqlChannel;
+import com.heimuheimu.mysql.jdbc.command.SQLCommand;
 import com.heimuheimu.mysql.jdbc.facility.SQLFeatureNotSupportedExceptionBuilder;
+import com.heimuheimu.mysql.jdbc.packet.MysqlPacket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.*;
+import java.util.List;
 
 /**
+ * {@link Statement} 实现类，通过 {@link SQLCommand} 执行 SQL 语句并返回结果。
  *
+ * @author heimuheimu
  */
 public class TextStatement implements Statement {
+
+    private static final Logger LOG = LoggerFactory.getLogger(TextStatement.class);
+
+    /**
+     * 与 Mysql 服务进行数据交互的管道
+     */
+    private final MysqlChannel mysqlChannel;
+
+    /**
+     * Mysql 数据库连接信息
+     */
+    private final ConnectionInfo connectionInfo;
+
+    /**
+     * SQL 执行超时时间，单位：秒，如果等于 0，则不进行超时时间设置
+     */
+    private volatile int queryTimeout = 0;
+
+    /**
+     * 构造一个 {@code TextStatement} 实例。
+     *
+     * @param mysqlChannel 与 Mysql 服务进行数据交互的管道
+     * @param connectionInfo Mysql 数据库连接信息
+     */
+    public TextStatement(MysqlChannel mysqlChannel, ConnectionInfo connectionInfo) {
+        this.mysqlChannel = mysqlChannel;
+        this.connectionInfo = connectionInfo;
+    }
 
     @Override
     public long getLargeMaxRows() throws SQLException {
@@ -46,6 +82,37 @@ public class TextStatement implements Statement {
     @Override
     public int getMaxFieldSize() throws SQLException {
         return 0; // no limit
+    }
+
+    @Override
+    public int getQueryTimeout() throws SQLException {
+        return queryTimeout;
+    }
+
+    @Override
+    public void setQueryTimeout(int seconds) throws SQLException {
+        if (seconds < 0) {
+            String errorMessage = "Set query timeout failed: `could not less than zero`. invalidQueryTimeout: `"
+                    + seconds + "`. Connection info: `" + connectionInfo + "`.";
+            LOG.error(errorMessage);
+            throw new SQLException(errorMessage);
+        }
+        this.queryTimeout = seconds;
+    }
+
+    @Override
+    public boolean execute(String sql) throws SQLException {
+        try {
+            SQLCommand sqlCommand = new SQLCommand(sql, connectionInfo);
+            long millisecondTimeout = queryTimeout > 0 ? queryTimeout * 1000 : Long.MAX_VALUE;
+            List<MysqlPacket> mysqlPacketList = mysqlChannel.send(sqlCommand, millisecondTimeout);
+            return false;
+        } catch (Exception e) {
+            String errorMessage = "Execute sql failed: `" + e.getMessage() + "`. Sql: `" + sql + "`. Connection info: `"
+                    + connectionInfo + "`.";
+            LOG.error(errorMessage, e);
+            throw new SQLException(errorMessage, e);
+        }
     }
 
     @Override
@@ -94,16 +161,6 @@ public class TextStatement implements Statement {
     }
 
     @Override
-    public int getQueryTimeout() throws SQLException {
-        return 0;
-    }
-
-    @Override
-    public void setQueryTimeout(int seconds) throws SQLException {
-
-    }
-
-    @Override
     public void cancel() throws SQLException {
 
     }
@@ -121,11 +178,6 @@ public class TextStatement implements Statement {
     @Override
     public void setCursorName(String name) throws SQLException {
 
-    }
-
-    @Override
-    public boolean execute(String sql) throws SQLException {
-        return false;
     }
 
     @Override

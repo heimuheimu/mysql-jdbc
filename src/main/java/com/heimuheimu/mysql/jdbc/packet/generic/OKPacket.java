@@ -53,9 +53,9 @@ public class OKPacket {
     private long lastInsertId = -1;
 
     /**
-     * Mysql 服务端状态数值，每个比特位可代表不同的服务端状态
+     * Mysql 服务端状态数值，每个比特位可代表不同的服务端状态，如果 OK 包没有该信息，则值为 -1
      */
-    private int serverStatusFlags = 0;
+    private int serverStatusFlags = -1;
 
     /**
      * 警告信息数量
@@ -109,7 +109,7 @@ public class OKPacket {
     }
 
     /**
-     * 获得 Mysql 服务端状态数值，每个比特位可代表不同的服务端状态。
+     * 获得 Mysql 服务端状态数值，每个比特位可代表不同的服务端状态，如果 OK 包没有该信息，则值为 -1。
      *
      * @return Mysql 服务端状态数值
      */
