@@ -68,11 +68,11 @@ public class PingCommand extends AbstractCommand {
     }
 
     @Override
-    protected boolean isLastPacket(MysqlPacket responsePacket) throws SQLException {
+    protected boolean isLastPacket(MysqlPacket responsePacket) throws IllegalStateException {
         if (OKPacket.isOkPacket(responsePacket)) {
             return true;
         } else {
-            throw new SQLException("Receive response packet for `PingCommand` failed: `invalid OK_Packet`. Invalid response packet:`"
+            throw new IllegalStateException("Receive response packet for `PingCommand` failed: `invalid OK_Packet`. Invalid response packet:`"
                 + responsePacket + "`.");
         }
     }

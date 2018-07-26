@@ -251,7 +251,7 @@ public class TestColumnTypeMappingUtil {
                     45, 0, 30, null);
             MysqlChannel mysqlChannel = new MysqlChannel(connectionConfiguration, null);
             mysqlChannel.init();
-            SQLCommand createTableCommand = new SQLCommand(CREATE_TABLE_SQL, mysqlChannel.getConnectionInfo().getJavaCharset());
+            SQLCommand createTableCommand = new SQLCommand(CREATE_TABLE_SQL, mysqlChannel.getConnectionInfo());
             List<MysqlPacket> mysqlPacketList = mysqlChannel.send(createTableCommand, 5000);
             if (!OKPacket.isOkPacket(mysqlPacketList.get(0))) {
                 ErrorPacket errorPacket = null;
@@ -268,7 +268,7 @@ public class TestColumnTypeMappingUtil {
     @AfterClass
     public static void clean() throws SQLException {
         for (MysqlChannel mysqlChannel : mysqlChannelList) {
-            SQLCommand deleteTableCommand = new SQLCommand(DELETE_TABLE_SQL, mysqlChannel.getConnectionInfo().getJavaCharset());
+            SQLCommand deleteTableCommand = new SQLCommand(DELETE_TABLE_SQL, mysqlChannel.getConnectionInfo());
             List<MysqlPacket> mysqlPacketList = mysqlChannel.send(deleteTableCommand, 5000);
             if (!OKPacket.isOkPacket(mysqlPacketList.get(0))) {
                 ErrorPacket errorPacket = null;
@@ -375,7 +375,7 @@ public class TestColumnTypeMappingUtil {
     }
 
     private HashMap<String, ColumnDefinition41ResponsePacket> getColumnDefinition41ResponsePacketMap(MysqlChannel mysqlChannel) throws SQLException {
-        SQLCommand selectCommand = new SQLCommand(SELECT_SQL, mysqlChannel.getConnectionInfo().getJavaCharset());
+        SQLCommand selectCommand = new SQLCommand(SELECT_SQL, mysqlChannel.getConnectionInfo());
         List<MysqlPacket> mysqlPacketList = mysqlChannel.send(selectCommand, 5000);
         int i = 0;
         MysqlPacket packet = mysqlPacketList.get(i++);
