@@ -26,7 +26,6 @@ package com.heimuheimu.mysql.jdbc.command;
 
 import com.heimuheimu.mysql.jdbc.packet.MysqlPacket;
 
-import java.sql.SQLException;
 import java.sql.SQLTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +55,7 @@ public abstract class AbstractCommand implements Command {
     }
 
     @Override
-    public void receiveResponsePacket(MysqlPacket responsePacket) throws SQLException {
+    public void receiveResponsePacket(MysqlPacket responsePacket) throws IllegalStateException {
         boolean isLastPacket = isLastPacket(responsePacket);
 
         synchronized (responseLock) {
@@ -70,12 +69,12 @@ public abstract class AbstractCommand implements Command {
     }
 
     @Override
-    public List<MysqlPacket> getResponsePacketList(long timeout) throws SQLException {
+    public List<MysqlPacket> getResponsePacketList(long timeout) throws IllegalStateException, SQLTimeoutException {
         boolean latchFlag;
         try {
             latchFlag = latch.await(timeout, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) { // never happened
-            throw new SQLException("Get mysql command response packet failed: `command has been interrupted`. Timeout: `"
+            throw new IllegalStateException("Get mysql command response packet failed: `command has been interrupted`. Timeout: `"
                     + timeout + "ms`. Command: `" + this + "`.", e);
         }
 
@@ -85,7 +84,7 @@ public abstract class AbstractCommand implements Command {
                     return responsePacketList;
                 }
             } else {
-                throw new SQLException("Get mysql command response packet failed: `command has been closed`. Timeout: `"
+                throw new IllegalStateException("Get mysql command response packet failed: `command has been closed`. Timeout: `"
                         + timeout + "ms`. Command: `" + this + "`.");
             }
         } else {
@@ -105,11 +104,20 @@ public abstract class AbstractCommand implements Command {
     }
 
     /**
+     * 判断当前 Mysql 命令是否已执行成功（所有的返回数据都已接受完毕）。
+     *
+     * @return Mysql 命令是否已执行成功
+     */
+    protected boolean isCompleted() {
+        return isCompleted;
+    }
+
+    /**
      * 判断收到的响应数据包是否为该命令的最后一个数据包。
      *
      * @param responsePacket 收到的响应数据包
      * @return 是否为该命令的最后一个响应数据包
-     * @throws SQLException 当接收到非预期响应包时，将抛出此异常
+     * @throws IllegalStateException 当接收到非预期响应包时，将抛出此异常
      */
-    protected abstract boolean isLastPacket(MysqlPacket responsePacket) throws SQLException;
+    protected abstract boolean isLastPacket(MysqlPacket responsePacket) throws IllegalStateException;
 }

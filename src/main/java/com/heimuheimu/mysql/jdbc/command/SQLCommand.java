@@ -31,8 +31,6 @@ import com.heimuheimu.mysql.jdbc.packet.generic.EOFPacket;
 import com.heimuheimu.mysql.jdbc.packet.generic.ErrorPacket;
 import com.heimuheimu.mysql.jdbc.packet.generic.OKPacket;
 
-import java.sql.SQLException;
-
 /**
  * Mysql SQL 命令，用于执行任何合法的 SQL 语句。
  *
@@ -66,6 +64,21 @@ public class SQLCommand extends AbstractCommand {
     private volatile int receivedEOFPacketCount = 0;
 
     /**
+     * SQL 语句执行完成后，返回的是否为 {@code TextResultsetResponsePacket} 数据包
+     */
+    private volatile boolean hasTextResultSet = false;
+
+    /**
+     * SQL 语句变更的记录行数
+     */
+    private volatile long affectedRows = 0;
+
+    /**
+     * 最后插入的主键 ID
+     */
+    private volatile long lastInsertId = -1;
+
+    /**
      * SQL 语句执行出错返回的错误响应数据包
      */
     private volatile ErrorPacket errorPacket = null;
@@ -78,10 +91,20 @@ public class SQLCommand extends AbstractCommand {
     /**
      * 构造一个 Mysql SQL 命令，用于执行任何合法的 SQL 语句。
      *
-     * @param sql SQL 语句
-     * @param connectionInfo 执行 SQL 语句的 Mysql 数据库连接信息
+     * @param sql SQL 语句，不允许为 {@code null} 或空字符串
+     * @param connectionInfo 执行 SQL 语句的 Mysql 数据库连接信息，不允许为 {@code null}
+     * @throws IllegalArgumentException 如果 {@code sql} 为 {@code null} 或空字符串
+     * @throws IllegalArgumentException 如果 {@code connectionInfo} 为 {@code null}
      */
-    public SQLCommand(String sql, ConnectionInfo connectionInfo) {
+    public SQLCommand(String sql, ConnectionInfo connectionInfo) throws IllegalArgumentException {
+        if (sql == null || sql.isEmpty()) {
+            throw new IllegalArgumentException("Create SQLCommand failed: `sql is null or empty`. Sql: `" + sql
+                    + "`. Connection info: `" + connectionInfo + "`.");
+        }
+        if (connectionInfo == null) {
+            throw new IllegalArgumentException("Create SQLCommand failed: `connectionInfo is null`. Sql: `" + sql
+                    + "`. Connection info: `null`.");
+        }
         this.sql = sql;
         this.connectionInfo = connectionInfo;
         CommandQueryPacket commandQueryPacket = new CommandQueryPacket(sql);
@@ -94,22 +117,71 @@ public class SQLCommand extends AbstractCommand {
     }
 
     /**
-     * 获得 SQL 语句执行出错返回的错误响应包数据，如果执行成功或执行未完成，将会返回 {@code null}。
+     * 判断 SQL 语句执行完成后，返回的是否为 {@code TextResultsetResponsePacket} 数据包。
+     *
+     * @return 是否为 {@code TextResultsetResponsePacket} 数据包
+     * @throws IllegalStateException 如果 SQL 语句尚未执行完成，将会抛出此异常
+     */
+    public boolean hasTextResultSet() throws IllegalStateException {
+        if (!isCompleted()) {
+            throw new IllegalStateException("Check has text result set failed: `command is not finished`. Sql: `" +
+                    sql + "`. ConnectionInfo:`" + connectionInfo + "`.");
+        }
+        return hasTextResultSet;
+    }
+
+    /**
+     * 获得 SQL 语句变更的记录行数，如果 SQL 为查询语句，将返回 0。
+     *
+     * @return SQL 语句变更的记录行数
+     * @throws IllegalStateException 如果 SQL 语句尚未执行完成，将会抛出此异常
+     */
+    public long getAffectedRows() throws IllegalStateException {
+        if (!isCompleted()) {
+            throw new IllegalStateException("Get affected rows failed: `command is not finished`. Sql: `" +
+                    sql + "`. ConnectionInfo:`" + connectionInfo + "`.");
+        }
+        return affectedRows;
+    }
+
+    /**
+     * 获得 INSERT SQL 语句执行后，最后插入的主键 ID，如果 SQL 为查询语句，将返回 -1。
+     *
+     * @return 最后插入的主键 ID
+     * @throws IllegalStateException 如果 SQL 语句尚未执行完成，将会抛出此异常
+     */
+    public long getLastInsertId() throws IllegalStateException {
+        if (!isCompleted()) {
+            throw new IllegalStateException("Get last insert id failed: `command is not finished`. Sql: `" +
+                    sql + "`. ConnectionInfo:`" + connectionInfo + "`.");
+        }
+        return lastInsertId;
+    }
+
+    /**
+     * 获得 SQL 语句执行出错返回的错误响应包数据，如果执行成功，将会返回 {@code null}。
      *
      * @return 错误响应包数据，可能为 {@code null}
+     * @throws IllegalStateException 如果 SQL 语句尚未执行完成，将会抛出此异常
      */
-    public ErrorPacket getErrorPacket() {
+    public ErrorPacket getErrorPacket() throws IllegalStateException {
+        if (!isCompleted()) {
+            throw new IllegalStateException("Get error packet failed: `command is not finished`. Sql: `" +
+                    sql + "`. ConnectionInfo:`" + connectionInfo + "`.");
+        }
         return errorPacket;
     }
 
     @Override
-    protected boolean isLastPacket(MysqlPacket responsePacket) throws SQLException {
+    protected boolean isLastPacket(MysqlPacket responsePacket) throws IllegalStateException {
         if (responsePacket.getPayload()[0] == 0xFB) {
-            throw new SQLException("Receive response packet for `SQLCommand` failed: `LOCAL INFILE Request is not supported`. Sql: `" +
+            throw new IllegalStateException("Receive response packet for `SQLCommand` failed: `LOCAL INFILE Request is not supported`. Sql: `" +
                     sql + "`. ConnectionInfo:`" + connectionInfo + "`. Invalid response packet:`" + responsePacket + "`.");
         }
         if (OKPacket.isOkPacket(responsePacket)) {
             OKPacket okPacket = OKPacket.parse(responsePacket, connectionInfo.getCapabilitiesFlags(), connectionInfo.getJavaCharset());
+            affectedRows = okPacket.getAffectedRows();
+            lastInsertId = okPacket.getLastInsertId();
             if (okPacket.getServerStatusFlags() != -1) {
                 serverStatusInfo = new MysqlServerStatusInfo(okPacket.getServerStatusFlags());
             }
@@ -121,6 +193,7 @@ public class SQLCommand extends AbstractCommand {
                 if (eofPacket.getServerStatusFlags() != -1) {
                     serverStatusInfo = new MysqlServerStatusInfo(eofPacket.getServerStatusFlags());
                 }
+                hasTextResultSet = true;
                 return true;
             }
         } else if (ErrorPacket.isErrorPacket(responsePacket)) {
@@ -139,7 +212,12 @@ public class SQLCommand extends AbstractCommand {
     public String toString() {
         return "SQLCommand{" +
                 "sql='" + sql + '\'' +
-                ", connectionInfo=" + connectionInfo +
+                ", receivedEOFPacketCount=" + receivedEOFPacketCount +
+                ", hasTextResultSet=" + hasTextResultSet +
+                ", affectedRows=" + affectedRows +
+                ", lastInsertId=" + lastInsertId +
+                ", errorPacket=" + errorPacket +
+                ", serverStatusInfo=" + serverStatusInfo +
                 '}';
     }
 }

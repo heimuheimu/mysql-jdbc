@@ -44,7 +44,6 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.Socket;
-import java.sql.SQLException;
 import java.sql.SQLTimeoutException;
 import java.util.LinkedList;
 import java.util.List;
@@ -160,24 +159,21 @@ public class MysqlChannel implements Closeable {
      * @param timeout 超时时间，单位：毫秒
      * @return 该命令对应的响应数据列表，不会返回 {@code null}
      * @throws NullPointerException 如果 {@code command} 为 {@code null}，将会抛出此异常
+     * @throws IllegalStateException 当前 {@code MysqlChannel} 未初始化或已被关闭，将抛出此异常
+     * @throws IllegalStateException 等待响应数据过程中，命令被关闭或中断，将抛出此异常
      * @throws SQLTimeoutException 如果等待响应数据超时，将抛出此异常
-     * @throws SQLException 如果当前 {@code MysqlChannel} 未初始化或已关闭，将会抛出此异常
      */
-    public List<MysqlPacket> send(Command command, long timeout) throws NullPointerException, SQLException {
+    public List<MysqlPacket> send(Command command, long timeout) throws NullPointerException, IllegalStateException, SQLTimeoutException {
         if (command == null) {
-            String errorMessage = "Execute mysql command failed: `command should not be null`. Host: `" +
-                    connectionConfiguration.getHost() + "`. Connection config: `" + connectionConfiguration + "`.";
-            LOG.error(errorMessage);
-            throw new NullPointerException(errorMessage);
+            throw new NullPointerException("Execute mysql command failed: `null command`. Host: `" +
+                    connectionConfiguration.getHost() + "`. Connection config: `" + connectionConfiguration + "`.");
         }
         if (state == BeanStatusEnum.NORMAL) {
             commandQueue.add(command);
         } else {
-            String errorMessage = "Execute mysql command failed: `MysqlChannel is not initialized or has been closed`. State: `"
+            throw new IllegalStateException("Execute mysql command failed: `MysqlChannel is not initialized or has been closed`. State: `"
                     + state + "`. Host: `" + connectionConfiguration.getHost() + "`. Command: `" + command + "`. Connection config: `"
-                    + connectionConfiguration + "`.";
-            LOG.error(errorMessage);
-            throw new SQLException(errorMessage);
+                    + connectionConfiguration + "`.");
         }
         try {
             return command.getResponsePacketList(timeout);
@@ -187,10 +183,6 @@ public class MysqlChannel implements Closeable {
             LOG.error("Execute mysql command failed: `wait response packet timeout, MysqlChannel need to be closed`. Host: `" + connectionConfiguration.getHost()
                     + "`. Connection info: `" + connectionInfo + "`. Timeout: `" + timeout + "ms`. Command: `" + command + "`.", e);
             close();
-            throw e;
-        } catch (Exception e) {
-            LOG.error("Execute mysql command failed: `" + e.getMessage() + "`. Host: `" + connectionConfiguration.getHost() + "`. Connection info: `"
-                    + connectionInfo + "`. Timeout: `" + timeout + "ms`. Command: `" + command + "`.", e);
             throw e;
         }
     }

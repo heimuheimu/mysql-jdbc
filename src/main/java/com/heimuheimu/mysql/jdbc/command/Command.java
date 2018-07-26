@@ -26,7 +26,6 @@ package com.heimuheimu.mysql.jdbc.command;
 
 import com.heimuheimu.mysql.jdbc.packet.MysqlPacket;
 
-import java.sql.SQLException;
 import java.sql.SQLTimeoutException;
 import java.util.List;
 
@@ -60,20 +59,20 @@ public interface Command {
      * 将会把下一个接收到响应数据包传入该方法。
      *
      * @param responsePacket 响应数据包
-     * @throws SQLException 当接收到非预期响应包时，将抛出此异常
+     * @throws IllegalStateException 当接收到非预期响应包时，将抛出此异常
      * @see #hasResponsePacket()
      */
-    void receiveResponsePacket(MysqlPacket responsePacket) throws SQLException;
+    void receiveResponsePacket(MysqlPacket responsePacket) throws IllegalStateException;
 
     /**
      * 获得该命令对应的响应数据包列表，该方法不会返回 {@code null}。
      *
      * @param timeout 超时时间，单位：毫秒
      * @return 该命令对应的响应数据包列表
-     * @throws SQLException 等待响应数据过程中，命令被关闭，将抛出此异常
+     * @throws IllegalStateException 等待响应数据过程中，命令被关闭或中断，将抛出此异常
      * @throws SQLTimeoutException 等待响应数据超时，将抛出此异常
      */
-    List<MysqlPacket> getResponsePacketList(long timeout) throws SQLException;
+    List<MysqlPacket> getResponsePacketList(long timeout) throws IllegalStateException, SQLTimeoutException;
 
     /**
      * 关闭该命令，如果该命令处于等待响应数据包状态，应立刻释放。
