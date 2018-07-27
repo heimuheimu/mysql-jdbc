@@ -54,6 +54,12 @@ public class AutoGenerateKeysResultSet extends ReadonlyScrollResultSet {
 
     private final Statement statement;
 
+    /**
+     * 构造一个自增主键查询结果 {@link ResultSet} 实现类。
+     *
+     * @param autoGenerateKey 自增主键，如果为 -1，则不存在自增主键
+     * @param statement SQL 语句执行器
+     */
     public AutoGenerateKeysResultSet(long autoGenerateKey, Statement statement) {
         autoGenerateKeyList = new ArrayList<>();
         if (autoGenerateKey != -1) {

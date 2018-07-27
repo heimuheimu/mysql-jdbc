@@ -30,6 +30,7 @@ import com.heimuheimu.mysql.jdbc.facility.SQLFeatureNotSupportedExceptionBuilder
 import com.heimuheimu.mysql.jdbc.monitor.ExecutionMonitorFactory;
 import com.heimuheimu.mysql.jdbc.packet.MysqlPacket;
 import com.heimuheimu.mysql.jdbc.packet.generic.ErrorPacket;
+import com.heimuheimu.mysql.jdbc.result.AutoGenerateKeysResultSet;
 import com.heimuheimu.mysql.jdbc.result.ReadonlyTextResultSet;
 import com.heimuheimu.naivemonitor.monitor.ExecutionMonitor;
 import org.slf4j.Logger;
@@ -46,12 +47,20 @@ import java.util.concurrent.TimeUnit;
  */
 public class TextStatement implements Statement {
 
+    /**
+     * {@code TextStatement}
+     */
     private static final Logger LOG = LoggerFactory.getLogger(TextStatement.class);
 
     /**
      * Mysql 命令慢执行日志
      */
-    protected static final Logger MYSQL_SLOW_EXECUTION_LOG = LoggerFactory.getLogger("MYSQL_SLOW_EXECUTION_LOG");
+    private static final Logger MYSQL_SLOW_EXECUTION_LOG = LoggerFactory.getLogger("MYSQL_SLOW_EXECUTION_LOG");
+
+    /**
+     * Mysql 命令 DEBUG 执行日志
+     */
+    private static final Logger MYSQL_EXECUTION_DEBUG_LOG = LoggerFactory.getLogger("MYSQL_EXECUTION_DEBUG_LOG");
 
     /**
      * 与 Mysql 服务进行数据交互的管道
@@ -91,7 +100,12 @@ public class TextStatement implements Statement {
     /**
      * SQL 查询结果，如果执行的是非查询语句，则为 {@code null}
      */
-    private volatile ResultSet resultSet = null;
+    private volatile ReadonlyTextResultSet resultSet = null;
+
+    /**
+     * 获取行数据顺序
+     */
+    private volatile int fetchDirection = ResultSet.FETCH_FORWARD;
 
     /**
      * 构造一个 {@code TextStatement} 实例。
@@ -156,11 +170,34 @@ public class TextStatement implements Statement {
                 throw new SQLException(errorMessage, errorPacket.getSqlState(), errorPacket.getErrorCode());
             }
             if (sqlCommand.hasTextResultSet()) {
-                resultSet = new ReadonlyTextResultSet(mysqlPacketList, connectionInfo);
+                resultSet = new ReadonlyTextResultSet(mysqlPacketList, connectionInfo, this);
+                if (fetchDirection != ResultSet.FETCH_FORWARD) {
+                    resultSet.setFetchDirection(fetchDirection);
+                }
+                if (MYSQL_EXECUTION_DEBUG_LOG.isDebugEnabled()) { // print debug log
+                    StringBuilder queryResult = new StringBuilder();
+                    int columnCount = resultSet.getMetaData().getColumnCount();
+                    while (resultSet.next()) {
+                        queryResult.append("[");
+                        for (int i = 1; i <= columnCount; i++) {
+                            if (i > 1) {
+                                queryResult.append(", ");
+                            }
+                            queryResult.append("`").append(resultSet.getObject(i)).append("`");
+                        }
+                        queryResult.append("]\n\r");
+                    }
+                    MYSQL_EXECUTION_DEBUG_LOG.debug("{}\n\r{}\n\rRows size: {}\n\r{}", sql, sqlCommand.getServerStatusInfo(),
+                            resultSet.getRowsSize(), queryResult.toString());
+                }
                 return true;
             } else {
                 affectedRows = sqlCommand.getAffectedRows();
                 lastInsertId = sqlCommand.getLastInsertId();
+                if (MYSQL_EXECUTION_DEBUG_LOG.isDebugEnabled()) {
+                    MYSQL_EXECUTION_DEBUG_LOG.debug("{}\n\r{}\n\rAffected rows: {}. Last insert id: {}.", sql,
+                            sqlCommand.getServerStatusInfo(), affectedRows, lastInsertId);
+                }
                 return false;
             }
         } catch (IllegalStateException e) {
@@ -253,12 +290,7 @@ public class TextStatement implements Statement {
 
     @Override
     public ResultSet getGeneratedKeys() throws SQLException {
-        if (lastInsertId == -1) {
-            return null;
-        } else {
-
-        }
-        return null;
+        return new AutoGenerateKeysResultSet(lastInsertId, this);
     }
 
     @Override
@@ -298,37 +330,41 @@ public class TextStatement implements Statement {
 
     @Override
     public void setCursorName(String name) throws SQLException {
-
+        // do nothing
     }
 
     @Override
     public void setFetchDirection(int direction) throws SQLException {
-
+        if (direction == ResultSet.FETCH_REVERSE) {
+            fetchDirection = ResultSet.FETCH_REVERSE;
+        } else {
+            fetchDirection = ResultSet.FETCH_FORWARD;
+        }
     }
 
     @Override
     public int getFetchDirection() throws SQLException {
-        return 0;
+        return fetchDirection;
     }
 
     @Override
     public void setFetchSize(int rows) throws SQLException {
-
+        // do nothing
     }
 
     @Override
     public int getFetchSize() throws SQLException {
-        return 0;
+        return Integer.MAX_VALUE;
     }
 
     @Override
     public int getResultSetConcurrency() throws SQLException {
-        return 0;
+        return ResultSet.CONCUR_READ_ONLY;
     }
 
     @Override
     public int getResultSetType() throws SQLException {
-        return 0;
+        return ResultSet.TYPE_SCROLL_INSENSITIVE;
     }
 
     @Override

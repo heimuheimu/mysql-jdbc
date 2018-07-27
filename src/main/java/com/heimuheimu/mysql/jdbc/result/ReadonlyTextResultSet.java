@@ -89,6 +89,11 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
     private final int rowsSize;
 
     /**
+     * SQL 语句执行器
+     */
+    private final Statement statement;
+
+    /**
      * 最后被读取列的值是否为 SQL NULL
      */
     private boolean wasNull = false;
@@ -98,10 +103,12 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
      *
      * @param mysqlPackets SQL 查询语句返回的响应数据包列表
      * @param connectionInfo 接收响应数据的 Mysql 数据库连接信息
+     * @param statement SQL 语句执行器
      * @throws IllegalArgumentException 如果解析响应数据包时出现错误，将会抛出此异常
      */
-    public ReadonlyTextResultSet(List<MysqlPacket> mysqlPackets, ConnectionInfo connectionInfo) throws IllegalArgumentException {
+    public ReadonlyTextResultSet(List<MysqlPacket> mysqlPackets, ConnectionInfo connectionInfo, Statement statement) throws IllegalArgumentException {
         this.connectionInfo = connectionInfo;
+        this.statement = statement;
         int i = 0;
         this.textResultsetResponsePacket = TextResultsetResponsePacket.parse(mysqlPackets.get(i++),
                 connectionInfo.getCapabilitiesFlags());
@@ -620,6 +627,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
         if (type == null) {
             String errorMessage = "Get column object value failed: `type could not be null`. Column index: `" + columnIndex
@@ -703,7 +711,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
 
     @Override
     public Statement getStatement() throws SQLException {
-        return null;
+        return statement;
     }
 
     @Override
