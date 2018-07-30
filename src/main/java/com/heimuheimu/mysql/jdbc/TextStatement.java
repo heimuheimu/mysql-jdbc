@@ -485,6 +485,7 @@ public class TextStatement implements Statement {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T> T unwrap(Class<T> iface) throws SQLException {
         return (T) this;
     }

@@ -68,7 +68,10 @@ public class ExecutionMonitorFactory {
      * @return Socket 连接目标地址获得对应的操作执行信息监控器，该方法不会返回 {@code null}
      */
     public static ExecutionMonitor get(String host, String databaseName) {
-        String key = host + "/" + databaseName;
+        String key = host;
+        if (databaseName != null && !databaseName.isEmpty()) {
+            key += "/" + databaseName;
+        }
         ExecutionMonitor monitor = MYSQL_EXECUTION_MONITOR_MAP.get(key);
         if (monitor == null) {
             synchronized (lock) {
