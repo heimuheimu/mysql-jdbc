@@ -58,6 +58,11 @@ public class ConnectionInfo {
     private final long serverCapabilitiesFlags;
 
     /**
+     * Mysql 连接建立完成后，Mysql 服务端初始状态数值
+     */
+    private final int serverStatusFlags;
+
+    /**
      * 当前 Mysql 连接使用的字符集编码 ID，ID 对应的编码可通过数据库表 "information_schema.collations" 进行查询
      */
     private final int characterId;
@@ -79,16 +84,18 @@ public class ConnectionInfo {
      * @param serverVersion Mysql 服务端版本号
      * @param serverCharacterId Mysql 服务端默认字符集编码 ID
      * @param serverCapabilitiesFlags Mysql 服务端支持的特性数值
+     * @param serverStatusFlags Mysql 连接建立完成后，Mysql 服务端初始状态数值
      * @param characterId 当前 Mysql 连接使用的字符集编码 ID
      * @param capabilitiesFlags 当前 Mysql 连接支持的特性数值
      * @param databaseName 当前 Mysql 连接使用的数据库名称
      */
     public ConnectionInfo(long connectionId, String serverVersion, int serverCharacterId, long serverCapabilitiesFlags,
-                          int characterId, long capabilitiesFlags, String databaseName) {
+                          int serverStatusFlags, int characterId, long capabilitiesFlags, String databaseName) {
         this.connectionId = connectionId;
         this.serverVersion = serverVersion;
         this.serverCharacterId = serverCharacterId;
         this.serverCapabilitiesFlags = serverCapabilitiesFlags;
+        this.serverStatusFlags = serverStatusFlags;
         this.characterId = characterId;
         this.capabilitiesFlags = capabilitiesFlags;
         this.databaseName = databaseName;
@@ -128,6 +135,15 @@ public class ConnectionInfo {
      */
     public long getServerCapabilitiesFlags() {
         return serverCapabilitiesFlags;
+    }
+
+    /**
+     * 获得 Mysql 连接建立完成后，Mysql 服务端初始状态数值
+     *
+     * @return Mysql 连接建立完成后，Mysql 服务端初始状态数值
+     */
+    public int getServerStatusFlags() {
+        return serverStatusFlags;
     }
 
     /**

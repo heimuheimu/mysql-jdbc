@@ -246,6 +246,17 @@ public class MysqlChannel implements Closeable {
         }
     }
 
+    @Override
+    public String toString() {
+        return "MysqlChannel{" +
+                "connectionConfiguration=" + connectionConfiguration +
+                ", socket=" + socket +
+                ", unusableServiceNotifier=" + unusableServiceNotifier +
+                ", state=" + state +
+                ", connectionInfo=" + connectionInfo +
+                '}';
+    }
+
     /**
      * Mysql IO 线程
      */

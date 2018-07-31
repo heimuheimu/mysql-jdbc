@@ -48,7 +48,7 @@ import java.util.concurrent.TimeUnit;
 public class TextStatement implements Statement {
 
     /**
-     * {@code TextStatement}
+     * {@code TextStatement} 错误信息日志
      */
     private static final Logger LOG = LoggerFactory.getLogger(TextStatement.class);
 
@@ -61,6 +61,11 @@ public class TextStatement implements Statement {
      * Mysql 命令 DEBUG 执行日志
      */
     private static final Logger MYSQL_EXECUTION_DEBUG_LOG = LoggerFactory.getLogger("MYSQL_EXECUTION_DEBUG_LOG");
+
+    /**
+     * 创建当前 {@code TextStatement} 实例的 Mysql 数据库连接
+     */
+    private final MysqlConnection mysqlConnection;
 
     /**
      * 与 Mysql 服务进行数据交互的管道
@@ -83,9 +88,9 @@ public class TextStatement implements Statement {
     private final long slowExecutionThreshold;
 
     /**
-     * SQL 执行超时时间，单位：秒，如果等于 0，则不进行超时时间设置
+     * SQL 执行超时时间，单位：毫秒
      */
-    private volatile int queryTimeout = 0;
+    private volatile long queryMillisecondsTimeout = Long.MAX_VALUE;
 
     /**
      * SQL 语句变更的记录行数，如果执行的是查询语句，则为 -1
@@ -110,15 +115,14 @@ public class TextStatement implements Statement {
     /**
      * 构造一个 {@code TextStatement} 实例。
      *
-     * @param mysqlChannel 与 Mysql 服务进行数据交互的管道，不允许为 {@code null}
-     * @param connectionInfo Mysql 数据库连接信息，不允许为 {@code null}
+     * @param mysqlConnection 创建当前 {@code TextStatement} 实例的 Mysql 数据库连接
      * @param executionMonitor Mysql 命令执行信息监控器，不允许为 {@code null}
      * @param slowExecutionThreshold 执行 Mysql 命令过慢最小时间，单位：纳秒，不能小于等于 0
      */
-    public TextStatement(MysqlChannel mysqlChannel, ConnectionInfo connectionInfo,
-                         ExecutionMonitor executionMonitor, long slowExecutionThreshold) {
-        this.mysqlChannel = mysqlChannel;
-        this.connectionInfo = connectionInfo;
+    public TextStatement(MysqlConnection mysqlConnection, ExecutionMonitor executionMonitor, long slowExecutionThreshold) {
+        this.mysqlConnection = mysqlConnection;
+        this.mysqlChannel = mysqlConnection.getMysqlChannel();
+        this.connectionInfo = mysqlConnection.getMysqlChannel().getConnectionInfo();
         this.executionMonitor = executionMonitor;
         this.slowExecutionThreshold = slowExecutionThreshold;
     }
@@ -140,18 +144,46 @@ public class TextStatement implements Statement {
 
     @Override
     public int getQueryTimeout() throws SQLException {
-        return queryTimeout;
+        if (queryMillisecondsTimeout == Long.MAX_VALUE) { // 如果没有超时时间，则返回 0
+            return 0;
+        } else {
+            long seconds = queryMillisecondsTimeout / 1000;
+            int intSeconds = seconds > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) seconds;
+            return Math.max(1, intSeconds);
+        }
     }
 
     @Override
     public void setQueryTimeout(int seconds) throws SQLException {
-        if (seconds < 0) {
+        setQueryMillisecondsTimeout(seconds * 1000);
+    }
+
+    /**
+     * 获得 SQL 执行超时时间，单位：毫秒。
+     *
+     * @return SQL 执行超时时间，单位：毫秒
+     */
+    public long getQueryMillisecondsTimeout() {
+        return queryMillisecondsTimeout;
+    }
+
+    /**
+     * 设置 SQL 执行超时时间，单位：毫秒，如果等于 0，则没有超时时间限制，不允许设置小于 0 的值。
+     *
+     * @param queryMillisecondsTimeout SQL 执行超时时间，单位：毫秒，如果等于 0，则没有超时时间限制，不允许设置小于 0 的值
+     * @throws SQLException 如果 SQL 执行超时时间小于 0，将会抛出此异常
+     */
+    public void setQueryMillisecondsTimeout(long queryMillisecondsTimeout) throws SQLException {
+        if (queryMillisecondsTimeout > 0) {
+            this.queryMillisecondsTimeout = queryMillisecondsTimeout;
+        } else if (queryMillisecondsTimeout == 0) {
+            this.queryMillisecondsTimeout = Long.MAX_VALUE;
+        } else {
             String errorMessage = "Set query timeout failed: `could not less than zero`. invalidQueryTimeout: `"
-                    + seconds + "`. Connection info: `" + connectionInfo + "`.";
+                    + queryMillisecondsTimeout + "ms`. Connection info: `" + connectionInfo + "`.";
             LOG.error(errorMessage);
             throw new SQLException(errorMessage);
         }
-        this.queryTimeout = seconds;
     }
 
     @Override
@@ -160,8 +192,7 @@ public class TextStatement implements Statement {
         try {
             reset();
             SQLCommand sqlCommand = new SQLCommand(sql, connectionInfo);
-            long millisecondTimeout = queryTimeout > 0 ? queryTimeout * 1000 : Long.MAX_VALUE;
-            List<MysqlPacket> mysqlPacketList = mysqlChannel.send(sqlCommand, millisecondTimeout);
+            List<MysqlPacket> mysqlPacketList = mysqlChannel.send(sqlCommand, queryMillisecondsTimeout);
             ErrorPacket errorPacket = sqlCommand.getErrorPacket();
             if (errorPacket != null) {
                 String errorMessage = "Execute sql failed: `" + errorPacket.getErrorMessage() + "`. Error code: `"
@@ -174,6 +205,7 @@ public class TextStatement implements Statement {
                 if (fetchDirection != ResultSet.FETCH_FORWARD) {
                     resultSet.setFetchDirection(fetchDirection);
                 }
+                mysqlConnection.setLastServerStatusInfo(sqlCommand.getServerStatusInfo());
                 if (MYSQL_EXECUTION_DEBUG_LOG.isDebugEnabled()) { // print debug log
                     StringBuilder queryResult = new StringBuilder();
                     int columnCount = resultSet.getMetaData().getColumnCount();
@@ -194,6 +226,7 @@ public class TextStatement implements Statement {
             } else {
                 affectedRows = sqlCommand.getAffectedRows();
                 lastInsertId = sqlCommand.getLastInsertId();
+                mysqlConnection.setLastServerStatusInfo(sqlCommand.getServerStatusInfo());
                 if (MYSQL_EXECUTION_DEBUG_LOG.isDebugEnabled()) {
                     MYSQL_EXECUTION_DEBUG_LOG.debug("{}\n\r{}\n\rAffected rows: {}. Last insert id: {}.", sql,
                             sqlCommand.getServerStatusInfo(), affectedRows, lastInsertId);
@@ -209,7 +242,7 @@ public class TextStatement implements Statement {
         } catch (SQLTimeoutException e) {
             executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_TIMEOUT);
             LOG.error("Execute sql failed: `timeout`. Cost: `" + (System.nanoTime() - startTime) + "ns`. Sql: `"
-                    + sql + "`. Query timeout: `" + queryTimeout + "s`. Connection info: `" + connectionInfo + "`.", e);
+                    + sql + "`. Query timeout: `" + queryMillisecondsTimeout + "ms`. Connection info: `" + connectionInfo + "`.", e);
             throw e;
         } catch (SQLException e) {
             executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_MYSQL_ERROR);
@@ -369,7 +402,7 @@ public class TextStatement implements Statement {
 
     @Override
     public Connection getConnection() throws SQLException {
-        return null;
+        return mysqlConnection;
     }
 
     @Override

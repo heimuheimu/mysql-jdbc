@@ -107,8 +107,9 @@ public class HandshakeProcessor {
         } else {
             ConnectionInfo connectionInfo = new ConnectionInfo(handshakeV10Packet.getConnectionId(),
                     handshakeV10Packet.getServerVersion(), handshakeV10Packet.getServerCharacterId(),
-                    handshakeV10Packet.getCapabilitiesFlags(), handshakeResponse41Packet.getClientCharacterId(),
-                    handshakeResponse41Packet.getCapabilitiesFlags(), handshakeResponse41Packet.getDatabaseName());
+                    handshakeV10Packet.getCapabilitiesFlags(), handshakeV10Packet.getServerStatusFlags(),
+                    handshakeResponse41Packet.getClientCharacterId(), handshakeResponse41Packet.getCapabilitiesFlags(),
+                    handshakeResponse41Packet.getDatabaseName());
             return connectionInfo;
         }
     }
