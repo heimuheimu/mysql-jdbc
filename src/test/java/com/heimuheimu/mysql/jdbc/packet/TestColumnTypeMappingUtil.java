@@ -237,11 +237,11 @@ public class TestColumnTypeMappingUtil {
     /**
      * Mysql 数据库数据交互管道列表
      */
-    private static List<MysqlChannel> mysqlChannelList;
+    private static List<MysqlChannel> MYSQL_CHANNEL_LIST;
 
     @BeforeClass
     public static void init() throws SQLException {
-        mysqlChannelList = new CopyOnWriteArrayList<>();
+        MYSQL_CHANNEL_LIST = new CopyOnWriteArrayList<>();
         for (Map<String, String> databaseInfo : DatabaseInfoProvider.getDatabaseInfoList()) {
             String host = databaseInfo.get("host");
             String databaseName = databaseInfo.get("databaseName");
@@ -261,13 +261,13 @@ public class TestColumnTypeMappingUtil {
                 Assert.fail("Create table `heimuheimu_columns_type_test` failed. Error packet: " + errorPacket + ". Database info: "
                     + databaseInfo);
             }
-            mysqlChannelList.add(mysqlChannel);
+            MYSQL_CHANNEL_LIST.add(mysqlChannel);
         }
     }
 
     @AfterClass
     public static void clean() throws SQLException {
-        for (MysqlChannel mysqlChannel : mysqlChannelList) {
+        for (MysqlChannel mysqlChannel : MYSQL_CHANNEL_LIST) {
             SQLCommand deleteTableCommand = new SQLCommand(DELETE_TABLE_SQL, mysqlChannel.getConnectionInfo());
             List<MysqlPacket> mysqlPacketList = mysqlChannel.send(deleteTableCommand, 5000);
             if (!OKPacket.isOkPacket(mysqlPacketList.get(0))) {
@@ -284,10 +284,10 @@ public class TestColumnTypeMappingUtil {
 
     @Test
     public void testGetTypeName() throws SQLException {
-        if (mysqlChannelList == null || mysqlChannelList.isEmpty()) {
+        if (MYSQL_CHANNEL_LIST == null || MYSQL_CHANNEL_LIST.isEmpty()) {
             Assert.fail("There is no active MysqlChannel.");
         }
-        for (MysqlChannel mysqlChannel : mysqlChannelList) {
+        for (MysqlChannel mysqlChannel : MYSQL_CHANNEL_LIST) {
             HashMap<String, ColumnDefinition41ResponsePacket> definitionMap = getColumnDefinition41ResponsePacketMap(mysqlChannel);
             if (definitionMap == null) {
                 Assert.fail("There is no metadata. `INDEX_CLIENT_OPTIONAL_RESULTSET_METADATA` is active. " + mysqlChannel);
@@ -315,10 +315,10 @@ public class TestColumnTypeMappingUtil {
 
     @Test
     public void testGetJavaType() throws SQLException {
-        if (mysqlChannelList == null || mysqlChannelList.isEmpty()) {
+        if (MYSQL_CHANNEL_LIST == null || MYSQL_CHANNEL_LIST.isEmpty()) {
             Assert.fail("There is no active MysqlChannel.");
         }
-        for (MysqlChannel mysqlChannel : mysqlChannelList) {
+        for (MysqlChannel mysqlChannel : MYSQL_CHANNEL_LIST) {
             HashMap<String, ColumnDefinition41ResponsePacket> definitionMap = getColumnDefinition41ResponsePacketMap(mysqlChannel);
             if (definitionMap == null) {
                 Assert.fail("There is no metadata. `INDEX_CLIENT_OPTIONAL_RESULTSET_METADATA` is active. " + mysqlChannel);
@@ -345,10 +345,10 @@ public class TestColumnTypeMappingUtil {
 
     @Test
     public void testGetJDBCType() throws SQLException {
-        if (mysqlChannelList == null || mysqlChannelList.isEmpty()) {
+        if (MYSQL_CHANNEL_LIST == null || MYSQL_CHANNEL_LIST.isEmpty()) {
             Assert.fail("There is no active MysqlChannel.");
         }
-        for (MysqlChannel mysqlChannel : mysqlChannelList) {
+        for (MysqlChannel mysqlChannel : MYSQL_CHANNEL_LIST) {
             HashMap<String, ColumnDefinition41ResponsePacket> definitionMap = getColumnDefinition41ResponsePacketMap(mysqlChannel);
             if (definitionMap == null) {
                 Assert.fail("There is no metadata. `INDEX_CLIENT_OPTIONAL_RESULTSET_METADATA` is active. " + mysqlChannel);

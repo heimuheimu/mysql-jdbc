@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ExecutionMonitorFactory {
 
     /**
-     * Mysql 命令执行错误码：参数不正确
+     * Mysql 命令执行错误码：MYSQL 服务端执行异常
      */
     public static final int ERROR_CODE_MYSQL_ERROR = -1;
 
@@ -49,9 +49,14 @@ public class ExecutionMonitorFactory {
     public static final int ERROR_CODE_TIMEOUT = -3;
 
     /**
+     * Mysql 命令执行错误码：参数值设置不正确
+     */
+    public static final int ERROR_CODE_INVALID_PARAMETER = -4;
+
+    /**
      * Mysql 命令执行错误码：预期外异常
      */
-    public static final int ERROR_CODE_UNEXPECTED_ERROR = -4;
+    public static final int ERROR_CODE_UNEXPECTED_ERROR = -5;
 
     private ExecutionMonitorFactory() {
         // private constructor

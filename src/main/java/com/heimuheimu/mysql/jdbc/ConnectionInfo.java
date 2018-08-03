@@ -189,6 +189,7 @@ public class ConnectionInfo {
                 ", serverVersion='" + serverVersion + '\'' +
                 ", serverCharacterId=" + serverCharacterId +
                 ", serverCapabilitiesFlags=" + serverCapabilitiesFlags +
+                ", serverStatusFlags=" + serverStatusFlags +
                 ", characterId=" + characterId +
                 ", javaCharset='" + getJavaCharset() + '\'' +
                 ", capabilitiesFlags=" + capabilitiesFlags +

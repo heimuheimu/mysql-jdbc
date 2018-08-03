@@ -43,6 +43,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * {@link Statement} 实现类，通过 {@link SQLCommand} 执行 SQL 语句并返回结果。
  *
+ * <p><strong>说明：</strong>{@code TextStatement} 类是非线程安全的，不允许多个线程使用同一个实例。</p>
+ *
  * @author heimuheimu
  */
 public class TextStatement implements Statement {
@@ -65,22 +67,22 @@ public class TextStatement implements Statement {
     /**
      * 创建当前 {@code TextStatement} 实例的 Mysql 数据库连接
      */
-    private final MysqlConnection mysqlConnection;
+    protected final MysqlConnection mysqlConnection;
 
     /**
      * 与 Mysql 服务进行数据交互的管道
      */
-    private final MysqlChannel mysqlChannel;
+    protected final MysqlChannel mysqlChannel;
 
     /**
      * Mysql 数据库连接信息
      */
-    private final ConnectionInfo connectionInfo;
+    protected final ConnectionInfo connectionInfo;
 
     /**
      * Mysql 命令执行信息监控器
      */
-    private final ExecutionMonitor executionMonitor;
+    protected final ExecutionMonitor executionMonitor;
 
     /**
      * 执行 Mysql 命令过慢最小时间，单位：纳秒，不能小于等于 0，执行 Mysql 命令时间大于该值时，将进行慢执行日志打印
@@ -180,7 +182,8 @@ public class TextStatement implements Statement {
             this.queryMillisecondsTimeout = Long.MAX_VALUE;
         } else {
             String errorMessage = "Set query timeout failed: `could not less than zero`. invalidQueryTimeout: `"
-                    + queryMillisecondsTimeout + "ms`. Connection info: `" + connectionInfo + "`.";
+                    + queryMillisecondsTimeout + "ms`. Connection info: `" + connectionInfo + "`. Host: `"
+                    + mysqlChannel.getConnectionConfiguration().getHost() + "`.";
             LOG.error(errorMessage);
             throw new SQLException(errorMessage);
         }
@@ -197,7 +200,8 @@ public class TextStatement implements Statement {
             if (errorPacket != null) {
                 String errorMessage = "Execute sql failed: `" + errorPacket.getErrorMessage() + "`. Error code: `"
                         + errorPacket.getErrorCode() + "`. Sql state: `" + errorPacket.getSqlState() + "`. Sql: `" + sql
-                        + "`. Connection info: `" + connectionInfo + "`.";
+                        + "`. Connection info: `" + connectionInfo + "`. Host: `"
+                        + mysqlChannel.getConnectionConfiguration().getHost() + ".";
                 throw new SQLException(errorMessage, errorPacket.getSqlState(), errorPacket.getErrorCode());
             }
             if (sqlCommand.hasTextResultSet()) {
@@ -219,8 +223,8 @@ public class TextStatement implements Statement {
                         }
                         queryResult.append("]\n\r");
                     }
-                    MYSQL_EXECUTION_DEBUG_LOG.debug("{}\n\r{}\n\rRows size: {}\n\r{}", sql, sqlCommand.getServerStatusInfo(),
-                            resultSet.getRowsSize(), queryResult.toString());
+                    MYSQL_EXECUTION_DEBUG_LOG.debug("[{}] {}\n\r{}\n\rRows size: {}\n\r{}", mysqlConnection.getSchema(),
+                            sql, sqlCommand.getServerStatusInfo(), resultSet.getRowsSize(), queryResult.toString());
                 }
                 return true;
             } else {
@@ -228,38 +232,41 @@ public class TextStatement implements Statement {
                 lastInsertId = sqlCommand.getLastInsertId();
                 mysqlConnection.setLastServerStatusInfo(sqlCommand.getServerStatusInfo());
                 if (MYSQL_EXECUTION_DEBUG_LOG.isDebugEnabled()) {
-                    MYSQL_EXECUTION_DEBUG_LOG.debug("{}\n\r{}\n\rAffected rows: {}. Last insert id: {}.", sql,
-                            sqlCommand.getServerStatusInfo(), affectedRows, lastInsertId);
+                    MYSQL_EXECUTION_DEBUG_LOG.debug("[{}] {}\n\r{}\n\rAffected rows: {}. Last insert id: {}.", mysqlConnection.getSchema(),
+                            sql, sqlCommand.getServerStatusInfo(), affectedRows, lastInsertId);
                 }
                 return false;
             }
         } catch (IllegalStateException e) {
             executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_ILLEGAL_STATE);
             String errorMessage = "Execute sql failed: `illegal state`. Cost: `" + (System.nanoTime() - startTime) + "ns`. Sql: `"
-                    + sql + "`. Connection info: `" + connectionInfo + "`.";
+                    + sql + "`. Connection info: `" + connectionInfo + "`. Host: `"
+                    + mysqlChannel.getConnectionConfiguration().getHost() + "`.";
             LOG.error(errorMessage, e);
             throw new SQLException(errorMessage, e);
         } catch (SQLTimeoutException e) {
             executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_TIMEOUT);
             LOG.error("Execute sql failed: `timeout`. Cost: `" + (System.nanoTime() - startTime) + "ns`. Sql: `"
-                    + sql + "`. Query timeout: `" + queryMillisecondsTimeout + "ms`. Connection info: `" + connectionInfo + "`.", e);
+                    + sql + "`. Query timeout: `" + queryMillisecondsTimeout + "ms`. Connection info: `" + connectionInfo
+                    + "`. Host: `" + mysqlChannel.getConnectionConfiguration().getHost() + "`.", e);
             throw e;
         } catch (SQLException e) {
             executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_MYSQL_ERROR);
             LOG.error("Execute sql failed: `sql exception`. Cost: `" + (System.nanoTime() - startTime) + "ns`. Sql: `"
-                    + sql + "`. Connection info: `" + connectionInfo + "`.", e);
+                    + sql + "`. Connection info: `" + connectionInfo + "`. Host: `"
+                    + mysqlChannel.getConnectionConfiguration().getHost() + "`.", e);
             throw e;
         } catch (Exception e) {
             executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
             String errorMessage = "Execute sql failed: `unexpected exception`. Sql: `" + sql + "`. Connection info: `"
-                    + connectionInfo + "`.";
+                    + connectionInfo + "`. Host: `" + mysqlChannel.getConnectionConfiguration().getHost() + "`.";
             LOG.error(errorMessage, e);
             throw new SQLException(errorMessage, e);
         } finally {
             long executedNanoTime = System.nanoTime() - startTime;
             if (executedNanoTime > slowExecutionThreshold) {
                 MYSQL_SLOW_EXECUTION_LOG.info("`Cost`:`{}ns ({}ms)`. `Sql`:`{}`. `Database`:`{}`. `Host`:`{}`.", executedNanoTime,
-                        TimeUnit.MILLISECONDS.convert(executedNanoTime, TimeUnit.NANOSECONDS), sql, connectionInfo.getDatabaseName(),
+                        TimeUnit.MILLISECONDS.convert(executedNanoTime, TimeUnit.NANOSECONDS), sql, mysqlConnection.getSchema(),
                         mysqlChannel.getConnectionConfiguration().getHost());
             }
             executionMonitor.onExecuted(startTime);
@@ -284,8 +291,11 @@ public class TextStatement implements Statement {
     public ResultSet executeQuery(String sql) throws SQLException {
         execute(sql);
         if (resultSet == null) {
-            throw new SQLException("Execute query sql failed: `not query sql`. Sql: `" + sql + "`. Connection info: `"
-                    + connectionInfo + "`.");
+            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
+            String errorMessage = "Execute query sql failed: `not query sql`. Sql: `" + sql + "`. Connection info: `"
+                    + connectionInfo + "`. Host: `" + mysqlChannel.getConnectionConfiguration().getHost() + "`.";
+            LOG.error(errorMessage);
+            throw new SQLException(errorMessage);
         }
         return resultSet;
     }
@@ -299,8 +309,11 @@ public class TextStatement implements Statement {
     public long executeLargeUpdate(String sql) throws SQLException {
         execute(sql);
         if (affectedRows == -1) {
-            throw new SQLException("Execute update sql failed: `not update sql`. Sql: `" + sql + "`. Connection info: `"
-                    + connectionInfo + "`.");
+            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
+            String errorMessage = "Execute update sql failed: `not update sql`. Sql: `" + sql + "`. Connection info: `"
+                    + connectionInfo + "`. Host: `" + mysqlChannel.getConnectionConfiguration().getHost() + "`.";
+            LOG.error(errorMessage);
+            throw new SQLException(errorMessage);
         }
         return affectedRows;
     }
