@@ -36,6 +36,12 @@ import java.util.Arrays;
 public class BytesUtil {
 
     /**
+     * 十六进制数字字符数组
+     */
+    private final static char[] HEX_ARRAY = new char[]{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            'A', 'B', 'C', 'D', 'E', 'F'};
+
+    /**
      * 存储字节长度与对应的最大无符号整数
      */
     private static final long[] MAXIMUM_INTEGER_VALUE_ARRAY;
@@ -126,5 +132,21 @@ public class BytesUtil {
         for (int i = 0; i < length; i++) {
             target[offset + i] = (byte) (value >>> (i * 8));
         }
+    }
+
+    /**
+     * 将字节数组转换为十六进制字符串。
+     *
+     * @param bytes 字节数组
+     * @return 十六进制字符串
+     */
+    public static String toHex(byte[] bytes) {
+        char[] hexChars = new char[bytes.length * 2];
+        for (int i = 0; i < bytes.length; i++) {
+            int unsignedByteValue = bytes[i] & 0xFF;
+            hexChars[i * 2] = HEX_ARRAY[unsignedByteValue >>> 4];
+            hexChars[i * 2 + 1] = HEX_ARRAY[unsignedByteValue & 0x0F];
+        }
+        return new String(hexChars);
     }
 }

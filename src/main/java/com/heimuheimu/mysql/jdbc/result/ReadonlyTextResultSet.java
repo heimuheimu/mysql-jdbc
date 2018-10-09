@@ -384,6 +384,9 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
         String value = getString(columnIndex);
         if (value != null) {
             try {
+                if (cal == null) {
+                    cal = Calendar.getInstance();
+                }
                 int year = Integer.parseInt(value.substring(0, 4));
                 int month = 1;
                 int day = 1;
@@ -429,6 +432,9 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
         String value = getString(columnIndex);
         if (value != null) {
             try {
+                if (cal == null) {
+                    cal = Calendar.getInstance();
+                }
                 String[] timeParts = value.split(":");
                 int hour = Integer.parseInt(timeParts[0]);
                 int minute = Integer.parseInt(timeParts[1]);
@@ -479,6 +485,9 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
         String value = getString(columnIndex);
         if (value != null) {
             try {
+                if (cal == null) {
+                    cal = Calendar.getInstance();
+                }
                 int year = Integer.parseInt(value.substring(0, 4));
                 int month = 1;
                 int day = 1;

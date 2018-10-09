@@ -224,7 +224,8 @@ public class TextStatement implements Statement {
                         queryResult.append("]\n\r");
                     }
                     MYSQL_EXECUTION_DEBUG_LOG.debug("[{}] {}\n\r{}\n\rRows size: {}\n\r{}", mysqlConnection.getSchema(),
-                            sql, sqlCommand.getServerStatusInfo(), resultSet.getRowsSize(), queryResult.toString());
+                            sql.replace('\n', ' ').replace('\r', ' '),
+                            sqlCommand.getServerStatusInfo(), resultSet.getRowsSize(), queryResult.toString());
                 }
                 return true;
             } else {
