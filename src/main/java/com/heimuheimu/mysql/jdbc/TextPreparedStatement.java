@@ -134,29 +134,54 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
         return sqlParts;
     }
 
+    /**
+     * 根据当前 SQL 语句模版和已设置的参数值组装成完整的 SQL 语句。
+     *
+     * @return SQL 语句
+     * @throws SQLException 如果有参数值尚未进行设置，将会抛出此异常
+     */
+    private String buildSql() throws SQLException {
+        StringBuilder buffer = new StringBuilder(256);
+        for (int i = 0; i < (sqlParts.size() - 1); i++) {
+            buffer.append(sqlParts.get(i));
+            String parameterValue = parameterValues.get(i);
+            if (parameterValue != null) {
+                buffer.append(parameterValue);
+            } else {
+                executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_INVALID_PARAMETER);
+                String errorMessage = buildSetParameterErrorMessage("buildSql()", (i + 1), null,
+                        "build sql failed, parameter value has not been set", null);
+                LOG.error(errorMessage);
+                throw new SQLException(errorMessage);
+            }
+        }
+        buffer.append(sqlParts.get(sqlParts.size() - 1));
+        return buffer.toString();
+    }
+
     @Override
     public void setNull(int parameterIndex, int sqlType) throws SQLException {
         checkParameterIndex( "setNull(int parameterIndex, int sqlType)", parameterIndex, null);
-        parameterValues.set(parameterIndex, NULL_VALUE);
+        parameterValues.set(parameterIndex - 1, NULL_VALUE);
     }
 
     @Override
     public void setNull(int parameterIndex, int sqlType, String typeName) throws SQLException {
         checkParameterIndex( "setNull(int parameterIndex, int sqlType, String typeName)", parameterIndex, null);
-        parameterValues.set(parameterIndex, NULL_VALUE);
+        parameterValues.set(parameterIndex - 1, NULL_VALUE);
     }
 
     @Override
     public void setBoolean(int parameterIndex, boolean x) throws SQLException {
         checkParameterIndex( "setBoolean(int parameterIndex, boolean x)", parameterIndex, x);
-        parameterValues.set(parameterIndex, x ? "1" : "0");
+        parameterValues.set(parameterIndex - 1, x ? "1" : "0");
     }
 
     @Override
     public void setByte(int parameterIndex, byte x) throws SQLException {
         checkParameterIndex( "setByte(int parameterIndex, byte x)", parameterIndex, x);
         String hex = BytesUtil.toHex(new byte[]{x});
-        parameterValues.set(parameterIndex, "X'" + hex + "'");
+        parameterValues.set(parameterIndex - 1, "X'" + hex + "'");
     }
 
     @Override
@@ -164,49 +189,49 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
         checkParameterIndex( "setBytes(int parameterIndex, byte[] x)", parameterIndex, x);
         if (x != null) {
             String hex = BytesUtil.toHex(x);
-            parameterValues.set(parameterIndex, "X'" + hex + "'");
+            parameterValues.set(parameterIndex - 1, "X'" + hex + "'");
         } else {
-            parameterValues.set(parameterIndex, NULL_VALUE);
+            parameterValues.set(parameterIndex - 1, NULL_VALUE);
         }
     }
 
     @Override
     public void setShort(int parameterIndex, short x) throws SQLException {
         checkParameterIndex( "setShort(int parameterIndex, short x)", parameterIndex, x);
-        parameterValues.set(parameterIndex, String.valueOf(x));
+        parameterValues.set(parameterIndex - 1, String.valueOf(x));
     }
 
     @Override
     public void setInt(int parameterIndex, int x) throws SQLException {
         checkParameterIndex( "setInt(int parameterIndex, int x)", parameterIndex, x);
-        parameterValues.set(parameterIndex, String.valueOf(x));
+        parameterValues.set(parameterIndex - 1, String.valueOf(x));
     }
 
     @Override
     public void setLong(int parameterIndex, long x) throws SQLException {
         checkParameterIndex( "setLong(int parameterIndex, long x)", parameterIndex, x);
-        parameterValues.set(parameterIndex, String.valueOf(x));
+        parameterValues.set(parameterIndex - 1, String.valueOf(x));
     }
 
     @Override
     public void setFloat(int parameterIndex, float x) throws SQLException {
         checkParameterIndex( "setFloat(int parameterIndex, float x)", parameterIndex, x);
-        parameterValues.set(parameterIndex, String.valueOf(x));
+        parameterValues.set(parameterIndex - 1, String.valueOf(x));
     }
 
     @Override
     public void setDouble(int parameterIndex, double x) throws SQLException {
         checkParameterIndex( "setDouble(int parameterIndex, double x)", parameterIndex, x);
-        parameterValues.set(parameterIndex, String.valueOf(x));
+        parameterValues.set(parameterIndex - 1, String.valueOf(x));
     }
 
     @Override
     public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
         checkParameterIndex( "setBigDecimal(int parameterIndex, BigDecimal x)", parameterIndex, x);
         if (x != null) {
-            parameterValues.set(parameterIndex, x.toPlainString());
+            parameterValues.set(parameterIndex - 1, x.toPlainString());
         } else {
-            parameterValues.set(parameterIndex, NULL_VALUE);
+            parameterValues.set(parameterIndex - 1, NULL_VALUE);
         }
     }
 
@@ -214,9 +239,9 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
     public void setString(int parameterIndex, String x) throws SQLException {
         checkParameterIndex( "setString(int parameterIndex, String x)", parameterIndex, x);
         if (x != null) {
-            parameterValues.set(parameterIndex, "'" + StringUtil.escape(x) + "'");
+            parameterValues.set(parameterIndex - 1, "'" + StringUtil.escape(x) + "'");
         } else {
-            parameterValues.set(parameterIndex, NULL_VALUE);
+            parameterValues.set(parameterIndex - 1, NULL_VALUE);
         }
     }
 
@@ -229,9 +254,9 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
     public void setURL(int parameterIndex, URL x) throws SQLException {
         checkParameterIndex( "setURL(int parameterIndex, URL x)", parameterIndex, x);
         if (x != null) {
-            parameterValues.set(parameterIndex, "'" + StringUtil.escape(x.toString()) + "'");
+            parameterValues.set(parameterIndex - 1, "'" + StringUtil.escape(x.toString()) + "'");
         } else {
-            parameterValues.set(parameterIndex, NULL_VALUE);
+            parameterValues.set(parameterIndex - 1, NULL_VALUE);
         }
     }
 
@@ -251,7 +276,7 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
                 }
                 cal.setTimeInMillis(x.getTime());
                 LocalDateTime ldt = LocalDateTime.ofInstant(cal.toInstant(), cal.getTimeZone().toZoneId());
-                parameterValues.set(parameterIndex, "'" + ldt.format(DATE_FORMATTER) + "'");
+                parameterValues.set(parameterIndex - 1, "'" + ldt.format(DATE_FORMATTER) + "'");
             } catch (Exception e) {
                 executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_INVALID_PARAMETER);
                 Calendar finalCal = cal;
@@ -261,7 +286,7 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
                 throw new SQLException(errorMessage, e);
             }
         } else {
-            parameterValues.set(parameterIndex, NULL_VALUE);
+            parameterValues.set(parameterIndex - 1, NULL_VALUE);
         }
     }
 
@@ -281,7 +306,7 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
                 }
                 cal.setTimeInMillis(x.getTime());
                 LocalDateTime ldt = LocalDateTime.ofInstant(cal.toInstant(), cal.getTimeZone().toZoneId());
-                parameterValues.set(parameterIndex, "'" + ldt.format(TIME_FORMATTER) + "'");
+                parameterValues.set(parameterIndex - 1, "'" + ldt.format(TIME_FORMATTER) + "'");
             } catch (Exception e) {
                 executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_INVALID_PARAMETER);
                 Calendar finalCal = cal;
@@ -291,7 +316,7 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
                 throw new SQLException(errorMessage, e);
             }
         } else {
-            parameterValues.set(parameterIndex, NULL_VALUE);
+            parameterValues.set(parameterIndex - 1, NULL_VALUE);
         }
     }
 
@@ -311,7 +336,7 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
                 }
                 cal.setTimeInMillis(x.getTime());
                 LocalDateTime ldt = LocalDateTime.ofInstant(cal.toInstant(), cal.getTimeZone().toZoneId());
-                parameterValues.set(parameterIndex, "'" + ldt.format(TIMESTAMP_FORMATTER) + "'");
+                parameterValues.set(parameterIndex - 1, "'" + ldt.format(TIMESTAMP_FORMATTER) + "'");
             } catch (Exception e) {
                 executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_INVALID_PARAMETER);
                 Calendar finalCal = cal;
@@ -321,7 +346,7 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
                 throw new SQLException(errorMessage, e);
             }
         } else {
-            parameterValues.set(parameterIndex, NULL_VALUE);
+            parameterValues.set(parameterIndex - 1, NULL_VALUE);
         }
     }
 
@@ -367,7 +392,7 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
             try {
                 byte[] bytes = readBytesFromInputStream(x, length);
                 String hex = BytesUtil.toHex(bytes);
-                parameterValues.set(parameterIndex, "X'" + hex + "'");
+                parameterValues.set(parameterIndex - 1, "X'" + hex + "'");
             } catch (Exception e) {
                 executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_INVALID_PARAMETER);
                 String errorMessage = buildSetParameterErrorMessage(methodName, parameterIndex, x,
@@ -376,7 +401,7 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
                 throw new SQLException(errorMessage, e);
             }
         } else {
-            parameterValues.set(parameterIndex, NULL_VALUE);
+            parameterValues.set(parameterIndex - 1, NULL_VALUE);
         }
     }
 
@@ -411,7 +436,7 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
         if (reader != null) {
             try {
                 String value = readStringFromReader(reader, length);
-                parameterValues.set(parameterIndex, "'" + StringUtil.escape(value) + "'");
+                parameterValues.set(parameterIndex - 1, "'" + StringUtil.escape(value) + "'");
             } catch (Exception e) {
                 executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_INVALID_PARAMETER);
                 String errorMessage = buildSetParameterErrorMessage(methodName, parameterIndex, reader,
@@ -420,7 +445,7 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
                 throw new SQLException(errorMessage, e);
             }
         } else {
-            parameterValues.set(parameterIndex, NULL_VALUE);
+            parameterValues.set(parameterIndex - 1, NULL_VALUE);
         }
     }
 
@@ -429,7 +454,6 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
         String methodName = "setObject(int parameterIndex, Object x)";
         checkParameterIndex(methodName, parameterIndex, x);
         if (x != null) {
-            Class<?> clz = x.getClass();
             if (x instanceof Boolean) {
                 setBoolean(parameterIndex, (Boolean) x);
             } else if (x instanceof Byte) {
@@ -506,32 +530,35 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
 
     @Override
     public ResultSetMetaData getMetaData() throws SQLException {
-        return null;
-    }
-
-    @Override
-    public ParameterMetaData getParameterMetaData() throws SQLException {
-        return null;
+        if (resultSet != null) {
+            return resultSet.getMetaData();
+        } else {
+            return null;
+        }
     }
 
     @Override
     public boolean execute() throws SQLException {
-        return false;
+        String sql = buildSql();
+        return execute(sql);
     }
 
     @Override
     public ResultSet executeQuery() throws SQLException {
-        return null;
+        String sql = buildSql();
+        return executeQuery(sql);
     }
 
     @Override
     public int executeUpdate() throws SQLException {
-        return 0;
+        String sql = buildSql();
+        return executeUpdate(sql);
     }
 
     @Override
     public long executeLargeUpdate() throws SQLException {
-        return 0;
+        String sql = buildSql();
+        return executeLargeUpdate(sql);
     }
 
     /**
@@ -543,7 +570,7 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
      * @throws SQLException 如果参数位置索索引越界，则抛出 {@code SQLException} 异常
      */
     private void checkParameterIndex(String methodName, int parameterIndex, Object parameterValue) throws SQLException {
-        if (parameterIndex < 0 || parameterIndex >= parameterValues.length()) {
+        if (parameterIndex <= 0 || parameterIndex > parameterValues.length()) {
             executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_INVALID_PARAMETER);
             String errorMessage = buildSetParameterErrorMessage(methodName, parameterIndex, parameterValue,
                     "parameter index out of range", null);
@@ -573,9 +600,8 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
         parameterMap.put("sqlTemplate", sqlTemplate);
         parameterMap.put("parameterValues", parameterValues);
         parameterMap.put("mysqlChannel", mysqlChannel);
-        String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("TextPreparedStatement#" + methodName,
+        return LogBuildUtil.buildMethodExecuteFailedLog("TextPreparedStatement#" + methodName,
                 desc, parameterMap);
-        return errorMessage;
     }
 
     /**
@@ -607,6 +633,7 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
      * @param reader 输入流
      * @param length 读取的最大字符串长度，如果小于 0，则不进行限制
      * @return 字符串
+     * @throws IOException 如果读取过程中出现 IO 错误，将会抛出此异常
      */
     private String readStringFromReader(Reader reader, int length) throws IOException {
         StringBuilder builder = new StringBuilder(1024);
@@ -693,5 +720,10 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
     @Override
     public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException {
         throw SQLFeatureNotSupportedExceptionBuilder.build("TextPreparedStatement#setSQLXML(int parameterIndex, SQLXML xmlObject)");
+    }
+
+    @Override
+    public ParameterMetaData getParameterMetaData() throws SQLException {
+        throw SQLFeatureNotSupportedExceptionBuilder.build("TextPreparedStatement#getParameterMetaData()");
     }
 }

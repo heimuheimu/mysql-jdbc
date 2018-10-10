@@ -25,6 +25,8 @@
 package com.heimuheimu.mysql.jdbc;
 
 import com.heimuheimu.mysql.jdbc.packet.CharsetMappingUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
 
@@ -36,6 +38,8 @@ import java.nio.charset.Charset;
  * @author heimuheimu
  */
 public class ConnectionInfo {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionInfo.class);
 
     /**
      * 当前 Mysql 连接 ID
@@ -46,6 +50,21 @@ public class ConnectionInfo {
      * Mysql 服务端版本号
      */
     private final String serverVersion;
+
+    /**
+     * 主版本号
+     */
+    private final int majorVersionNumber;
+
+    /**
+     * 副版本号
+     */
+    private final int minorVersionNumber;
+
+    /**
+     * 小版本号
+     */
+    private final int subMinorVersionNumber;
 
     /**
      * Mysql 服务端默认字符集编码 ID，ID 对应的编码可通过数据库表 "information_schema.collations" 进行查询
@@ -99,6 +118,11 @@ public class ConnectionInfo {
         this.characterId = characterId;
         this.capabilitiesFlags = capabilitiesFlags;
         this.databaseName = databaseName;
+
+        int[] versionNumbers = parseServerVersion(serverVersion);
+        this.majorVersionNumber = versionNumbers[0];
+        this.minorVersionNumber = versionNumbers[1];
+        this.subMinorVersionNumber = versionNumbers[2];
     }
 
     /**
@@ -117,6 +141,33 @@ public class ConnectionInfo {
      */
     public String getServerVersion() {
         return serverVersion;
+    }
+
+    /**
+     * 获得主版本号。
+     *
+     * @return 主版本号
+     */
+    public int getMajorVersionNumber() {
+        return majorVersionNumber;
+    }
+
+    /**
+     * 获得副版本号。
+     *
+     * @return 副版本号
+     */
+    public int getMinorVersionNumber() {
+        return minorVersionNumber;
+    }
+
+    /**
+     * 获得小版本号。
+     *
+     * @return 小版本号
+     */
+    public int getSubMinorVersionNumber() {
+        return subMinorVersionNumber;
     }
 
     /**
@@ -182,16 +233,78 @@ public class ConnectionInfo {
         return databaseName;
     }
 
+    /**
+     * 判断当前 Mysql 服务端版本号是否满足指定的最小版本号要求。
+     *
+     * @param majorVersion 最小主版本号
+     * @param minorVersion 最小副版本号
+     * @param subMinorVersion 最小小版本号
+     * @return 是否满足指定的最小版本号要求
+     */
+    public boolean versionMeetsMinimum(int majorVersion, int minorVersion, int subMinorVersion) {
+        if (this.majorVersionNumber > majorVersion) {
+            return true;
+        } else if (this.majorVersionNumber == majorVersion) {
+            if (this.minorVersionNumber > minorVersion) {
+                return true;
+            } else if (this.minorVersionNumber == minorVersion) {
+                return this.subMinorVersionNumber >= subMinorVersion;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 将 Mysql 服务端版本号解析为各版本号数字后，以数组形式返回。
+     *
+     * @param serverVersion Mysql 服务端版本号
+     * @return 各版本号数字数组
+     */
+    private int[] parseServerVersion(String serverVersion) {
+        int majorVersionNumber = 0;
+        int minorVersionNumber = 0;
+        int subMinorVersionNumber = 0;
+        try {
+            int pointIndex = serverVersion.indexOf('.');
+            if (pointIndex > 0) {
+                majorVersionNumber = Integer.parseInt(serverVersion.substring(0, pointIndex));
+                String remainingServerVersion = serverVersion.substring(pointIndex + 1);
+                pointIndex = remainingServerVersion.indexOf('.');
+                if (pointIndex > 0) {
+                    minorVersionNumber = Integer.parseInt(remainingServerVersion.substring(0, pointIndex));
+                    remainingServerVersion = remainingServerVersion.substring(pointIndex + 1);
+
+                    int digitLength = 0;
+                    while (digitLength < remainingServerVersion.length()) {
+                        if ((remainingServerVersion.charAt(digitLength) < '0') || (remainingServerVersion.charAt(digitLength) > '9')) {
+                            break;
+                        }
+
+                        digitLength++;
+                    }
+                    if (digitLength > 0) {
+                        subMinorVersionNumber = Integer.parseInt(remainingServerVersion.substring(0, digitLength));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error("Parse server version failed. `serverVersion`: `" + serverVersion + "`.", e);
+        }
+        return new int[]{majorVersionNumber, minorVersionNumber, subMinorVersionNumber};
+    }
+
     @Override
     public String toString() {
         return "ConnectionInfo{" +
                 "connectionId=" + connectionId +
                 ", serverVersion='" + serverVersion + '\'' +
+                ", majorVersionNumber=" + majorVersionNumber +
+                ", minorVersionNumber=" + minorVersionNumber +
+                ", subMinorVersionNumber=" + subMinorVersionNumber +
                 ", serverCharacterId=" + serverCharacterId +
                 ", serverCapabilitiesFlags=" + serverCapabilitiesFlags +
                 ", serverStatusFlags=" + serverStatusFlags +
                 ", characterId=" + characterId +
-                ", javaCharset='" + getJavaCharset() + '\'' +
                 ", capabilitiesFlags=" + capabilitiesFlags +
                 ", databaseName='" + databaseName + '\'' +
                 '}';

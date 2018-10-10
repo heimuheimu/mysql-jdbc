@@ -85,6 +85,11 @@ public class TextStatement implements Statement {
     protected final ExecutionMonitor executionMonitor;
 
     /**
+     * SQL 查询结果，如果执行的是非查询语句，则为 {@code null}
+     */
+    protected volatile ReadonlyTextResultSet resultSet = null;
+
+    /**
      * 执行 Mysql 命令过慢最小时间，单位：纳秒，不能小于等于 0，执行 Mysql 命令时间大于该值时，将进行慢执行日志打印
      */
     private final long slowExecutionThreshold;
@@ -103,11 +108,6 @@ public class TextStatement implements Statement {
      * 最后插入的主键 ID，如果执行的是查询语句，则为 -1
      */
     private volatile long lastInsertId = -1;
-
-    /**
-     * SQL 查询结果，如果执行的是非查询语句，则为 {@code null}
-     */
-    private volatile ReadonlyTextResultSet resultSet = null;
 
     /**
      * 获取行数据顺序
