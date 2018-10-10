@@ -48,5 +48,5 @@ public class DriverVersion {
     /**
      * Mysql 数据库驱动副版本号
      */
-    public final static int DRIVER_MINOR_VERSION = 1;
+    public final static int DRIVER_MINOR_VERSION = 0;
 }
