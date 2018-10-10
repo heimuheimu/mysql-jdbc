@@ -181,6 +181,7 @@ public class TextStatement implements Statement {
         } else if (queryMillisecondsTimeout == 0) {
             this.queryMillisecondsTimeout = Long.MAX_VALUE;
         } else {
+            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
             String errorMessage = "Set query timeout failed: `could not less than zero`. invalidQueryTimeout: `"
                     + queryMillisecondsTimeout + "ms`. Connection info: `" + connectionInfo + "`. Host: `"
                     + mysqlChannel.getConnectionConfiguration().getHost() + "`.";

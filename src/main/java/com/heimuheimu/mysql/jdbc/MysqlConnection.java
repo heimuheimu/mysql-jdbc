@@ -170,6 +170,7 @@ public class MysqlConnection implements Connection {
     public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
         checkClosed("createStatement(int resultSetType, int resultSetConcurrency)");
         if (resultSetType != ResultSet.TYPE_SCROLL_INSENSITIVE || resultSetConcurrency != ResultSet.CONCUR_READ_ONLY) {
+            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
             Map<String, Object> parameterMap = new LinkedHashMap<>();
             parameterMap.put("resultSetType", resultSetType);
             parameterMap.put("resultSetConcurrency", resultSetConcurrency);
@@ -200,6 +201,7 @@ public class MysqlConnection implements Connection {
     public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         checkClosed("prepareStatement(String sql, int resultSetType, int resultSetConcurrency)");
         if (resultSetType != ResultSet.TYPE_SCROLL_INSENSITIVE || resultSetConcurrency != ResultSet.CONCUR_READ_ONLY) {
+            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
             Map<String, Object> parameterMap = new LinkedHashMap<>();
             parameterMap.put("resultSetType", resultSetType);
             parameterMap.put("resultSetConcurrency", resultSetConcurrency);
@@ -221,12 +223,22 @@ public class MysqlConnection implements Connection {
     @Override
     public void setReadOnly(boolean readOnly) throws SQLException {
         checkClosed("setReadOnly(boolean readOnly)");
-        boolean isReadOnly = isReadOnly();
-        if (isReadOnly != readOnly) {
-            if (true) { // 大于 5.6.5
-
-            } else {
-
+        boolean currentIsReadOnly = isReadOnly();
+        if (readOnly != currentIsReadOnly) {
+            if (mysqlChannel.getConnectionInfo().versionMeetsMinimum(5, 6, 5)) {
+                if (readOnly) {
+                    executeSql("SET TRANSACTION READ ONLY");
+                } else {
+                    executeSql("SET TRANSACTION READ WRITE");
+                }
+            } else { // Mysql 版本小于 5.6.5 不支持 ReadOnly 设置
+                if (readOnly) {
+                    executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
+                    String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#setReadOnly(boolean readOnly)",
+                            "mysql version too low, minimal version: 5.6.5", getCommonParameterMap());
+                    LOG.error(errorMessage);
+                    throw new SQLException(errorMessage);
+                }
             }
         }
     }
@@ -240,8 +252,8 @@ public class MysqlConnection implements Connection {
     @Override
     public void setAutoCommit(boolean autoCommit) throws SQLException {
         checkClosed("setAutoCommit(boolean autoCommit)");
-        boolean isAutoCommit = getAutoCommit();
-        if (autoCommit != isAutoCommit) {
+        boolean currentIsAutoCommit = getAutoCommit();
+        if (autoCommit != currentIsAutoCommit) {
             if (autoCommit) {
                 executeSql("SET autocommit=1");
             } else {
@@ -489,6 +501,7 @@ public class MysqlConnection implements Connection {
      */
     private void checkClosed(String methodName) throws SQLException {
         if (isClosed()) {
+            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_ILLEGAL_STATE);
             Map<String, Object> parameterMap = getCommonParameterMap();
             String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#" + methodName,
                     "Mysql connection is closed", parameterMap);
