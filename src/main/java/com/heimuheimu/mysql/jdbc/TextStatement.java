@@ -235,7 +235,8 @@ public class TextStatement implements Statement {
                 mysqlConnection.setLastServerStatusInfo(sqlCommand.getServerStatusInfo());
                 if (MYSQL_EXECUTION_DEBUG_LOG.isDebugEnabled()) {
                     MYSQL_EXECUTION_DEBUG_LOG.debug("[{}] {}\n\r{}\n\rAffected rows: {}. Last insert id: {}.", mysqlConnection.getSchema(),
-                            sql, sqlCommand.getServerStatusInfo(), affectedRows, lastInsertId);
+                            sql.replace('\n', ' ').replace('\r', ' '),
+                            sqlCommand.getServerStatusInfo(), affectedRows, lastInsertId);
                 }
                 return false;
             }
@@ -267,9 +268,9 @@ public class TextStatement implements Statement {
         } finally {
             long executedNanoTime = System.nanoTime() - startTime;
             if (executedNanoTime > slowExecutionThreshold) {
-                MYSQL_SLOW_EXECUTION_LOG.info("`Cost`:`{}ns ({}ms)`. `Sql`:`{}`. `Database`:`{}`. `Host`:`{}`.", executedNanoTime,
+                MYSQL_SLOW_EXECUTION_LOG.info("`Cost`:`{}ns ({}ms)`. `Sql`:`{}`. `Database`:`{}`. `Host`:`{}`. `{}`.", executedNanoTime,
                         TimeUnit.MILLISECONDS.convert(executedNanoTime, TimeUnit.NANOSECONDS), sql, mysqlConnection.getSchema(),
-                        mysqlChannel.getConnectionConfiguration().getHost());
+                        mysqlChannel.getConnectionConfiguration().getHost(), mysqlConnection.getLastServerStatusInfo());
             }
             executionMonitor.onExecuted(startTime);
         }
