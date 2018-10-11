@@ -89,6 +89,11 @@ public class MysqlConnection implements Connection {
     private volatile String currentDatabaseName;
 
     /**
+     * 当前连接使用的事务等级，在未实际获取前，值为 {@link Integer#MIN_VALUE}
+     */
+    private volatile int transactionIsolation = Integer.MIN_VALUE;
+
+    /**
      * 构造一个 Mysql 数据库连接。
      *
      * @param configuration 建立 Mysql 数据库连接使用的配置信息，不允许为 {@code null}
@@ -146,16 +151,27 @@ public class MysqlConnection implements Connection {
     }
 
     @Override
-    public void setSchema(String schema) throws SQLException {
-        checkClosed("setSchema(String schema)");
-        executeSql("USE " + schema);
-        this.currentDatabaseName = schema;
-    }
-
-    @Override
     public String getSchema() throws SQLException {
         checkClosed("getSchema()");
         return currentDatabaseName != null ? currentDatabaseName : "";
+    }
+
+    @Override
+    public void setSchema(String schema) throws SQLException {
+        checkClosed("setSchema(String schema)");
+        try {
+            createStatement().execute("USE " + schema);
+            this.currentDatabaseName = schema;
+        } catch (Exception e) {
+            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
+            Map<String, Object> parameterMap = new LinkedHashMap<>();
+            parameterMap.put("schema", schema);
+            parameterMap.putAll(getCommonParameterMap());
+            String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#setSchema(String schema)",
+                    "unexpected error", parameterMap);
+            LOG.error(errorMessage, e);
+            throw new SQLException(errorMessage, e);
+        }
     }
 
     @Override
@@ -221,24 +237,31 @@ public class MysqlConnection implements Connection {
     }
 
     @Override
-    public void setReadOnly(boolean readOnly) throws SQLException {
-        checkClosed("setReadOnly(boolean readOnly)");
-        boolean currentIsReadOnly = isReadOnly();
-        if (readOnly != currentIsReadOnly) {
-            if (mysqlChannel.getConnectionInfo().versionMeetsMinimum(5, 6, 5)) {
-                if (readOnly) {
-                    executeSql("SET TRANSACTION READ ONLY");
+    public boolean getAutoCommit() throws SQLException {
+        checkClosed("getAutoCommit()");
+        return lastServerStatusInfo.isAutoCommit();
+    }
+
+    @Override
+    public void setAutoCommit(boolean autoCommit) throws SQLException {
+        checkClosed("setAutoCommit(boolean autoCommit)");
+        boolean currentIsAutoCommit = getAutoCommit();
+        if (autoCommit != currentIsAutoCommit) {
+            try {
+                if (autoCommit) {
+                    createStatement().execute("SET autocommit=1");
                 } else {
-                    executeSql("SET TRANSACTION READ WRITE");
+                    createStatement().execute("SET autocommit=0");
                 }
-            } else { // Mysql 版本小于 5.6.5 不支持 ReadOnly 设置
-                if (readOnly) {
-                    executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
-                    String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#setReadOnly(boolean readOnly)",
-                            "mysql version too low, minimal version: 5.6.5", getCommonParameterMap());
-                    LOG.error(errorMessage);
-                    throw new SQLException(errorMessage);
-                }
+            } catch (Exception e) {
+                executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
+                Map<String, Object> parameterMap = new LinkedHashMap<>();
+                parameterMap.put("autoCommit", autoCommit);
+                parameterMap.putAll(getCommonParameterMap());
+                String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#setAutoCommit(boolean autoCommit)",
+                        "unexpected error", parameterMap);
+                LOG.error(errorMessage, e);
+                throw new SQLException(errorMessage, e);
             }
         }
     }
@@ -250,34 +273,149 @@ public class MysqlConnection implements Connection {
     }
 
     @Override
-    public void setAutoCommit(boolean autoCommit) throws SQLException {
-        checkClosed("setAutoCommit(boolean autoCommit)");
-        boolean currentIsAutoCommit = getAutoCommit();
-        if (autoCommit != currentIsAutoCommit) {
-            if (autoCommit) {
-                executeSql("SET autocommit=1");
-            } else {
-                executeSql("SET autocommit=0");
+    public void setReadOnly(boolean readOnly) throws SQLException {
+        checkClosed("setReadOnly(boolean readOnly)");
+        boolean currentIsReadOnly = isReadOnly();
+        if (readOnly != currentIsReadOnly) {
+            if (mysqlChannel.getConnectionInfo().versionMeetsMinimum(5, 6, 5)) {
+                try {
+                    if (readOnly) {
+                        createStatement().execute("SET SESSION TRANSACTION READ ONLY");
+                    } else {
+                        createStatement().execute("SET SESSION TRANSACTION READ WRITE");
+                    }
+                } catch (Exception e) {
+                    executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
+                    Map<String, Object> parameterMap = new LinkedHashMap<>();
+                    parameterMap.put("readOnly", readOnly);
+                    parameterMap.putAll(getCommonParameterMap());
+                    String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#setReadOnly(boolean readOnly)",
+                            "unexpected error", parameterMap);
+                    LOG.error(errorMessage, e);
+                    throw new SQLException(errorMessage, e);
+                }
+            } else { // Mysql 版本小于 5.6.5 不支持 ReadOnly 设置
+                if (readOnly) {
+                    executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
+                    Map<String, Object> parameterMap = new LinkedHashMap<>();
+                    parameterMap.put("readOnly", readOnly);
+                    parameterMap.putAll(getCommonParameterMap());
+                    String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#setReadOnly(boolean readOnly)",
+                            "mysql version too low, minimal version: 5.6.5", parameterMap);
+                    LOG.error(errorMessage);
+                    throw new SQLException(errorMessage);
+                }
             }
         }
     }
 
     @Override
-    public boolean getAutoCommit() throws SQLException {
-        checkClosed("getAutoCommit()");
-        return lastServerStatusInfo.isAutoCommit();
+    public int getTransactionIsolation() throws SQLException {
+        checkClosed("getTransactionIsolation()");
+        if (transactionIsolation == Integer.MIN_VALUE) {
+            ConnectionInfo connection = mysqlChannel.getConnectionInfo();
+            String variableName;
+            if (connection.versionMeetsMinimum(8, 0 ,3) ||
+                    (connection.versionMeetsMinimum(5, 7, 20)
+                            && !connection.versionMeetsMinimum(8, 0, 0))) {
+                variableName = "@@session.transaction_isolation";
+            } else {
+                variableName = "@@session.tx_isolation";
+            }
+            String transactionIsolationName = "";
+            try {
+                ResultSet resultSet = createStatement().executeQuery("SELECT " + variableName);
+                while (resultSet.next()) {
+                    transactionIsolationName = resultSet.getString(1);
+                    break;
+                }
+            } catch (Exception e) {
+                executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
+                String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#getTransactionIsolation()",
+                        "unexpected error", getCommonParameterMap());
+                LOG.error(errorMessage, e);
+                throw new SQLException(errorMessage, e);
+            }
+            switch (transactionIsolationName) {
+                case "READ-UNCOMMITED":
+                case "READ-UNCOMMITTED":
+                    transactionIsolation = TRANSACTION_READ_UNCOMMITTED;
+                    break;
+                case "READ-COMMITTED":
+                    transactionIsolation = TRANSACTION_READ_COMMITTED;
+                    break;
+                case "REPEATABLE-READ":
+                    transactionIsolation = TRANSACTION_REPEATABLE_READ;
+                    break;
+                case "SERIALIZABLE":
+                    transactionIsolation = TRANSACTION_SERIALIZABLE;
+                    break;
+                default:
+                    executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
+                    String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#getTransactionIsolation()",
+                            "Could not map transaction isolation '" + transactionIsolationName + "' to a valid JDBC level", getCommonParameterMap());
+                    LOG.error(errorMessage);
+                    throw new SQLException(errorMessage);
+            }
+        }
+        return transactionIsolation;
+    }
+
+    @Override
+    public void setTransactionIsolation(int level) throws SQLException {
+        if (level != transactionIsolation) {
+            String sql;
+            switch (level) {
+                case TRANSACTION_READ_COMMITTED:
+                    sql = "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED";
+                    break;
+                case TRANSACTION_READ_UNCOMMITTED:
+                    sql = "SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED";
+                    break;
+                case TRANSACTION_REPEATABLE_READ:
+                    sql = "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ";
+                    break;
+                case TRANSACTION_SERIALIZABLE:
+                    sql = "SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE";
+                    break;
+                default:
+                    executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
+                    Map<String, Object> parameterMap = new LinkedHashMap<>();
+                    parameterMap.put("level", level);
+                    parameterMap.putAll(getCommonParameterMap());
+                    String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#setTransactionIsolation(int level)",
+                            "unsupported transaction isolation level '" + level + "'", parameterMap);
+                    LOG.error(errorMessage);
+                    throw new SQLException(errorMessage);
+            }
+            try {
+                createStatement().execute(sql);
+            } catch (Exception e) {
+                transactionIsolation = Integer.MIN_VALUE; // 无法完全确定当前连接事务等级，将本地的事务等级设置为未初始化状态
+                executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
+                Map<String, Object> parameterMap = new LinkedHashMap<>();
+                parameterMap.put("level", level);
+                parameterMap.put("sql", sql);
+                parameterMap.putAll(getCommonParameterMap());
+                String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#setTransactionIsolation(int level)",
+                        "unexpected error", parameterMap);
+                LOG.error(errorMessage, e);
+                throw new SQLException(errorMessage, e);
+            }
+            this.transactionIsolation = level;
+        }
     }
 
     @Override
     public void commit() throws SQLException {
         checkClosed("commit()");
-        executeSql("COMMIT");
+        createStatement().execute("COMMIT");
     }
 
     @Override
     public void rollback() throws SQLException {
         checkClosed("rollback()");
-        executeSql("ROLLBACK");
+        createStatement().execute("ROLLBACK");
     }
 
     @Override
@@ -303,16 +441,6 @@ public class MysqlConnection implements Connection {
     @Override
     public String getCatalog() throws SQLException {
         return "def";
-    }
-
-    @Override
-    public void setTransactionIsolation(int level) throws SQLException {
-
-    }
-
-    @Override
-    public int getTransactionIsolation() throws SQLException {
-        return 0;
     }
 
     @Override
@@ -459,11 +587,6 @@ public class MysqlConnection implements Connection {
     @Override
     public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         throw SQLFeatureNotSupportedExceptionBuilder.build("MysqlConnection#prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability)");
-    }
-
-    private void executeSql(String sql) throws SQLException {
-        Statement statement = createStatement();
-        statement.execute(sql);
     }
 
     /**

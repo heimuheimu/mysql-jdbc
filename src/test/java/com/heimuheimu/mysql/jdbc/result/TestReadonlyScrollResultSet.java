@@ -22,9 +22,8 @@
  * SOFTWARE.
  */
 
-package com.heimuheimu.mysql.jdbc;
+package com.heimuheimu.mysql.jdbc.result;
 
-import com.heimuheimu.mysql.jdbc.result.ReadonlyScrollResultSet;
 import org.junit.Assert;
 import org.junit.Test;
 

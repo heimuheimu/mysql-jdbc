@@ -22,13 +22,12 @@
  * SOFTWARE.
  */
 
-package com.heimuheimu.mysql.jdbc.packet;
+package com.heimuheimu.mysql.jdbc;
 
-import com.heimuheimu.mysql.jdbc.ConnectionConfiguration;
-import com.heimuheimu.mysql.jdbc.DatabaseInfoProvider;
-import com.heimuheimu.mysql.jdbc.MysqlConnection;
+import com.heimuheimu.mysql.jdbc.packet.ColumnTypeMappingUtil;
 import org.junit.*;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +58,7 @@ public class TestMysqlConnection {
             String password = databaseInfo.get("password");
             ConnectionConfiguration connectionConfiguration = new ConnectionConfiguration(host, databaseName, username, password,
                     45, 0, 30, null);
-            MysqlConnection connection = new MysqlConnection(connectionConfiguration, 5000, 200, null);
+            MysqlConnection connection = new MysqlConnection(connectionConfiguration, 5000, 5, null);
             MYSQL_CONNECTION_LIST.add(connection);
         }
     }
@@ -75,6 +74,7 @@ public class TestMysqlConnection {
     public void testAutoCommit() throws SQLException {
         for (MysqlConnection connection : MYSQL_CONNECTION_LIST) {
             connection.setNetworkTimeout(null, 5000);
+            connection.setAutoCommit(true);
             Assert.assertTrue(connection.getAutoCommit());
             connection.setAutoCommit(false);
             Assert.assertFalse(connection.getAutoCommit());
@@ -82,6 +82,34 @@ public class TestMysqlConnection {
             Assert.assertFalse(connection.getAutoCommit());
             connection.setAutoCommit(true);
             Assert.assertTrue(connection.getAutoCommit());
+        }
+    }
+
+    public void testReadOnly() throws SQLException {
+        for (MysqlConnection connection : MYSQL_CONNECTION_LIST) {
+            connection.setNetworkTimeout(null, 5000);
+            connection.setReadOnly(false);
+            Assert.assertFalse(connection.isReadOnly());
+            connection.setReadOnly(true);
+            Assert.assertTrue(connection.isReadOnly());
+        }
+    }
+
+    @Test
+    public void testTransactionIsolation() throws SQLException {
+        for (MysqlConnection connection : MYSQL_CONNECTION_LIST) {
+            connection.setNetworkTimeout(null, 5000);
+            connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+            Assert.assertTrue(connection.getTransactionIsolation() == Connection.TRANSACTION_READ_COMMITTED);
+
+            connection.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+            Assert.assertTrue(connection.getTransactionIsolation() == Connection.TRANSACTION_READ_UNCOMMITTED);
+
+            connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
+            Assert.assertTrue(connection.getTransactionIsolation() == Connection.TRANSACTION_REPEATABLE_READ);
+
+            connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+            Assert.assertTrue(connection.getTransactionIsolation() == Connection.TRANSACTION_SERIALIZABLE);
         }
     }
 }
