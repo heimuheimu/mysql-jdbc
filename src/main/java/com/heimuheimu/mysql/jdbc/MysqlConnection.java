@@ -41,6 +41,7 @@ import java.sql.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
@@ -363,6 +364,7 @@ public class MysqlConnection implements Connection {
 
     @Override
     public void setTransactionIsolation(int level) throws SQLException {
+        checkClosed("setTransactionIsolation(int level)");
         if (level != transactionIsolation) {
             String sql;
             switch (level) {
@@ -407,15 +409,143 @@ public class MysqlConnection implements Connection {
     }
 
     @Override
+    public Savepoint setSavepoint() throws SQLException {
+        String randomSavepointName = UUID.randomUUID().toString().replace("-", "");
+        return setSavepoint(randomSavepointName);
+    }
+
+    @Override
+    public Savepoint setSavepoint(String name) throws SQLException {
+        String methodName = "setSavepoint(String name)";
+        checkClosed(methodName);
+        Savepoint savepoint = new MysqlSavepoint(name);
+        checkSavepointName(methodName, savepoint);
+        checkInAutoCommitMode(methodName, name);
+        try {
+            createStatement().execute("SAVEPOINT `" + name + "`");
+            return savepoint;
+        } catch (Exception e) {
+            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
+            Map<String, Object> parameterMap = new LinkedHashMap<>();
+            parameterMap.put("savepointName", name);
+            parameterMap.putAll(getCommonParameterMap());
+            String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#setSavepoint(String name)",
+                    "unexpected error", parameterMap);
+            LOG.error(errorMessage, e);
+            throw new SQLException(errorMessage, e);
+        }
+    }
+
+    @Override
+    public void rollback(Savepoint savepoint) throws SQLException {
+        String methodName = "rollback(Savepoint savepoint)";
+        checkClosed(methodName);
+        checkSavepointName(methodName, savepoint);
+        checkInAutoCommitMode(methodName, savepoint.getSavepointName());
+        try {
+            createStatement().execute("ROLLBACK TO SAVEPOINT `" + savepoint.getSavepointName() + "`");
+        } catch (Exception e) {
+            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
+            Map<String, Object> parameterMap = new LinkedHashMap<>();
+            parameterMap.put("savepointName", savepoint.getSavepointName());
+            parameterMap.putAll(getCommonParameterMap());
+            String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#rollback(Savepoint savepoint)",
+                    "unexpected error", parameterMap);
+            LOG.error(errorMessage, e);
+            throw new SQLException(errorMessage, e);
+        }
+    }
+
+    @Override
+    public void releaseSavepoint(Savepoint savepoint) throws SQLException {
+        String methodName = "releaseSavepoint(Savepoint savepoint)";
+        checkClosed(methodName);
+        checkSavepointName(methodName, savepoint);
+        checkInAutoCommitMode(methodName, savepoint.getSavepointName());
+        try {
+            createStatement().execute("RELEASE SAVEPOINT `" + savepoint.getSavepointName() + "`");
+        } catch (Exception e) {
+            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
+            Map<String, Object> parameterMap = new LinkedHashMap<>();
+            parameterMap.put("savepointName", savepoint.getSavepointName());
+            parameterMap.putAll(getCommonParameterMap());
+            String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#releaseSavepoint(Savepoint savepoint)",
+                    "unexpected error", parameterMap);
+            LOG.error(errorMessage, e);
+            throw new SQLException(errorMessage, e);
+        }
+    }
+
+    /**
+     * 检查 Savepoint 名称，如果为 {@code null} 或空，将会抛出 {@link SQLException} 异常。
+     *
+     * @param methodName 方法名称
+     * @param savepoint Savepoint 实例
+     * @throws SQLException 如果 Savepoint 名称为 {@code null} 或空，将会抛出此异常
+     */
+    private void checkSavepointName(String methodName, Savepoint savepoint) throws SQLException {
+        String savepointName = null;
+        if (savepoint != null) {
+            savepointName = savepoint.getSavepointName();
+        }
+        if (savepointName == null || savepointName.isEmpty()) {
+            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
+            Map<String, Object> parameterMap = new LinkedHashMap<>();
+            parameterMap.put("savepointName", savepointName);
+            parameterMap.putAll(getCommonParameterMap());
+            String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#" + methodName,
+                    "savepoint name could not be empty", parameterMap);
+            LOG.error(errorMessage);
+            throw new SQLException(errorMessage);
+        }
+    }
+
+    /**
+     * 检查当前连接是否处于 auto-commit 模式，如果是，将会抛出 {@link SQLException} 异常。
+     *
+     * @param methodName 方法名称
+     * @param savepointName Savepoint 名称
+     * @throws SQLException 如果当前连接处于 auto-commit 模式，将会抛出此异常
+     */
+    private void checkInAutoCommitMode(String methodName, String savepointName) throws SQLException {
+        if (lastServerStatusInfo.isAutoCommit()) {
+            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
+            Map<String, Object> parameterMap = new LinkedHashMap<>();
+            parameterMap.put("savepointName", savepointName);
+            parameterMap.putAll(getCommonParameterMap());
+            String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#" + methodName,
+                    "connection object is currently in auto-commit mode", parameterMap);
+            LOG.error(errorMessage);
+            throw new SQLException(errorMessage);
+        }
+    }
+
+    @Override
     public void commit() throws SQLException {
         checkClosed("commit()");
-        createStatement().execute("COMMIT");
+        try {
+            createStatement().execute("COMMIT");
+        } catch (Exception e) {
+            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
+            String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#commit()",
+                    "unexpected error", getCommonParameterMap());
+            LOG.error(errorMessage, e);
+            throw new SQLException(errorMessage, e);
+        }
     }
 
     @Override
     public void rollback() throws SQLException {
         checkClosed("rollback()");
-        createStatement().execute("ROLLBACK");
+        try {
+            createStatement().execute("ROLLBACK");
+        } catch (Exception e) {
+            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
+            String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#rollback()",
+                    "unexpected error", getCommonParameterMap());
+            LOG.error(errorMessage, e);
+            throw new SQLException(errorMessage, e);
+        }
     }
 
     @Override
@@ -450,47 +580,17 @@ public class MysqlConnection implements Connection {
 
     @Override
     public void clearWarnings() throws SQLException {
-
-    }
-
-    @Override
-    public Map<String, Class<?>> getTypeMap() throws SQLException {
-        return null;
-    }
-
-    @Override
-    public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
-
-    }
-
-    @Override
-    public Savepoint setSavepoint() throws SQLException {
-        return null;
-    }
-
-    @Override
-    public Savepoint setSavepoint(String name) throws SQLException {
-        return null;
-    }
-
-    @Override
-    public void rollback(Savepoint savepoint) throws SQLException {
-
-    }
-
-    @Override
-    public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-
+        // this is a no-op
     }
 
     @Override
     public void setClientInfo(String name, String value) throws SQLClientInfoException {
-
+        // this is a no-op
     }
 
     @Override
     public void setClientInfo(Properties properties) throws SQLClientInfoException {
-
+        // this is a no-op
     }
 
     @Override
@@ -512,6 +612,63 @@ public class MysqlConnection implements Connection {
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         return MysqlConnection.class == iface;
+    }
+
+    /**
+     * 获得当前连接使用的与 Mysql 服务进行数据交互的管道。
+     *
+     * @return 与 Mysql 服务进行数据交互的管道
+     */
+    public MysqlChannel getMysqlChannel() {
+        return mysqlChannel;
+    }
+
+    /**
+     * 获得当前连接最新的 Mysql 服务端状态信息。
+     *
+     * @return 当前连接最新的 Mysql 服务端状态信息
+     */
+    public MysqlServerStatusInfo getLastServerStatusInfo() {
+        return lastServerStatusInfo;
+    }
+
+    /**
+     * 设置当前连接最新的 Mysql 服务端状态信息。
+     *
+     * @param lastServerStatusInfo
+     */
+    public void setLastServerStatusInfo(MysqlServerStatusInfo lastServerStatusInfo) {
+        this.lastServerStatusInfo = lastServerStatusInfo;
+    }
+
+    /**
+     * 检查当前 Mysql 连接是否已关闭，如果已关闭，则抛出 {@code SQLException} 异常。
+     *
+     * @param methodName 调用该检查方法的方法名
+     * @throws SQLException 如果当前 Mysql 连接已关闭，则抛出 {@code SQLException} 异常
+     */
+    private void checkClosed(String methodName) throws SQLException {
+        if (isClosed()) {
+            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_ILLEGAL_STATE);
+            Map<String, Object> parameterMap = getCommonParameterMap();
+            String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#" + methodName,
+                    "Mysql connection is closed", parameterMap);
+            LOG.error(errorMessage);
+            throw new SQLException(errorMessage);
+        }
+    }
+
+    /**
+     * 获得通用参数 {@code Map}。
+     *
+     * @return 通用参数 {@code Map}
+     */
+    private Map<String, Object> getCommonParameterMap() {
+        Map<String, Object> parameterMap = new LinkedHashMap<>();
+        parameterMap.put("timeout", timeout);
+        parameterMap.put("slowExecutionThreshold", slowExecutionThreshold);
+        parameterMap.put("mysqlChannel", mysqlChannel);
+        return parameterMap;
     }
 
     @Override
@@ -589,60 +746,13 @@ public class MysqlConnection implements Connection {
         throw SQLFeatureNotSupportedExceptionBuilder.build("MysqlConnection#prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability)");
     }
 
-    /**
-     * 获得当前连接使用的与 Mysql 服务进行数据交互的管道。
-     *
-     * @return 与 Mysql 服务进行数据交互的管道
-     */
-    public MysqlChannel getMysqlChannel() {
-        return mysqlChannel;
+    @Override
+    public Map<String, Class<?>> getTypeMap() throws SQLException {
+        throw SQLFeatureNotSupportedExceptionBuilder.build("MysqlConnection#getTypeMap()");
     }
 
-    /**
-     * 获得当前连接最新的 Mysql 服务端状态信息。
-     *
-     * @return 当前连接最新的 Mysql 服务端状态信息
-     */
-    public MysqlServerStatusInfo getLastServerStatusInfo() {
-        return lastServerStatusInfo;
-    }
-
-    /**
-     * 设置当前连接最新的 Mysql 服务端状态信息。
-     *
-     * @param lastServerStatusInfo
-     */
-    public void setLastServerStatusInfo(MysqlServerStatusInfo lastServerStatusInfo) {
-        this.lastServerStatusInfo = lastServerStatusInfo;
-    }
-
-    /**
-     * 检查当前 Mysql 连接是否已关闭，如果已关闭，则抛出 {@code SQLException} 异常。
-     *
-     * @param methodName 调用该检查方法的方法名
-     * @throws SQLException 如果当前 Mysql 连接已关闭，则抛出 {@code SQLException} 异常
-     */
-    private void checkClosed(String methodName) throws SQLException {
-        if (isClosed()) {
-            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_ILLEGAL_STATE);
-            Map<String, Object> parameterMap = getCommonParameterMap();
-            String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#" + methodName,
-                    "Mysql connection is closed", parameterMap);
-            LOG.error(errorMessage);
-            throw new SQLException(errorMessage);
-        }
-    }
-
-    /**
-     * 获得通用参数 {@code Map}。
-     *
-     * @return 通用参数 {@code Map}
-     */
-    private Map<String, Object> getCommonParameterMap() {
-        Map<String, Object> parameterMap = new LinkedHashMap<>();
-        parameterMap.put("timeout", timeout);
-        parameterMap.put("slowExecutionThreshold", slowExecutionThreshold);
-        parameterMap.put("mysqlChannel", mysqlChannel);
-        return parameterMap;
+    @Override
+    public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
+        throw SQLFeatureNotSupportedExceptionBuilder.build("MysqlConnection#setTypeMap(Map<String, Class<?>> map)");
     }
 }
