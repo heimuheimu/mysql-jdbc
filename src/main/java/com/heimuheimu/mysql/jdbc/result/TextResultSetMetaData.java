@@ -225,6 +225,7 @@ public class TextResultSetMetaData implements ResultSetMetaData {
         return getJavaType(column).getName();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
         return (T) this;

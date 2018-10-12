@@ -475,6 +475,7 @@ public class AutoGenerateKeysResultSet extends ReadonlyScrollResultSet {
         return false;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
         return (T) this;

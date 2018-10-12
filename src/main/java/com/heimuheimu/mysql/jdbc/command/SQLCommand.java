@@ -174,7 +174,7 @@ public class SQLCommand extends AbstractCommand {
 
     @Override
     protected boolean isLastPacket(MysqlPacket responsePacket) throws IllegalStateException {
-        if (responsePacket.getPayload()[0] == 0xFB) {
+        if ((responsePacket.getPayload()[0] & 0xFF) == 0xFB) {
             throw new IllegalStateException("Receive response packet for `SQLCommand` failed: `LOCAL INFILE Request is not supported`. Sql: `" +
                     sql + "`. ConnectionInfo:`" + connectionInfo + "`. Invalid response packet:`" + responsePacket + "`.");
         }

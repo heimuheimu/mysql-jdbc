@@ -54,9 +54,14 @@ public class ExecutionMonitorFactory {
     public static final int ERROR_CODE_INVALID_PARAMETER = -4;
 
     /**
+     * Mysql 命令执行错误码：查询结果集 {@code ResultSet} 操作错误
+     */
+    public static final int ERROR_CODE_RESULTSET_ERROR = -5;
+
+    /**
      * Mysql 命令执行错误码：预期外异常
      */
-    public static final int ERROR_CODE_UNEXPECTED_ERROR = -5;
+    public static final int ERROR_CODE_UNEXPECTED_ERROR = -6;
 
     private ExecutionMonitorFactory() {
         // private constructor

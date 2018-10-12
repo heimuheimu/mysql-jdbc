@@ -85,7 +85,7 @@ public class HandshakeResponse41Packet {
     /**
      * Mysql 客户端属性键值对 Map，Key 为属性名称，Value 为属性值
      */
-    private LinkedHashMap<String, String> clientConnectionAttributeMap = new LinkedHashMap<>();
+    private final LinkedHashMap<String, String> clientConnectionAttributeMap = new LinkedHashMap<>();
 
     /**
      * 获得 Mysql 客户端可使用的特性数值。
@@ -327,8 +327,7 @@ public class HandshakeResponse41Packet {
                 CapabilitiesFlagsUtil.INDEX_CLIENT_PLUGIN_AUTH)) {
             handshakeResponse41Packet.writeNullTerminatedString(authPluginNameBytes);
         }
-        if (CapabilitiesFlagsUtil.isCapabilityEnabled(capabilitiesFlags,
-                CapabilitiesFlagsUtil.INDEX_CLIENT_CONNECT_ATTRS)) {
+        if (clientConnectionAttributeBytes != null) {
             handshakeResponse41Packet.writeLengthEncodedInteger(bytesLengthOfAllAttributes);
             for (int i = 0; i < clientConnectionAttributeBytes.length; i++) {
                 handshakeResponse41Packet.writeLengthEncodedString(clientConnectionAttributeBytes[i]);

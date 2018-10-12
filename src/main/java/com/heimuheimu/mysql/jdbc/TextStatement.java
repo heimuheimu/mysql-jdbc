@@ -206,7 +206,7 @@ public class TextStatement implements Statement {
                 throw new SQLException(errorMessage, errorPacket.getSqlState(), errorPacket.getErrorCode());
             }
             if (sqlCommand.hasTextResultSet()) {
-                resultSet = new ReadonlyTextResultSet(mysqlPacketList, connectionInfo, this);
+                resultSet = new ReadonlyTextResultSet(mysqlPacketList, connectionInfo, this, executionMonitor);
                 if (fetchDirection != ResultSet.FETCH_FORWARD) {
                     resultSet.setFetchDirection(fetchDirection);
                 }
@@ -364,7 +364,7 @@ public class TextStatement implements Statement {
 
     @Override
     public void setEscapeProcessing(boolean enable) throws SQLException {
-        // do nothing
+        // this is a no-op
     }
 
     @Override
@@ -374,12 +374,12 @@ public class TextStatement implements Statement {
 
     @Override
     public void clearWarnings() throws SQLException {
-        // do nothing
+        // this is a no-op
     }
 
     @Override
     public void setCursorName(String name) throws SQLException {
-        // do nothing
+        // this is a no-op
     }
 
     @Override
@@ -398,7 +398,7 @@ public class TextStatement implements Statement {
 
     @Override
     public void setFetchSize(int rows) throws SQLException {
-        // do nothing
+        // this is a no-op
     }
 
     @Override
@@ -433,7 +433,7 @@ public class TextStatement implements Statement {
 
     @Override
     public void closeOnCompletion() throws SQLException {
-        // this method has no effect
+        // this is a no-op
     }
 
     @Override
@@ -449,6 +449,17 @@ public class TextStatement implements Statement {
     @Override
     public boolean isCloseOnCompletion() throws SQLException {
         return false;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> T unwrap(Class<T> iface) throws SQLException {
+        return (T) this;
+    }
+
+    @Override
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        return TextStatement.class == iface;
     }
 
     @Override
@@ -531,16 +542,5 @@ public class TextStatement implements Statement {
     @Override
     public int getResultSetHoldability() throws SQLException {
         throw SQLFeatureNotSupportedExceptionBuilder.build("TextStatement#getResultSetHoldability()");
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T> T unwrap(Class<T> iface) throws SQLException {
-        return (T) this;
-    }
-
-    @Override
-    public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        return TextStatement.class == iface;
     }
 }

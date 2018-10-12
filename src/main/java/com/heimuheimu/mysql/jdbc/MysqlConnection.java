@@ -565,7 +565,7 @@ public class MysqlConnection implements Connection {
 
     @Override
     public void setCatalog(String catalog) throws SQLException {
-        // do nothing
+        // this is a no-op
     }
 
     @Override
@@ -635,7 +635,7 @@ public class MysqlConnection implements Connection {
     /**
      * 设置当前连接最新的 Mysql 服务端状态信息。
      *
-     * @param lastServerStatusInfo
+     * @param lastServerStatusInfo 最新的 Mysql 服务端状态信息
      */
     public void setLastServerStatusInfo(MysqlServerStatusInfo lastServerStatusInfo) {
         this.lastServerStatusInfo = lastServerStatusInfo;

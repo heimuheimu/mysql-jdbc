@@ -60,7 +60,7 @@ public class MysqlSavepoint implements Savepoint {
 
     @Override
     public int getSavepointId() throws SQLException {
-        LinkedHashMap parameterMap = new LinkedHashMap();
+        LinkedHashMap<String, Object> parameterMap = new LinkedHashMap<>();
         parameterMap.put("savepointName", savepointName);
         String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlSavepoint#getSavepointId()",
                 "this is a named savepoint", parameterMap);

@@ -26,12 +26,14 @@ package com.heimuheimu.mysql.jdbc.result;
 
 import com.heimuheimu.mysql.jdbc.ConnectionInfo;
 import com.heimuheimu.mysql.jdbc.facility.SQLFeatureNotSupportedExceptionBuilder;
+import com.heimuheimu.mysql.jdbc.monitor.ExecutionMonitorFactory;
 import com.heimuheimu.mysql.jdbc.packet.ColumnTypeMappingUtil;
 import com.heimuheimu.mysql.jdbc.packet.MysqlPacket;
 import com.heimuheimu.mysql.jdbc.packet.command.text.ColumnDefinition41ResponsePacket;
 import com.heimuheimu.mysql.jdbc.packet.command.text.TextResultsetResponsePacket;
 import com.heimuheimu.mysql.jdbc.packet.command.text.TextResultsetRowResponsePacket;
 import com.heimuheimu.mysql.jdbc.packet.generic.EOFPacket;
+import com.heimuheimu.naivemonitor.monitor.ExecutionMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,14 +86,19 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
     private final ConnectionInfo connectionInfo;
 
     /**
-     * 查询结果总行数
-     */
-    private final int rowsSize;
-
-    /**
      * SQL 语句执行器
      */
     private final Statement statement;
+
+    /**
+     * Mysql 命令执行信息监控器
+     */
+    protected final ExecutionMonitor executionMonitor;
+
+    /**
+     * 查询结果总行数
+     */
+    private final int rowsSize;
 
     /**
      * 最后被读取列的值是否为 SQL NULL
@@ -106,9 +113,11 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
      * @param statement SQL 语句执行器
      * @throws IllegalArgumentException 如果解析响应数据包时出现错误，将会抛出此异常
      */
-    public ReadonlyTextResultSet(List<MysqlPacket> mysqlPackets, ConnectionInfo connectionInfo, Statement statement) throws IllegalArgumentException {
+    public ReadonlyTextResultSet(List<MysqlPacket> mysqlPackets, ConnectionInfo connectionInfo,
+                                 Statement statement, ExecutionMonitor executionMonitor) throws IllegalArgumentException {
         this.connectionInfo = connectionInfo;
         this.statement = statement;
+        this.executionMonitor = executionMonitor;
         int i = 0;
         this.textResultsetResponsePacket = TextResultsetResponsePacket.parse(mysqlPackets.get(i++),
                 connectionInfo.getCapabilitiesFlags());
@@ -160,6 +169,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
         if (columnIndex != null) {
             return columnIndex;
         } else {
+            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_RESULTSET_ERROR);
             String errorMessage = "Get column value failed: `column is not exist in query result`. Column name: `" +
                     columnLabel + "`. Current row: " + getRow() + "`. Connection info: `" + connectionInfo + "`.";
             LOG.error(errorMessage);
@@ -289,7 +299,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
 
     @Override
     public short getShort(int columnIndex) throws SQLException {
-        return parseNumber(columnIndex, value -> Short.parseShort(value), (short) 0);
+        return parseNumber(columnIndex, Short::parseShort, (short) 0);
     }
 
     @Override
@@ -299,7 +309,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
 
     @Override
     public int getInt(int columnIndex) throws SQLException {
-        return parseNumber(columnIndex, value -> Integer.parseInt(value), 0);
+        return parseNumber(columnIndex, Integer::parseInt, 0);
     }
 
     @Override
@@ -309,7 +319,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
 
     @Override
     public long getLong(int columnIndex) throws SQLException {
-        return parseNumber(columnIndex, value -> Long.parseLong(value), 0L);
+        return parseNumber(columnIndex, Long::parseLong, 0L);
     }
 
     @Override
@@ -319,7 +329,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
 
     @Override
     public float getFloat(int columnIndex) throws SQLException {
-        return parseNumber(columnIndex, value -> Float.parseFloat(value), 0F);
+        return parseNumber(columnIndex, Float::parseFloat, 0F);
     }
 
     @Override
@@ -329,7 +339,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
 
     @Override
     public double getDouble(int columnIndex) throws SQLException {
-        return parseNumber(columnIndex, value -> Double.parseDouble(value), 0D);
+        return parseNumber(columnIndex, Double::parseDouble, 0D);
     }
 
     @Override
@@ -339,7 +349,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
 
     @Override
     public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
-        return parseNumber(columnIndex, value -> new BigDecimal(value), null);
+        return parseNumber(columnIndex, BigDecimal::new, null);
     }
 
     @Override
@@ -818,6 +828,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
         throw SQLFeatureNotSupportedExceptionBuilder.build("ReadonlyTextResultSet#getHoldability()");
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
         return (T) this;

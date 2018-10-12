@@ -58,8 +58,7 @@ public class MysqlDatabaseMetaData implements DatabaseMetaData {
     public String getURL() throws SQLException {
         ConnectionConfiguration configuration = mysqlConnection.getMysqlChannel().getConnectionConfiguration();
         String databaseName = configuration.getDatabaseName() != null ? configuration.getDatabaseName() : "";
-        String url = "jdbc:mysql://" + configuration.getHost() + "/" + databaseName;
-        return url;
+        return "jdbc:mysql://" + configuration.getHost() + "/" + databaseName;
     }
 
     @Override

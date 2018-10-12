@@ -105,12 +105,11 @@ public class HandshakeProcessor {
             throw new IOException("Connect to mysql failed: `handshake failed`. Error packet: `" + errorPacket
                     + "`. Connection config: `" + connectionConfiguration + "`.");
         } else {
-            ConnectionInfo connectionInfo = new ConnectionInfo(handshakeV10Packet.getConnectionId(),
+            return new ConnectionInfo(handshakeV10Packet.getConnectionId(),
                     handshakeV10Packet.getServerVersion(), handshakeV10Packet.getServerCharacterId(),
                     handshakeV10Packet.getCapabilitiesFlags(), handshakeV10Packet.getServerStatusFlags(),
                     handshakeResponse41Packet.getClientCharacterId(), handshakeResponse41Packet.getCapabilitiesFlags(),
                     handshakeResponse41Packet.getDatabaseName());
-            return connectionInfo;
         }
     }
 }
