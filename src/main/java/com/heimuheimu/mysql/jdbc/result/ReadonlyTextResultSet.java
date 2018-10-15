@@ -93,7 +93,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
     /**
      * Mysql 命令执行信息监控器
      */
-    protected final ExecutionMonitor executionMonitor;
+    private final ExecutionMonitor executionMonitor;
 
     /**
      * 查询结果总行数
@@ -188,6 +188,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
                 try {
                     return converter.apply(columnValue);
                 } catch (Exception e) {
+                    executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_RESULTSET_ERROR);
                     ColumnDefinition41ResponsePacket columnDefinition41ResponsePacket = null;
                     if (columnIndex < columnDefinition41ResponsePacketList.size()) {
                         columnDefinition41ResponsePacket = columnDefinition41ResponsePacketList.get(columnIndex);
@@ -199,6 +200,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
                     throw new SQLException(errorMessage, e);
                 }
             } else {
+                executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_RESULTSET_ERROR);
                 String errorMessage = "Get column value failed: `columnIndex out of range`. Invalid column index: `" +
                         columnIndex + "`. Columns size: `" + columnValues.size() + "`. Current row: `" + currentRow
                         + "`. Rows size: `" + rowsSize + "`. Connection info: `" + connectionInfo + "`.";
@@ -206,6 +208,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
                 throw new SQLException(errorMessage);
             }
         } else {
+            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_RESULTSET_ERROR);
             String errorMessage = "Get column value failed: `invalid row`. Current row: `" + currentRow
                     + "`. Rows size: `" + rowsSize + "`. Connection info: `" + connectionInfo + "`.";
             LOG.error(errorMessage);
@@ -248,6 +251,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
             } else if (value.contains("1")) {
                 return true;
             } else {
+                executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_RESULTSET_ERROR);
                 String errorMessage = "Get column boolean value failed: `invalid value, value must contain a '0'(false) or contain a '1'(true)`. Column index: `"
                         + columnIndex + "`. Current row: `" + getRow() + "`. Invalid column value: `" + value + "`. Connection info: `"
                         + connectionInfo + "`.";
@@ -286,6 +290,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
             try {
                 return numberParser.apply(value);
             } catch (Exception e) {
+                executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_RESULTSET_ERROR);
                 String errorMessage = "Get column number value failed: `parse number error`. Column index: `" + columnIndex
                         + "`. Current row: `" + getRow() + "`. Invalid column value: `" + value + "`. Connection info: `"
                         + connectionInfo + "`.";
@@ -411,6 +416,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
                 cal.set(Calendar.MILLISECOND, 0);
                 return new Date(cal.getTimeInMillis());
             } catch (Exception e) {
+                executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_RESULTSET_ERROR);
                 String errorMessage = "Get column date value failed: `parse date error`. Column index: `" + columnIndex
                         + "`. Current row: `" + getRow() + "`. Invalid column value: `" + value + "`. Connection info: `"
                         + connectionInfo + "`.";
@@ -464,6 +470,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
                 cal.set(Calendar.MILLISECOND, millisecond);
                 return new Time(cal.getTimeInMillis());
             } catch (Exception e) {
+                executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_RESULTSET_ERROR);
                 String errorMessage = "Get column time value failed: `parse time error`. Column index: `" + columnIndex
                         + "`. Current row: `" + getRow() + "`. Invalid column value: `" + value + "`. Connection info: `"
                         + connectionInfo + "`.";
@@ -524,6 +531,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
                 cal.set(Calendar.MILLISECOND, millisecond);
                 return new Timestamp(cal.getTimeInMillis());
             } catch (Exception e) {
+                executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_RESULTSET_ERROR);
                 String errorMessage = "Get column timestamp value failed: `parse timestamp error`. Column index: `" + columnIndex
                         + "`. Current row: `" + getRow() + "`. Invalid column value: `" + value + "`. Connection info: `"
                         + connectionInfo + "`.";
@@ -608,6 +616,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
             try {
                 return new URL(value);
             } catch (Exception e) {
+                executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_RESULTSET_ERROR);
                 String errorMessage = "Get column URL value failed: `parse URL error`. Column index: `" + columnIndex
                         + "`. Current row: `" + getRow() + "`. Invalid column value: `" + value + "`. Connection info: `"
                         + connectionInfo + "`.";
@@ -632,6 +641,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
                     columnDefinition41ResponsePacket.getColumnDefinitionFlags());
             return getObject(columnIndex, javaType);
         } else {
+            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_RESULTSET_ERROR);
             String errorMessage = "Get column object value failed: `columnIndex out of range`. Invalid column index: `" +
                     columnIndex + "`. Columns size: `" + columnDefinition41ResponsePacketList.size() + "`. Current row: `" +
                     getRow() + "`. Rows size: `" + rowsSize + "`. Connection info: `" + connectionInfo + "`.";
@@ -649,6 +659,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
     @SuppressWarnings("unchecked")
     public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
         if (type == null) {
+            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_RESULTSET_ERROR);
             String errorMessage = "Get column object value failed: `type could not be null`. Column index: `" + columnIndex
                     + "`. type: `null`. Current row: `" + getRow() + "`. Connection info: `" + connectionInfo + "`.";
             LOG.error(errorMessage);
@@ -684,6 +695,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
         } else if (Byte.class == type || byte.class == type) {
             columnValue = (T) (Byte) getByte(columnIndex);
         } else {
+            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_RESULTSET_ERROR);
             String errorMessage = "Get column object value failed: `unsupported java type`. Column index: `" + columnIndex
                     + "`. type: `" + type + "`. Current row: `" + getRow() + "`. Connection info: `" + connectionInfo + "`.";
             LOG.error(errorMessage);
@@ -714,6 +726,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
             }
             return getObject(columnIndex, javaType);
         } else {
+            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_RESULTSET_ERROR);
             String errorMessage = "Get column object value failed: `columnIndex out of range`. Invalid column index: `" +
                     columnIndex + "`. Columns size: `" + columnDefinition41ResponsePacketList.size() + "`. Current row: `" +
                     getRow() + "`. Rows size: `" + rowsSize + "`. javaClassMap: `" + map + "`. Connection info: `" +
@@ -745,7 +758,18 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
 
     @Override
     public void clearWarnings() throws SQLException {
-        // do nothing
+        // this is a no-op
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> T unwrap(Class<T> iface) throws SQLException {
+        return (T) this;
+    }
+
+    @Override
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        return ReadonlyTextResultSet.class == iface;
     }
 
     @Override
@@ -826,16 +850,5 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
     @Override
     public int getHoldability() throws SQLException {
         throw SQLFeatureNotSupportedExceptionBuilder.build("ReadonlyTextResultSet#getHoldability()");
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public <T> T unwrap(Class<T> iface) throws SQLException {
-        return (T) this;
-    }
-
-    @Override
-    public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        return ReadonlyTextResultSet.class == iface;
     }
 }
