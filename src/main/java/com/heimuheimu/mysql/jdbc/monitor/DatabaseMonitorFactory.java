@@ -24,74 +24,42 @@
 
 package com.heimuheimu.mysql.jdbc.monitor;
 
-import com.heimuheimu.naivemonitor.monitor.ExecutionMonitor;
-
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Mysql 命令执行信息监控工厂类。
+ * Mysql 数据库信息监控器工厂类。
  *
  * @author heimuheimu
  */
-public class ExecutionMonitorFactory {
+public class DatabaseMonitorFactory {
 
-    /**
-     * Mysql 命令执行错误码：MYSQL 服务端执行异常
-     */
-    public static final int ERROR_CODE_MYSQL_ERROR = -1;
-
-    /**
-     * Mysql 命令执行错误码：管道或命令已关闭
-     */
-    public static final int ERROR_CODE_ILLEGAL_STATE = -2;
-
-    /**
-     * Mysql 命令执行错误码：执行超时
-     */
-    public static final int ERROR_CODE_TIMEOUT = -3;
-
-    /**
-     * Mysql 命令执行错误码：参数值设置不正确
-     */
-    public static final int ERROR_CODE_INVALID_PARAMETER = -4;
-
-    /**
-     * Mysql 命令执行错误码：查询结果集 {@code ResultSet} 操作错误
-     */
-    public static final int ERROR_CODE_RESULTSET_ERROR = -5;
-
-    /**
-     * Mysql 命令执行错误码：预期外异常
-     */
-    public static final int ERROR_CODE_UNEXPECTED_ERROR = -6;
-
-    private static final ConcurrentHashMap<String, ExecutionMonitor> MYSQL_EXECUTION_MONITOR_MAP = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, DatabaseMonitor> DATABASE_MONITOR_MAP = new ConcurrentHashMap<>();
 
     private static final Object lock = new Object();
 
-    private ExecutionMonitorFactory() {
+    private DatabaseMonitorFactory() {
         // private constructor
     }
 
     /**
-     * 根据 Mysql 连接目标地址和数据库名称获得对应的操作执行信息监控器，该方法不会返回 {@code null}。
+     * 根据 Mysql 连接目标地址和数据库名称获得对应的数据库信息监控器，该方法不会返回 {@code null}。
      *
      * @param host Mysql 连接目标地址
      * @param databaseName 数据库名称
-     * @return 数据库操作执行信息监控器，该方法不会返回 {@code null}
+     * @return 数据库信息监控器，该方法不会返回 {@code null}
      */
-    public static ExecutionMonitor get(String host, String databaseName) {
+    public static DatabaseMonitor get(String host, String databaseName) {
         String key = host;
         if (databaseName != null && !databaseName.isEmpty()) {
             key += "/" + databaseName;
         }
-        ExecutionMonitor monitor = MYSQL_EXECUTION_MONITOR_MAP.get(key);
+        DatabaseMonitor monitor = DATABASE_MONITOR_MAP.get(key);
         if (monitor == null) {
             synchronized (lock) {
-                monitor = MYSQL_EXECUTION_MONITOR_MAP.get(key);
+                monitor = DATABASE_MONITOR_MAP.get(key);
                 if (monitor == null) {
-                    monitor = new ExecutionMonitor();
-                    MYSQL_EXECUTION_MONITOR_MAP.put(key, monitor);
+                    monitor = new DatabaseMonitor();
+                    DATABASE_MONITOR_MAP.put(key, monitor);
                 }
             }
         }

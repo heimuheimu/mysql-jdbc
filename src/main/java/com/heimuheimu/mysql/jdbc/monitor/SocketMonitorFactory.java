@@ -46,19 +46,24 @@ public class SocketMonitorFactory {
     private static final Object lock = new Object();
 
     /**
-     * 根据 Socket 连接目标地址获得对应的 Socket 信息监控器，该方法不会返回 {@code null}
+     * 根据 Socket 连接目标地址获得对应的 Socket 信息监控器，该方法不会返回 {@code null}。
      *
      * @param host Socket 连接目标地址
-     * @return Socket 连接目标地址获得对应的 Socket 信息监控器，该方法不会返回 {@code null}
+     * @param databaseName 数据库名称
+     * @return Socket Socket 信息监控器，该方法不会返回 {@code null}
      */
-    public static SocketMonitor get(String host) {
-        SocketMonitor monitor = SOCKET_MONITOR_MAP.get(host);
+    public static SocketMonitor get(String host, String databaseName) {
+        String key = host;
+        if (databaseName != null && !databaseName.isEmpty()) {
+            key += "/" + databaseName;
+        }
+        SocketMonitor monitor = SOCKET_MONITOR_MAP.get(key);
         if (monitor == null) {
             synchronized (lock) {
-                monitor = SOCKET_MONITOR_MAP.get(host);
+                monitor = SOCKET_MONITOR_MAP.get(key);
                 if (monitor == null) {
-                    monitor = new SocketMonitor(host);
-                    SOCKET_MONITOR_MAP.put(host, monitor);
+                    monitor = new SocketMonitor(key);
+                    SOCKET_MONITOR_MAP.put(key, monitor);
                 }
             }
         }

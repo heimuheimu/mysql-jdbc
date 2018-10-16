@@ -121,7 +121,7 @@ public class MysqlChannel implements Closeable {
             throws NullPointerException, IllegalArgumentException, BuildSocketException {
         this.connectionConfiguration = configuration;
         this.socket = SocketBuilder.create(configuration.getHost(), configuration.getSocketConfiguration());
-        this.socketMonitor = SocketMonitorFactory.get(configuration.getHost());
+        this.socketMonitor = SocketMonitorFactory.get(configuration.getHost(), configuration.getDatabaseName());
         this.unusableServiceNotifier = unusableServiceNotifier;
     }
 

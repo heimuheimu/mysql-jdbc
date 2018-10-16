@@ -32,7 +32,7 @@ import java.util.Map;
 /**
  * 提供用于测试使用的 Mysql 数据库信息列表。
  *
- * @author chenwei
+ * @author heimuheimu
  */
 public class DatabaseInfoProvider {
 

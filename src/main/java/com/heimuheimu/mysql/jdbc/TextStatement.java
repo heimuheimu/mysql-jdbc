@@ -27,11 +27,14 @@ package com.heimuheimu.mysql.jdbc;
 import com.heimuheimu.mysql.jdbc.channel.MysqlChannel;
 import com.heimuheimu.mysql.jdbc.command.SQLCommand;
 import com.heimuheimu.mysql.jdbc.facility.SQLFeatureNotSupportedExceptionBuilder;
+import com.heimuheimu.mysql.jdbc.monitor.DatabaseMonitor;
+import com.heimuheimu.mysql.jdbc.monitor.DatabaseMonitorFactory;
 import com.heimuheimu.mysql.jdbc.monitor.ExecutionMonitorFactory;
 import com.heimuheimu.mysql.jdbc.packet.MysqlPacket;
 import com.heimuheimu.mysql.jdbc.packet.generic.ErrorPacket;
 import com.heimuheimu.mysql.jdbc.result.AutoGenerateKeysResultSet;
 import com.heimuheimu.mysql.jdbc.result.ReadonlyTextResultSet;
+import com.heimuheimu.mysql.jdbc.util.SQLUtil;
 import com.heimuheimu.naivemonitor.monitor.ExecutionMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -115,6 +118,11 @@ public class TextStatement implements Statement {
     private volatile int fetchDirection = ResultSet.FETCH_FORWARD;
 
     /**
+     * Mysql 数据库信息监控器
+     */
+    private final DatabaseMonitor databaseMonitor;
+
+    /**
      * 构造一个 {@code TextStatement} 实例。
      *
      * @param mysqlConnection 创建当前 {@code TextStatement} 实例的 Mysql 数据库连接
@@ -127,6 +135,8 @@ public class TextStatement implements Statement {
         this.connectionInfo = mysqlConnection.getMysqlChannel().getConnectionInfo();
         this.executionMonitor = executionMonitor;
         this.slowExecutionThreshold = slowExecutionThreshold;
+        ConnectionConfiguration configuration = mysqlConnection.getMysqlChannel().getConnectionConfiguration();
+        this.databaseMonitor = DatabaseMonitorFactory.get(configuration.getHost(), configuration.getDatabaseName());
     }
 
     @Override
@@ -211,6 +221,7 @@ public class TextStatement implements Statement {
                     resultSet.setFetchDirection(fetchDirection);
                 }
                 mysqlConnection.setLastServerStatusInfo(sqlCommand.getServerStatusInfo());
+                databaseMonitor.onSelectExecuted(resultSet.getRowsSize());
                 if (MYSQL_EXECUTION_DEBUG_LOG.isDebugEnabled()) { // print debug log
                     StringBuilder queryResult = new StringBuilder();
                     int columnCount = resultSet.getMetaData().getColumnCount();
@@ -233,6 +244,7 @@ public class TextStatement implements Statement {
                 affectedRows = sqlCommand.getAffectedRows();
                 lastInsertId = sqlCommand.getLastInsertId();
                 mysqlConnection.setLastServerStatusInfo(sqlCommand.getServerStatusInfo());
+                databaseMonitor.onExecuted(SQLUtil.getSQLType(sql), sqlCommand.getAffectedRows());
                 if (MYSQL_EXECUTION_DEBUG_LOG.isDebugEnabled()) {
                     MYSQL_EXECUTION_DEBUG_LOG.debug("[{}] {}\n\r{}\n\rAffected rows: {}. Last insert id: {}.", mysqlConnection.getSchema(),
                             sql.replace('\n', ' ').replace('\r', ' '),

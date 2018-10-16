@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * {@link TestStringUtil} 单元测试类。
+ * {@link StringUtil} 单元测试类。
  *
  * @author heimuheimu
  */

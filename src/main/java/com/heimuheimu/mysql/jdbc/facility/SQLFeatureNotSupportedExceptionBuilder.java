@@ -24,6 +24,7 @@
 
 package com.heimuheimu.mysql.jdbc.facility;
 
+import com.heimuheimu.mysql.jdbc.monitor.SQLFeatureNotSupportedMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +59,7 @@ public class SQLFeatureNotSupportedExceptionBuilder {
      * @return {@code SQLFeatureNotSupportedException} 实例
      */
     public static SQLFeatureNotSupportedException build(String methodName, String errorMessage) {
+        SQLFeatureNotSupportedMonitor.getInstance().increaseCount();
         if (errorMessage == null || errorMessage.isEmpty()) {
             errorMessage = "mysql-jdbc does not support this method.";
         }
