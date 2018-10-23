@@ -228,8 +228,10 @@ public class MysqlChannel implements Closeable {
                 //关闭 Socket 连接
                 socket.close();
                 //停止 IO 线程
-                ioTask.stopSignal = true;
-                ioTask.interrupt();
+                if (ioTask != null) {
+                    ioTask.stopSignal = true;
+                    ioTask.interrupt();
+                }
                 MYSQL_CONNECTION_LOG.info("MysqlChannel has been closed. Cost: `{}ms`. Host: `{}`. Connection config: `{}`.",
                         (System.currentTimeMillis() - startTime), connectionConfiguration.getHost(), connectionConfiguration);
             } catch (Exception e) {

@@ -201,8 +201,8 @@ public class MysqlConnectionBuildUtil {
         if (url != null) {
             url = url.trim();
             if (!url.isEmpty()) {
-                String protocolName;
-                String hostName;
+                String protocolName = "";
+                String hostName = "";
                 String databaseName = "";
                 String queryString = "";
                 int port = 3306;
@@ -231,20 +231,20 @@ public class MysqlConnectionBuildUtil {
                         url = url.substring(0, portSplitCharIndex);
                     }
                     hostName = url;
-                    if (!protocolName.equals("jdbc:mysql:")) {
-                        throw new MalformedURLException("Parse mysql jdbc url failed: `invalid protocol, must start with 'jdbc:mysql://'`. url: `"
-                                + url + "`.");
-                    }
-                    if (hostName.isEmpty()) {
-                        throw new MalformedURLException("Parse mysql jdbc url failed: `empty host`. url: `" + url + "`.");
-                    }
-                    urlConnectionInfo.put(PROPERTY_HOST, hostName + ":" + port);
-                    urlConnectionInfo.put(PROPERTY_DATABASE_NAME, databaseName);
-                    try {
-                        urlConnectionInfo.putAll(parseQueryString(queryString));
-                    } catch (Exception e) {
-                        throw new MalformedURLException("Parse mysql jdbc url failed: `" + e.getMessage() + "`. url: `" + url + "`.");
-                    }
+                }
+                if (!protocolName.equals("jdbc:mysql:")) {
+                    throw new MalformedURLException("Parse mysql jdbc url failed: `invalid protocol, must start with 'jdbc:mysql://'`. url: `"
+                            + url + "`.");
+                }
+                if (hostName.isEmpty()) {
+                    throw new MalformedURLException("Parse mysql jdbc url failed: `empty host`. url: `" + url + "`.");
+                }
+                urlConnectionInfo.put(PROPERTY_HOST, hostName + ":" + port);
+                urlConnectionInfo.put(PROPERTY_DATABASE_NAME, databaseName);
+                try {
+                    urlConnectionInfo.putAll(parseQueryString(queryString));
+                } catch (Exception e) {
+                    throw new MalformedURLException("Parse mysql jdbc url failed: `" + e.getMessage() + "`. url: `" + url + "`.");
                 }
             }
         }
