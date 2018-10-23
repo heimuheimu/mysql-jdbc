@@ -30,12 +30,15 @@ import com.heimuheimu.mysql.jdbc.command.Command;
 import com.heimuheimu.mysql.jdbc.command.PingCommand;
 import com.heimuheimu.mysql.jdbc.constant.BeanStatusEnum;
 import com.heimuheimu.mysql.jdbc.facility.UnusableServiceNotifier;
+import com.heimuheimu.mysql.jdbc.facility.parameter.ConstructorParameterChecker;
+import com.heimuheimu.mysql.jdbc.facility.parameter.Parameters;
 import com.heimuheimu.mysql.jdbc.monitor.SocketMonitorFactory;
 import com.heimuheimu.mysql.jdbc.net.BuildSocketException;
 import com.heimuheimu.mysql.jdbc.net.SocketBuilder;
 import com.heimuheimu.mysql.jdbc.net.SocketConfiguration;
 import com.heimuheimu.mysql.jdbc.packet.MysqlPacket;
 import com.heimuheimu.mysql.jdbc.packet.MysqlPacketReader;
+import com.heimuheimu.mysql.jdbc.util.LogBuildUtil;
 import com.heimuheimu.naivemonitor.facility.MonitoredSocketOutputStream;
 import com.heimuheimu.naivemonitor.monitor.SocketMonitor;
 import org.slf4j.Logger;
@@ -45,8 +48,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.Socket;
 import java.sql.SQLTimeoutException;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -113,12 +115,18 @@ public class MysqlChannel implements Closeable {
      *
      * @param configuration 建立 Mysql 数据库连接使用的配置信息，不允许 {@code null}
      * @param unusableServiceNotifier {@code MysqlChannel} 不可用通知器，允许为 {@code null}
-     * @throws NullPointerException 如果 {@code configuration} 为 {@code null}，将会抛出此异常
+     * @throws IllegalArgumentException 如果 {@code configuration} 为 {@code null}，将会抛出此异常
      * @throws IllegalArgumentException 如果 Mysql 地址不符合规则，将会抛出此异常
      * @throws BuildSocketException 如果创建 {@link Socket} 过程中发生错误，将会抛出此异常
      */
     public MysqlChannel(ConnectionConfiguration configuration, UnusableServiceNotifier<MysqlChannel> unusableServiceNotifier)
-            throws NullPointerException, IllegalArgumentException, BuildSocketException {
+            throws IllegalArgumentException, BuildSocketException {
+        ConstructorParameterChecker checker = new ConstructorParameterChecker("MysqlChannel", LOG);
+        checker.addParameter("connectionConfiguration", configuration);
+        checker.addParameter("unusableServiceNotifier", unusableServiceNotifier);
+
+        checker.check("connectionConfiguration", "isNull", Parameters::isNull);
+
         this.connectionConfiguration = configuration;
         this.socket = SocketBuilder.create(configuration.getHost(), configuration.getSocketConfiguration());
         this.socketMonitor = SocketMonitorFactory.get(configuration.getHost(), configuration.getDatabaseName());
@@ -165,23 +173,29 @@ public class MysqlChannel implements Closeable {
      */
     public List<MysqlPacket> send(Command command, long timeout) throws NullPointerException, IllegalStateException, SQLTimeoutException {
         if (command == null) {
-            throw new NullPointerException("Execute mysql command failed: `null command`. Host: `" +
-                    connectionConfiguration.getHost() + "`. Connection config: `" + connectionConfiguration + "`.");
+            Map<String, Object> extendParameterMap = new HashMap<>();
+            extendParameterMap.put("timeout", timeout);
+            extendParameterMap.put("command", command);
+            throw new NullPointerException("Execute mysql command failed: `command could not be null`." + buildLogForParameters(extendParameterMap));
         }
         if (state == BeanStatusEnum.NORMAL) {
             commandQueue.add(command);
         } else {
-            throw new IllegalStateException("Execute mysql command failed: `MysqlChannel is not initialized or has been closed`. State: `"
-                    + state + "`. Host: `" + connectionConfiguration.getHost() + "`. Command: `" + command + "`. Connection config: `"
-                    + connectionConfiguration + "`.");
+            Map<String, Object> extendParameterMap = new HashMap<>();
+            extendParameterMap.put("timeout", timeout);
+            extendParameterMap.put("command", command);
+            throw new IllegalStateException("Execute mysql command failed: `MysqlChannel is not initialized or has been closed`. `state`:`"
+                    + state + "`." + buildLogForParameters(extendParameterMap));
         }
         try {
             return command.getResponsePacketList(timeout);
         } catch (SQLTimeoutException e) {
-            MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `execute command timeout`. Host: `{}`. Connection info: `{}`. Timeout: `{}ms`. Command: `{}`.",
-                    connectionConfiguration.getHost(), connectionInfo, timeout, command);
-            LOG.error("Execute mysql command failed: `wait response packet timeout, MysqlChannel need to be closed`. Host: `" + connectionConfiguration.getHost()
-                    + "`. Connection info: `" + connectionInfo + "`. Timeout: `" + timeout + "ms`. Command: `" + command + "`.", e);
+            Map<String, Object> extendParameterMap = new HashMap<>();
+            extendParameterMap.put("timeout", timeout);
+            extendParameterMap.put("command", command);
+            String parametersLog = buildLogForParameters(extendParameterMap);
+            MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `execute command timeout`.{}", parametersLog);
+            LOG.error("Execute mysql command failed: `wait response packet timeout, MysqlChannel need to be closed`." + parametersLog, e);
             close();
             throw e;
         }
@@ -198,22 +212,25 @@ public class MysqlChannel implements Closeable {
                     long startTime = System.currentTimeMillis();
                     SocketConfiguration config = SocketBuilder.getConfig(socket);
                     String socketAddress = connectionConfiguration.getHost() + "/" + socket.getLocalPort();
-                    //启动 IO 线程
+                    // 启动 IO 线程
                     ioTask = new MysqlIOTask(config.getReceiveBufferSize());
                     ioTask.setName("mysql-io-" + socketAddress);
                     ioTask.start();
-                    MYSQL_CONNECTION_LOG.info("MysqlChannel has benn initialized. Cost: `{}ms`. Host: `{}`. Local port: `{}`. Socket config: `{}`. Connection info: `{}`.",
-                            (System.currentTimeMillis() - startTime), connectionConfiguration.getHost(), socket.getLocalPort(), config, connectionInfo);
+
+                    Map<String, Object> extendParameterMap = new HashMap<>();
+                    extendParameterMap.put("localSocketPort", socket.getLocalPort());
+                    extendParameterMap.put("socketConfig", config);
+                    MYSQL_CONNECTION_LOG.info("MysqlChannel has benn initialized. `cost`:`{}ms`.{}",
+                            (System.currentTimeMillis() - startTime), buildLogForParameters(extendParameterMap));
                 } else {
-                    MYSQL_CONNECTION_LOG.error("Initialize MysqlChannel failed: `socket is not connected or has been closed`. Host: `{}`. Connection config: `{}`.",
-                            connectionConfiguration.getHost(), connectionConfiguration);
+                    MYSQL_CONNECTION_LOG.error("Initialize MysqlChannel failed: `socket is not connected or has been closed`.{}",
+                            buildLogForParameters(null));
                     close();
                 }
             } catch (Exception e) {
-                MYSQL_CONNECTION_LOG.error("Initialize MysqlChannel failed: `{}`. Host: `{}`. Connection config: `{}`.",
-                        e.getMessage(), connectionConfiguration.getHost(), connectionConfiguration);
-                LOG.error("Initialize MysqlChannel failed: `" + e.getMessage() + "`. Host: `" + connectionConfiguration.getHost()
-                                + "`. Connection config: `" + connectionConfiguration + "`.", e);
+                String parametersLog = buildLogForParameters(null);
+                MYSQL_CONNECTION_LOG.error("Initialize MysqlChannel failed: `{}`.{}", e.getMessage(), parametersLog);
+                LOG.error("Initialize MysqlChannel failed: `" + e.getMessage() + "`." + parametersLog, e);
                 close();
             }
         }
@@ -232,13 +249,12 @@ public class MysqlChannel implements Closeable {
                     ioTask.stopSignal = true;
                     ioTask.interrupt();
                 }
-                MYSQL_CONNECTION_LOG.info("MysqlChannel has been closed. Cost: `{}ms`. Host: `{}`. Connection config: `{}`.",
-                        (System.currentTimeMillis() - startTime), connectionConfiguration.getHost(), connectionConfiguration);
+                MYSQL_CONNECTION_LOG.info("MysqlChannel has been closed. `cost`:`{}ms`.{}",
+                        (System.currentTimeMillis() - startTime), buildLogForParameters(null));
             } catch (Exception e) {
-                MYSQL_CONNECTION_LOG.error("Close MysqlChannel failed: `{}`. Host: `{}`. Connection config: `{}`.",
-                        e.getMessage(), connectionConfiguration.getHost(), connectionConfiguration);
-                LOG.error("Close MysqlChannel failed: `" + e.getMessage() + "`. Host: `" + connectionConfiguration.getHost()
-                        + "`. Connection config: `" + connectionConfiguration + "`.", e);
+                String parametersLog = buildLogForParameters(null);
+                MYSQL_CONNECTION_LOG.error("Close MysqlChannel failed: `{}`.{}", e.getMessage(), parametersLog);
+                LOG.error("Close MysqlChannel failed: `" + e.getMessage() + "`." + parametersLog, e);
             } finally {
                 if (unusableServiceNotifier != null) {
                     unusableServiceNotifier.onClosed(this);
@@ -257,6 +273,23 @@ public class MysqlChannel implements Closeable {
                 ", state=" + state +
                 ", connectionInfo=" + connectionInfo +
                 '}';
+    }
+
+    /**
+     * 获得通用参数 {@code Map}，用于日志打印。
+     *
+     * @return 通用参数 {@code Map}
+     */
+    private String buildLogForParameters(Map<String, Object> extendParameterMap) {
+        Map<String, Object> parameterMap = new LinkedHashMap<>();
+        parameterMap.put("host", connectionConfiguration == null ? "" : connectionConfiguration.getHost());
+        parameterMap.put("connectionId", connectionInfo == null ? "" : connectionInfo.getConnectionId());
+        if (extendParameterMap != null && !extendParameterMap.isEmpty()) {
+            parameterMap.putAll(extendParameterMap);
+        }
+        parameterMap.put("connectionConfiguration", connectionConfiguration);
+        parameterMap.put("connectionInfo", connectionInfo);
+        return LogBuildUtil.build(parameterMap);
     }
 
     /**
@@ -301,22 +334,19 @@ public class MysqlChannel implements Closeable {
                             Thread pingCheckThread = new Thread(() -> { // 启动一个异步线程检查心跳是否有正常返回
                                 try {
                                     if ( pingCommand.isSuccess(5000) ) {
-                                        LOG.debug("Execute `PingCommand` success. Cost: `{}ms`. Host: `{}`. Connection info: `{}`.",
+                                        LOG.debug("Execute `PingCommand` success. `cost`:`{}ms`.{}",
                                                 System.currentTimeMillis() - pingCommandStartTime,
-                                                connectionConfiguration.getHost(), connectionInfo);
-                                    } else { //should not happen
-                                        MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `execute PingCommand failed`. Host: `{}`. Connection info: `{}`.",
-                                                connectionConfiguration.getHost(), connectionInfo);
-                                        LOG.error("MysqlChannel need to be closed: `execute PingCommand failed`. Host: `{}`. Connection info: `{}`.",
-                                                connectionConfiguration.getHost(), connectionInfo);
+                                                buildLogForParameters(null));
+                                    } else { // should not happen
+                                        String parametersLog = buildLogForParameters(null);
+                                        MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `execute PingCommand failed`.{}", parametersLog);
+                                        LOG.error("MysqlChannel need to be closed: `execute PingCommand failed`.{}", parametersLog);
                                         MysqlChannel.this.close();
                                     }
                                 } catch (Exception e) {
-                                    MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `execute PingCommand failed`. Host: `{}`. Connection info: `{}`.",
-                                            connectionConfiguration.getHost(), connectionInfo);
-                                    LOG.error("MysqlChannel need to be closed: `execute PingCommand failed`. Host: `"
-                                                    + connectionConfiguration.getHost() + "`. Connection info: `"
-                                                    + connectionInfo + "`.", e);
+                                    String parametersLog = buildLogForParameters(null);
+                                    MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `execute PingCommand failed`.{}", parametersLog);
+                                    LOG.error("MysqlChannel need to be closed: `execute PingCommand failed`." + parametersLog, e);
                                     MysqlChannel.this.close();
                                 }
                             });
@@ -345,8 +375,8 @@ public class MysqlChannel implements Closeable {
                                 waitingQueue.poll();
                             }
                         } else {
-                            MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `end of the input stream has been reached`. Host: `{}`. Connection info: `{}`.",
-                                    connectionConfiguration.getHost(), connectionInfo);
+                            MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `end of the input stream has been reached`.{}",
+                                    buildLogForParameters(null));
                             close();
                             break;
                         }
@@ -355,10 +385,9 @@ public class MysqlChannel implements Closeable {
 
                 } catch (Exception e) {
                     if (connectionInfo != null) {
-                        MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `{}`. Host: `{}`. Connection info: `{}`.",
-                                e.getMessage(), connectionConfiguration.getHost(), connectionInfo);
-                        LOG.error("MysqlChannel need to be closed: `" + e.getMessage() + "`. Host: `" + connectionConfiguration.getHost()
-                                        + "`. Connection info: `" + connectionInfo + "`.", e);
+                        String parametersLog = buildLogForParameters(null);
+                        MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `{}`.{}", e.getMessage(), parametersLog);
+                        LOG.error("MysqlChannel need to be closed: `" + e.getMessage() + "`." + parametersLog, e);
                     }
                     close();
                 }

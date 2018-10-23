@@ -659,7 +659,7 @@ public class MysqlConnection implements Connection {
     }
 
     /**
-     * 获得通用参数 {@code Map}。
+     * 获得通用参数 {@code Map}，用于日志打印。
      *
      * @return 通用参数 {@code Map}
      */
