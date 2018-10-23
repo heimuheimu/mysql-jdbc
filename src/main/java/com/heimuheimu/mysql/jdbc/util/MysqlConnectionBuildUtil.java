@@ -201,6 +201,7 @@ public class MysqlConnectionBuildUtil {
         if (url != null) {
             url = url.trim();
             if (!url.isEmpty()) {
+                String originalUrl = url;
                 String protocolName = "";
                 String hostName = "";
                 String databaseName = "";
@@ -226,7 +227,7 @@ public class MysqlConnectionBuildUtil {
                             port = Integer.parseInt(url.substring(portSplitCharIndex + 1));
                         } catch (Exception e) {
                             throw new MalformedURLException("Parse mysql jdbc url failed: `invalid port,must be number`. url: `"
-                                    + url + "`.");
+                                    + originalUrl + "`.");
                         }
                         url = url.substring(0, portSplitCharIndex);
                     }
@@ -234,17 +235,17 @@ public class MysqlConnectionBuildUtil {
                 }
                 if (!protocolName.equals("jdbc:mysql:")) {
                     throw new MalformedURLException("Parse mysql jdbc url failed: `invalid protocol, must start with 'jdbc:mysql://'`. url: `"
-                            + url + "`.");
+                            + originalUrl + "`.");
                 }
                 if (hostName.isEmpty()) {
-                    throw new MalformedURLException("Parse mysql jdbc url failed: `empty host`. url: `" + url + "`.");
+                    throw new MalformedURLException("Parse mysql jdbc url failed: `empty host`. url: `" + originalUrl + "`.");
                 }
                 urlConnectionInfo.put(PROPERTY_HOST, hostName + ":" + port);
                 urlConnectionInfo.put(PROPERTY_DATABASE_NAME, databaseName);
                 try {
                     urlConnectionInfo.putAll(parseQueryString(queryString));
                 } catch (Exception e) {
-                    throw new MalformedURLException("Parse mysql jdbc url failed: `" + e.getMessage() + "`. url: `" + url + "`.");
+                    throw new MalformedURLException("Parse mysql jdbc url failed: `" + e.getMessage() + "`. url: `" + originalUrl + "`.");
                 }
             }
         }
