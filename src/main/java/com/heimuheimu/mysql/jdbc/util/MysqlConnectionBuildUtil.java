@@ -301,6 +301,20 @@ public class MysqlConnectionBuildUtil {
                             } catch (Exception e) {
                                 throw new MalformedURLException("invalid pingPeriod");
                             }
+                        case PROPERTY_TIMEOUT:
+                            try {
+                                params.put(PROPERTY_TIMEOUT, Integer.parseInt(parameterValue));
+                                break;
+                            } catch (Exception e) {
+                                throw new MalformedURLException("invalid timeout");
+                            }
+                        case PROPERTY_SLOW_EXECUTION_THRESHOLD:
+                            try {
+                                params.put(PROPERTY_SLOW_EXECUTION_THRESHOLD, Integer.parseInt(parameterValue));
+                                break;
+                            } catch (Exception e) {
+                                throw new MalformedURLException("invalid slowExecutionThreshold");
+                            }
                         default:
                             break;
                     }
