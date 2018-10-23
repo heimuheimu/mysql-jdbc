@@ -124,25 +124,25 @@ public class MysqlConnectionBuildUtil {
     public static MysqlConnection build(String url, Map<String, Object> connectionInfo) throws MalformedURLException,
             IllegalArgumentException, BuildSocketException {
         try {
-            Map<String, Object> properties = new HashMap<>();
-            properties.putAll(parseURL(url));
-            properties.putAll(connectionInfo);
+            Map<String, Object> allConnectionInfo = new HashMap<>();
+            allConnectionInfo.putAll(parseURL(url));
+            allConnectionInfo.putAll(connectionInfo);
 
-            ConnectionConfiguration configuration = getConnectionConfiguration(properties);
+            ConnectionConfiguration configuration = getConnectionConfiguration(allConnectionInfo);
 
             int timeout = 5000; // 默认 SQL 执行超时时间为 5 秒
-            if (connectionInfo.containsKey(PROPERTY_TIMEOUT)) {
-                timeout = (int) connectionInfo.get(PROPERTY_TIMEOUT);
+            if (allConnectionInfo.containsKey(PROPERTY_TIMEOUT)) {
+                timeout = (int) allConnectionInfo.get(PROPERTY_TIMEOUT);
             }
 
             int slowExecutionThreshold = 500; // 默认 Mysql 命令过慢最小时间为 500 毫秒
-            if (connectionInfo.containsKey(PROPERTY_SLOW_EXECUTION_THRESHOLD)) {
-                slowExecutionThreshold = (int) connectionInfo.get(PROPERTY_SLOW_EXECUTION_THRESHOLD);
+            if (allConnectionInfo.containsKey(PROPERTY_SLOW_EXECUTION_THRESHOLD)) {
+                slowExecutionThreshold = (int) allConnectionInfo.get(PROPERTY_SLOW_EXECUTION_THRESHOLD);
             }
 
             UnusableServiceNotifier<MysqlChannel> notifier = null;
-            if (connectionInfo.containsKey(PROPERTY_UNUSABLE_SERVICE_NOTIFIER)) {
-                notifier = (UnusableServiceNotifier<MysqlChannel>) connectionInfo.get(PROPERTY_UNUSABLE_SERVICE_NOTIFIER);
+            if (allConnectionInfo.containsKey(PROPERTY_UNUSABLE_SERVICE_NOTIFIER)) {
+                notifier = (UnusableServiceNotifier<MysqlChannel>) allConnectionInfo.get(PROPERTY_UNUSABLE_SERVICE_NOTIFIER);
             }
 
             return new MysqlConnection(configuration, timeout, slowExecutionThreshold, notifier);
