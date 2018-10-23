@@ -36,6 +36,10 @@ import java.util.Map;
  */
 public class LogBuildUtil {
 
+    private LogBuildUtil() {
+        // private constructor
+    }
+
     /**
      * 生成方法执行错误日志文本信息。
      *

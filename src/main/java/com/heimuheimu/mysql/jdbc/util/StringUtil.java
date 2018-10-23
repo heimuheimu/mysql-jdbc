@@ -33,6 +33,10 @@ package com.heimuheimu.mysql.jdbc.util;
  */
 public class StringUtil {
 
+    private StringUtil() {
+        // private constructor
+    }
+
     /**
      * 对字符串中包含的特殊字符进行转义后返回，更多信息请参考：
      * <a href="https://dev.mysql.com/doc/refman/8.0/en/string-literals.html">

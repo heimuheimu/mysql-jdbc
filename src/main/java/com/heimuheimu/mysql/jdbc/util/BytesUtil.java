@@ -53,6 +53,10 @@ public class BytesUtil {
         }
     }
 
+    private BytesUtil() {
+        // private constructor
+    }
+
     /**
      * 将字节数组中指定长度的字节转换为无符号整数后返回，字节数组的顺序应为 {@link java.nio.ByteOrder#LITTLE_ENDIAN}
      *

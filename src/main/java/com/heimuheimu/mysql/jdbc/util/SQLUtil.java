@@ -33,6 +33,10 @@ import com.heimuheimu.mysql.jdbc.constant.SQLType;
  */
 public class SQLUtil {
 
+    private SQLUtil() {
+        // private constructor
+    }
+
     /**
      * 根据 SQL 语句获得其对应的语句类型。
      *
