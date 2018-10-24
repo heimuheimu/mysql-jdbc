@@ -25,6 +25,7 @@
 package com.heimuheimu.mysql.jdbc;
 
 import com.heimuheimu.mysql.jdbc.net.SocketConfiguration;
+import com.heimuheimu.mysql.jdbc.util.StringUtil;
 
 /**
  * 建立 Mysql 数据库连接使用的配置信息。
@@ -176,7 +177,7 @@ public class ConnectionConfiguration {
                 "host='" + host + '\'' +
                 ", databaseName='" + databaseName + '\'' +
                 ", username='" + username + '\'' +
-                ", password='" + password + '\'' +
+                ", password='" + StringUtil.hidePassword(password) + '\'' +
                 ", characterId=" + characterId +
                 ", capabilitiesFlags=" + capabilitiesFlags +
                 ", pingPeriod=" + pingPeriod +

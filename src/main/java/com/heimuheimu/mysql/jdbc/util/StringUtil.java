@@ -24,6 +24,8 @@
 
 package com.heimuheimu.mysql.jdbc.util;
 
+import java.util.Arrays;
+
 /**
  * {@code BytesUtil} 提供字符串转换的工具方法，例如将对 MYSQL 特殊字符进行转义。
  *
@@ -112,5 +114,27 @@ public class StringUtil {
         } else {
             return value;
         }
+    }
+
+    /**
+     * 隐藏密码关键信息，返回隐藏关键信息后的密码字符串。
+     *
+     * @param password 密码字符串
+     * @return 隐藏关键信息后的密码字符串
+     */
+    public static String hidePassword(String password) {
+        if (password == null || password.isEmpty()) {
+            return password;
+        }
+        char[] chars = password.toCharArray();
+        int passwordLength = chars.length;
+        if (passwordLength <= 2) {
+            Arrays.fill(chars, '*');
+        } else if (passwordLength < 8) {
+            Arrays.fill(chars, 1, passwordLength - 1, '*');
+        } else {
+            Arrays.fill(chars, 2, passwordLength - 2, '*');
+        }
+        return new String(chars);
     }
 }
