@@ -48,20 +48,20 @@ public class MysqlDriver implements Driver {
 
     @Override
     public Connection connect(String url, Properties info) throws SQLException {
-        try {
-            if (acceptsURL(url)) {
+        if (acceptsURL(url)) {
+            try {
                 return MysqlConnectionBuildUtil.build(url, info);
-            } else {
-                return null;
+            } catch (Exception e) {
+                LinkedHashMap<String, Object> parametersMap = new LinkedHashMap<>();
+                parametersMap.put("url", url);
+                parametersMap.put("info", info);
+                String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlDriver#connect(String url, Properties info)",
+                        "get mysql connection failed", parametersMap);
+                LOG.error(errorMessage, e);
+                throw new SQLException(errorMessage, e);
             }
-        } catch (Exception e) {
-            LinkedHashMap<String, Object> parametersMap = new LinkedHashMap<>();
-            parametersMap.put("url", url);
-            parametersMap.put("info", info);
-            String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlDriver#connect(String url, Properties info)",
-                    "get mysql connection failed", parametersMap);
-            LOG.error(errorMessage, e);
-            throw new SQLException(errorMessage, e);
+        } else {
+            return null;
         }
     }
 
