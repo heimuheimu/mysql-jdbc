@@ -26,8 +26,12 @@ package com.heimuheimu.mysql.jdbc;
 
 import com.heimuheimu.mysql.jdbc.constant.DriverVersion;
 import com.heimuheimu.mysql.jdbc.facility.SQLFeatureNotSupportedExceptionBuilder;
+import com.heimuheimu.mysql.jdbc.util.LogBuildUtil;
+import com.heimuheimu.mysql.jdbc.util.MysqlConnectionBuildUtil;
+import org.slf4j.LoggerFactory;
 
 import java.sql.*;
+import java.util.LinkedHashMap;
 import java.util.Properties;
 import java.util.logging.Logger;
 
@@ -40,14 +44,30 @@ import java.util.logging.Logger;
  */
 public class MysqlDriver implements Driver {
 
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(MysqlDriver.class);
+
     @Override
     public Connection connect(String url, Properties info) throws SQLException {
-        return null;
+        try {
+            if (acceptsURL(url)) {
+                return MysqlConnectionBuildUtil.build(url, info);
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            LinkedHashMap<String, Object> parametersMap = new LinkedHashMap<>();
+            parametersMap.put("url", url);
+            parametersMap.put("info", info);
+            String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlDriver#connect(String url, Properties info)",
+                    "get mysql connection failed", parametersMap);
+            LOG.error(errorMessage, e);
+            throw new SQLException(errorMessage, e);
+        }
     }
 
     @Override
     public boolean acceptsURL(String url) throws SQLException {
-        return false;
+        return MysqlConnectionBuildUtil.acceptsURL(url);
     }
 
     @Override

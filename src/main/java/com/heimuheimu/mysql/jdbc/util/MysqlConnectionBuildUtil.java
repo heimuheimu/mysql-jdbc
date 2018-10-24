@@ -121,10 +121,10 @@ public class MysqlConnectionBuildUtil {
      * @throws BuildSocketException 如果创建与 Mysql 服务器的 Socket 连接失败，将会抛出此异常
      */
     @SuppressWarnings("unchecked")
-    public static MysqlConnection build(String url, Map<String, Object> connectionInfo) throws MalformedURLException,
+    public static MysqlConnection build(String url, Map<Object, Object> connectionInfo) throws MalformedURLException,
             IllegalArgumentException, BuildSocketException {
         try {
-            Map<String, Object> allConnectionInfo = new HashMap<>();
+            Map<Object, Object> allConnectionInfo = new HashMap<>();
             allConnectionInfo.putAll(parseURL(url));
             allConnectionInfo.putAll(connectionInfo);
 
@@ -153,12 +153,25 @@ public class MysqlConnectionBuildUtil {
     }
 
     /**
+     * 判断传入的 JDBC URL 是否符合 Mysql JDBC URL 规则，即以 "jdbc:mysql://" 开头。
+     *
+     * @param url JDBC URL
+     * @return 是否符合 Mysql JDBC URL 规则
+     */
+    public static boolean acceptsURL(String url) {
+        if (url != null) {
+            return url.startsWith("jdbc:mysql://");
+        }
+        return false;
+    }
+
+    /**
      * 根据 Mysql 数据库连接参数 Map 生成 {@link ConnectionConfiguration} 实例后返回，该方法不会返回 {@code null}。
      *
      * @param connectionInfo Mysql 数据库连接参数 Map，不允许为 {@code null}
      * @return 建立 Mysql 数据库连接使用的配置信息
      */
-    private static ConnectionConfiguration getConnectionConfiguration(Map<String, Object> connectionInfo) {
+    private static ConnectionConfiguration getConnectionConfiguration(Map<Object, Object> connectionInfo) {
         String host = (String) connectionInfo.get(PROPERTY_HOST);
         String databaseName = "";
         if (connectionInfo.containsKey(PROPERTY_DATABASE_NAME)) {
