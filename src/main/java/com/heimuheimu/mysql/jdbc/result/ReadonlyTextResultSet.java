@@ -182,16 +182,16 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
         if (currentRow >= 1 && currentRow <= rowsSize) {
             TextResultsetRowResponsePacket rowResponsePacket = textResultsetRowResponsePacketList.get(currentRow - 1);
             List<byte[]> columnValues = rowResponsePacket.getColumnsValues();
-            if (columnIndex >= 0 && columnIndex < columnValues.size()) {
-                byte[] columnValue = columnValues.get(columnIndex);
+            if (columnIndex > 0 && columnIndex <= columnValues.size()) {
+                byte[] columnValue = columnValues.get(columnIndex - 1);
                 wasNull = (columnValue == null);
                 try {
                     return converter.apply(columnValue);
                 } catch (Exception e) {
                     executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_RESULTSET_ERROR);
                     ColumnDefinition41ResponsePacket columnDefinition41ResponsePacket = null;
-                    if (columnIndex < columnDefinition41ResponsePacketList.size()) {
-                        columnDefinition41ResponsePacket = columnDefinition41ResponsePacketList.get(columnIndex);
+                    if (columnIndex <= columnDefinition41ResponsePacketList.size()) {
+                        columnDefinition41ResponsePacket = columnDefinition41ResponsePacketList.get(columnIndex - 1);
                     }
                     String errorMessage = "Get column value failed: `convert value error`. Column index: `" +
                             columnIndex + "`. Current row: `" + currentRow + "`. Column value: `" + Arrays.toString(columnValue)
@@ -635,8 +635,8 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
 
     @Override
     public Object getObject(int columnIndex) throws SQLException {
-        if (columnIndex >= 0 && columnIndex < columnDefinition41ResponsePacketList.size()) {
-            ColumnDefinition41ResponsePacket columnDefinition41ResponsePacket = columnDefinition41ResponsePacketList.get(columnIndex);
+        if (columnIndex > 0 && columnIndex <= columnDefinition41ResponsePacketList.size()) {
+            ColumnDefinition41ResponsePacket columnDefinition41ResponsePacket = columnDefinition41ResponsePacketList.get(columnIndex - 1);
             Class<?> javaType = ColumnTypeMappingUtil.getJavaType(columnDefinition41ResponsePacket.getColumnType(),
                     columnDefinition41ResponsePacket.getColumnDefinitionFlags());
             return getObject(columnIndex, javaType);
@@ -715,8 +715,8 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
 
     @Override
     public Object getObject(int columnIndex, Map<String, Class<?>> map) throws SQLException {
-        if (columnIndex >= 0 && columnIndex < columnDefinition41ResponsePacketList.size()) {
-            ColumnDefinition41ResponsePacket definition4Packet = columnDefinition41ResponsePacketList.get(columnIndex);
+        if (columnIndex > 0 && columnIndex <= columnDefinition41ResponsePacketList.size()) {
+            ColumnDefinition41ResponsePacket definition4Packet = columnDefinition41ResponsePacketList.get(columnIndex - 1);
             String columnTypeName = ColumnTypeMappingUtil.getTypeName(definition4Packet.getColumnType(),
                     definition4Packet.getColumnDefinitionFlags(), definition4Packet.getMaximumColumnLength());
             Class<?> javaType = map.get(columnTypeName);
