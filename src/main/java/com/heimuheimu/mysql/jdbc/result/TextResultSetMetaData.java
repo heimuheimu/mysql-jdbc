@@ -244,8 +244,8 @@ public class TextResultSetMetaData implements ResultSetMetaData {
      * @throws SQLException 如果列位置越界，将抛出此异常
      */
     private ColumnDefinition41ResponsePacket getColumnDefinition41ResponsePacket(int columnIndex) throws SQLException {
-        if (columnIndex >= 0 && columnIndex < columnDefinition41ResponsePacketList.size()) {
-            return columnDefinition41ResponsePacketList.get(columnIndex);
+        if (columnIndex > 0 && columnIndex <= columnDefinition41ResponsePacketList.size()) {
+            return columnDefinition41ResponsePacketList.get(columnIndex - 1);
         } else {
             String errorMessage = "Get column definition packet failed: `columnIndex out of range`. Invalid column index: `"
                     + columnIndex + "`. Columns size: `" + columnDefinition41ResponsePacketList.size() + "`.";
