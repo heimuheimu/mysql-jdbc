@@ -102,6 +102,11 @@ public class MysqlConnection implements Connection {
     private volatile int transactionIsolation = Integer.MIN_VALUE;
 
     /**
+     * 当前连接是否处于只读模式标记，在未实际获取前，值为 {@link Integer#MIN_VALUE}
+     */
+    private volatile int readOnlyFlag = Integer.MIN_VALUE;
+
+    /**
      * 构造一个 Mysql 数据库连接。
      *
      * @param configuration 建立 Mysql 数据库连接使用的配置信息，不允许为 {@code null}
@@ -279,7 +284,50 @@ public class MysqlConnection implements Connection {
     @Override
     public boolean isReadOnly() throws SQLException {
         checkClosed("isReadOnly()");
-        return lastServerStatusInfo.isInReadonlyTransaction();
+        if (mysqlChannel.getConnectionInfo().versionMeetsMinimum(5, 6, 5)) {
+            if (readOnlyFlag == Integer.MIN_VALUE) {
+                ConnectionInfo connection = mysqlChannel.getConnectionInfo();
+                String variableName;
+                if (connection.versionMeetsMinimum(8, 0 ,3) ||
+                        (connection.versionMeetsMinimum(5, 7, 20)
+                                && !connection.versionMeetsMinimum(8, 0, 0))) {
+                    variableName = "@@session.transaction_read_only";
+                } else {
+                    variableName = "@@session.tx_read_only";
+                }
+                int transactionReadOnly = -1;
+                try {
+                    ResultSet resultSet = createStatement().executeQuery("SELECT " + variableName);
+                    while (resultSet.next()) {
+                        transactionReadOnly = resultSet.getInt(1);
+                        break;
+                    }
+                } catch (Exception e) {
+                    executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
+                    String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#isReadOnly()",
+                            "unexpected error", getCommonParameterMap());
+                    LOG.error(errorMessage, e);
+                    throw new SQLException(errorMessage, e);
+                }
+                switch (transactionReadOnly) {
+                    case 0:
+                        readOnlyFlag = 0;
+                        break;
+                    case 1:
+                        readOnlyFlag = 1;
+                        break;
+                    default:
+                        executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
+                        String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#isReadOnly()",
+                                "Could not map read-only flag '" + transactionReadOnly + "'", getCommonParameterMap());
+                        LOG.error(errorMessage);
+                        throw new SQLException(errorMessage);
+                }
+            }
+            return readOnlyFlag == 1;
+        } else { // Mysql 版本小于 5.6.5 不支持 ReadOnly 设置
+            return false;
+        }
     }
 
     @Override
@@ -291,8 +339,10 @@ public class MysqlConnection implements Connection {
                 try {
                     if (readOnly) {
                         createStatement().execute("SET SESSION TRANSACTION READ ONLY");
+                        this.readOnlyFlag = 1;
                     } else {
                         createStatement().execute("SET SESSION TRANSACTION READ WRITE");
+                        this.readOnlyFlag = 0;
                     }
                 } catch (Exception e) {
                     executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);

@@ -58,7 +58,7 @@ public class TestMysqlConnection {
             String password = databaseInfo.get("password");
             ConnectionConfiguration connectionConfiguration = new ConnectionConfiguration(host, databaseName, username, password,
                     45, 0, 30, null);
-            MysqlConnection connection = new MysqlConnection(connectionConfiguration, 5000, 5, null);
+            MysqlConnection connection = new MysqlConnection(connectionConfiguration, 5000, 1000, null);
             MYSQL_CONNECTION_LIST.add(connection);
         }
     }
@@ -85,13 +85,35 @@ public class TestMysqlConnection {
         }
     }
 
+    @Test
     public void testReadOnly() throws SQLException {
         for (MysqlConnection connection : MYSQL_CONNECTION_LIST) {
             connection.setNetworkTimeout(null, 5000);
-            connection.setReadOnly(false);
-            Assert.assertFalse(connection.isReadOnly());
-            connection.setReadOnly(true);
-            Assert.assertTrue(connection.isReadOnly());
+            if (connection.getMysqlChannel().getConnectionInfo().versionMeetsMinimum(5, 6, 5)) {
+                connection.setReadOnly(false);
+                Assert.assertFalse(connection.isReadOnly());
+                connection.setReadOnly(true);
+                Assert.assertTrue(connection.isReadOnly());
+                connection.setReadOnly(true);
+                Assert.assertTrue(connection.isReadOnly());
+                connection.setReadOnly(false);
+                Assert.assertFalse(connection.isReadOnly());
+                connection.setReadOnly(false);
+                Assert.assertFalse(connection.isReadOnly());
+            } else {
+                Assert.assertFalse(connection.isReadOnly());
+                connection.setReadOnly(false);
+                Assert.assertFalse(connection.isReadOnly());
+                try {
+                    connection.setReadOnly(true);
+                    Assert.fail("setReadOnly(boolean readOnly) should throw SqlException");
+                } catch (SQLException e) {
+                    Assert.assertTrue("unexpected exception message: " + e.getMessage(), e.getMessage().contains("mysql version too low"));
+                }
+                Assert.assertFalse(connection.isReadOnly());
+                connection.setReadOnly(false);
+                Assert.assertFalse(connection.isReadOnly());
+            }
         }
     }
 
