@@ -28,7 +28,6 @@ import com.heimuheimu.mysql.jdbc.channel.MysqlChannel;
 import com.heimuheimu.mysql.jdbc.command.SQLCommand;
 import com.heimuheimu.mysql.jdbc.facility.SQLFeatureNotSupportedExceptionBuilder;
 import com.heimuheimu.mysql.jdbc.monitor.DatabaseMonitor;
-import com.heimuheimu.mysql.jdbc.monitor.DatabaseMonitorFactory;
 import com.heimuheimu.mysql.jdbc.monitor.ExecutionMonitorFactory;
 import com.heimuheimu.mysql.jdbc.packet.MysqlPacket;
 import com.heimuheimu.mysql.jdbc.packet.generic.ErrorPacket;
@@ -127,16 +126,17 @@ public class TextStatement implements Statement {
      *
      * @param mysqlConnection 创建当前 {@code TextStatement} 实例的 Mysql 数据库连接
      * @param executionMonitor Mysql 命令执行信息监控器，不允许为 {@code null}
+     * @param databaseMonitor Mysql 数据库信息监控器
      * @param slowExecutionThreshold 执行 Mysql 命令过慢最小时间，单位：纳秒，不能小于等于 0
      */
-    public TextStatement(MysqlConnection mysqlConnection, ExecutionMonitor executionMonitor, long slowExecutionThreshold) {
+    public TextStatement(MysqlConnection mysqlConnection, ExecutionMonitor executionMonitor,
+                         DatabaseMonitor databaseMonitor, long slowExecutionThreshold) {
         this.mysqlConnection = mysqlConnection;
         this.mysqlChannel = mysqlConnection.getMysqlChannel();
         this.connectionInfo = mysqlConnection.getMysqlChannel().getConnectionInfo();
         this.executionMonitor = executionMonitor;
+        this.databaseMonitor = databaseMonitor;
         this.slowExecutionThreshold = slowExecutionThreshold;
-        ConnectionConfiguration configuration = mysqlConnection.getMysqlChannel().getConnectionConfiguration();
-        this.databaseMonitor = DatabaseMonitorFactory.get(configuration.getHost(), configuration.getDatabaseName());
     }
 
     @Override

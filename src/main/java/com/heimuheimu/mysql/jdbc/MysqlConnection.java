@@ -30,6 +30,8 @@ import com.heimuheimu.mysql.jdbc.facility.SQLFeatureNotSupportedExceptionBuilder
 import com.heimuheimu.mysql.jdbc.facility.UnusableServiceNotifier;
 import com.heimuheimu.mysql.jdbc.facility.parameter.ConstructorParameterChecker;
 import com.heimuheimu.mysql.jdbc.facility.parameter.Parameters;
+import com.heimuheimu.mysql.jdbc.monitor.DatabaseMonitor;
+import com.heimuheimu.mysql.jdbc.monitor.DatabaseMonitorFactory;
 import com.heimuheimu.mysql.jdbc.monitor.ExecutionMonitorFactory;
 import com.heimuheimu.mysql.jdbc.net.BuildSocketException;
 import com.heimuheimu.mysql.jdbc.util.LogBuildUtil;
@@ -73,6 +75,11 @@ public class MysqlConnection implements Connection {
      * 当前连接使用的 SQL 操作执行信息监控器
      */
     private final ExecutionMonitor executionMonitor;
+
+    /**
+     * 当前连接使用的 Mysql 数据库信息监控器
+     */
+    private final DatabaseMonitor databaseMonitor;
 
     /**
      * SQL 执行超时时间，单位：毫秒，如果等于 0，则没有超时时间限制
@@ -123,6 +130,7 @@ public class MysqlConnection implements Connection {
         this.mysqlChannel.init();
         this.lastServerStatusInfo = new MysqlServerStatusInfo(mysqlChannel.getConnectionInfo().getServerStatusFlags());
         this.executionMonitor = ExecutionMonitorFactory.get(configuration.getHost(), configuration.getDatabaseName());
+        this.databaseMonitor = DatabaseMonitorFactory.get(configuration.getHost(), configuration.getDatabaseName());
         this.timeout = timeout;
         this.slowExecutionThreshold = TimeUnit.NANOSECONDS.convert(slowExecutionThreshold, TimeUnit.MILLISECONDS); // 将毫秒转换为纳秒
         this.currentDatabaseName = mysqlChannel.getConnectionInfo().getDatabaseName();
@@ -178,7 +186,7 @@ public class MysqlConnection implements Connection {
     @Override
     public Statement createStatement() throws SQLException {
         checkClosed("createStatement()");
-        TextStatement statement = new TextStatement(this, executionMonitor, slowExecutionThreshold);
+        TextStatement statement = new TextStatement(this, executionMonitor, databaseMonitor, slowExecutionThreshold);
         statement.setQueryMillisecondsTimeout(timeout);
         return statement;
     }
@@ -203,7 +211,8 @@ public class MysqlConnection implements Connection {
     @Override
     public PreparedStatement prepareStatement(String sql) throws SQLException {
         checkClosed("prepareStatement(String sql)");
-        TextPreparedStatement preparedStatement = new TextPreparedStatement(sql, this, executionMonitor, slowExecutionThreshold);
+        TextPreparedStatement preparedStatement = new TextPreparedStatement(sql, this, executionMonitor,
+                databaseMonitor, slowExecutionThreshold);
         preparedStatement.setQueryMillisecondsTimeout(timeout);
         return preparedStatement;
     }

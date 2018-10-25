@@ -25,6 +25,8 @@
 package com.heimuheimu.mysql.jdbc.monitor.falcon;
 
 import com.heimuheimu.mysql.jdbc.constant.FalconDataCollectorConstant;
+import com.heimuheimu.mysql.jdbc.monitor.DatabaseMonitor;
+import com.heimuheimu.mysql.jdbc.monitor.DatabaseMonitorFactory;
 import com.heimuheimu.naivemonitor.falcon.FalconData;
 import com.heimuheimu.naivemonitor.falcon.support.AbstractFalconDataCollector;
 
@@ -42,7 +44,17 @@ public class DatabaseDataCollector extends AbstractFalconDataCollector {
 
     private final DatabaseExecutionDataCollector databaseExecutionDataCollector;
 
+    private final DatabaseMonitor databaseMonitor;
+
     private final String collectorName;
+
+    private volatile long lastSelectRowsCount = 0;
+
+    private volatile long lastInsertRowsCount = 0;
+
+    private volatile long lastUpdateRowsCount = 0;
+
+    private volatile long lastDeleteRowsCount = 0;
 
     /**
      * 构造一个 Mysql 数据库监控信息采集器。
@@ -55,6 +67,7 @@ public class DatabaseDataCollector extends AbstractFalconDataCollector {
         this.collectorName = collectorName;
         databaseSocketDataCollector = new DatabaseSocketDataCollector(host, databaseName, this.collectorName);
         databaseExecutionDataCollector = new DatabaseExecutionDataCollector(host, databaseName, this.collectorName);
+        this.databaseMonitor = DatabaseMonitorFactory.get(host, databaseName);
     }
 
     @Override
@@ -63,6 +76,22 @@ public class DatabaseDataCollector extends AbstractFalconDataCollector {
 
         falconDataList.addAll(databaseSocketDataCollector.getList());
         falconDataList.addAll(databaseExecutionDataCollector.getList());
+
+        long selectRowsCount = databaseMonitor.getSelectRowsCount();
+        falconDataList.add(create("_select_rows_count", selectRowsCount - lastSelectRowsCount));
+        lastSelectRowsCount = selectRowsCount;
+
+        long insertRowsCount = databaseMonitor.getInsertRowsCount();
+        falconDataList.add(create("_insert_rows_count", insertRowsCount - lastInsertRowsCount));
+        lastInsertRowsCount = insertRowsCount;
+
+        long updateRowsCount = databaseMonitor.getUpdateRowsCount();
+        falconDataList.add(create("_update_rows_count", updateRowsCount - lastUpdateRowsCount));
+        lastUpdateRowsCount = updateRowsCount;
+
+        long deleteRowsCount = databaseMonitor.getDeleteRowsCount();
+        falconDataList.add(create("_delete_rows_count", deleteRowsCount - lastDeleteRowsCount));
+        lastDeleteRowsCount = deleteRowsCount;
 
         return falconDataList;
     }

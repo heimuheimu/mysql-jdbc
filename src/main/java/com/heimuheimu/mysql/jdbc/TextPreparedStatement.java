@@ -26,6 +26,7 @@ package com.heimuheimu.mysql.jdbc;
 
 import com.heimuheimu.mysql.jdbc.command.SQLCommand;
 import com.heimuheimu.mysql.jdbc.facility.SQLFeatureNotSupportedExceptionBuilder;
+import com.heimuheimu.mysql.jdbc.monitor.DatabaseMonitor;
 import com.heimuheimu.mysql.jdbc.monitor.ExecutionMonitorFactory;
 import com.heimuheimu.mysql.jdbc.util.BytesUtil;
 import com.heimuheimu.mysql.jdbc.util.LogBuildUtil;
@@ -105,8 +106,8 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
      * @param slowExecutionThreshold 执行 Mysql 命令过慢最小时间，单位：纳秒，不能小于等于 0
      */
     public TextPreparedStatement(String sqlTemplate, MysqlConnection mysqlConnection, ExecutionMonitor executionMonitor,
-                                 long slowExecutionThreshold) {
-        super(mysqlConnection, executionMonitor, slowExecutionThreshold);
+                                 DatabaseMonitor databaseMonitor, long slowExecutionThreshold) {
+        super(mysqlConnection, executionMonitor, databaseMonitor, slowExecutionThreshold);
         this.sqlTemplate = sqlTemplate;
         this.sqlParts = parseSqlTemplate(sqlTemplate);
         this.parameterValues = new AtomicReferenceArray<>(this.sqlParts.size() - 1);
