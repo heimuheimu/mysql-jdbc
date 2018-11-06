@@ -282,7 +282,7 @@ public class TextStatement implements Statement {
             long executedNanoTime = System.nanoTime() - startTime;
             if (executedNanoTime > slowExecutionThreshold) {
                 MYSQL_SLOW_EXECUTION_LOG.info("`Cost`:`{}ns ({}ms)`. `Sql`:`{}`. `Database`:`{}`. `Host`:`{}`. `{}`.", executedNanoTime,
-                        TimeUnit.MILLISECONDS.convert(executedNanoTime, TimeUnit.NANOSECONDS), sql, mysqlConnection.getSchema(),
+                        TimeUnit.MILLISECONDS.convert(executedNanoTime, TimeUnit.NANOSECONDS), sql, mysqlChannel.getConnectionConfiguration().getDatabaseName(),
                         mysqlChannel.getConnectionConfiguration().getHost(), mysqlConnection.getLastServerStatusInfo());
             }
             executionMonitor.onExecuted(startTime);

@@ -196,7 +196,7 @@ public class MysqlChannel implements Closeable {
             extendParameterMap.put("timeout", timeout);
             extendParameterMap.put("command", command);
             String parametersLog = buildLogForParameters(extendParameterMap);
-            MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `execute command timeout`.{}", parametersLog);
+            MYSQL_CONNECTION_LOG.error("MysqlChannel need to be closed: `execute command timeout`.{}", parametersLog);
             LOG.error("Execute mysql command failed: `wait response packet timeout, MysqlChannel need to be closed`." + parametersLog, e);
             close(true);
             throw e;

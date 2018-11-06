@@ -166,7 +166,7 @@ public class MysqlDataSource implements DataSource, Closeable {
             long leftCheckoutTimeout = checkoutTimeout;
             int retryTimes = 0; // 获取数据库连接重试次数
             Integer connectionIndex;
-            while (connection == null || retryTimes < dataSourceConfiguration.getPoolSize()) {
+            while (connection == null && retryTimes < dataSourceConfiguration.getPoolSize()) {
                 retryTimes++;
                 if (checkoutTimeout == 0) {
                     connectionIndex = availableConnectionIndexQueue.take();
