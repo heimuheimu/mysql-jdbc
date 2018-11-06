@@ -27,39 +27,39 @@ package com.heimuheimu.mysql.jdbc.monitor;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Mysql 数据库连接池信息监控器工厂类。
+ * Mysql 数据库信息监控器工厂类。
  *
  * @author heimuheimu
  */
-public class DatabaseMonitorFactory {
+public class DataSourceMonitorFactory {
 
-    private static final ConcurrentHashMap<String, DatabaseMonitor> DATABASE_MONITOR_MAP = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, DataSourceMonitor> DATASOURCE_MONITOR_MAP = new ConcurrentHashMap<>();
 
     private static final Object lock = new Object();
 
-    private DatabaseMonitorFactory() {
+    private DataSourceMonitorFactory() {
         // private constructor
     }
 
     /**
-     * 根据 Mysql 连接目标地址和数据库名称获得对应的数据库信息监控器，该方法不会返回 {@code null}。
+     * 根据 Mysql 连接目标地址和数据库名称获得对应的数据库连接池信息监控器，该方法不会返回 {@code null}。
      *
      * @param host Mysql 连接目标地址
      * @param databaseName 数据库名称
-     * @return 数据库信息监控器，该方法不会返回 {@code null}
+     * @return 数据库连接池信息监控器，该方法不会返回 {@code null}
      */
-    public static DatabaseMonitor get(String host, String databaseName) {
+    public static DataSourceMonitor get(String host, String databaseName) {
         String key = host;
         if (databaseName != null && !databaseName.isEmpty()) {
             key += "/" + databaseName;
         }
-        DatabaseMonitor monitor = DATABASE_MONITOR_MAP.get(key);
+        DataSourceMonitor monitor = DATASOURCE_MONITOR_MAP.get(key);
         if (monitor == null) {
             synchronized (lock) {
-                monitor = DATABASE_MONITOR_MAP.get(key);
+                monitor = DATASOURCE_MONITOR_MAP.get(key);
                 if (monitor == null) {
-                    monitor = new DatabaseMonitor();
-                    DATABASE_MONITOR_MAP.put(key, monitor);
+                    monitor = new DataSourceMonitor();
+                    DATASOURCE_MONITOR_MAP.put(key, monitor);
                 }
             }
         }

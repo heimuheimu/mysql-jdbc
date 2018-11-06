@@ -64,47 +64,47 @@ public class MysqlConnection implements Connection {
     /**
      * 与 Mysql 服务进行数据交互的管道
      */
-    private final MysqlChannel mysqlChannel;
+    protected final MysqlChannel mysqlChannel;
 
     /**
      * 当前连接最新的 Mysql 服务端状态信息
      */
-    private volatile MysqlServerStatusInfo lastServerStatusInfo;
+    protected volatile MysqlServerStatusInfo lastServerStatusInfo;
 
     /**
      * 当前连接使用的 SQL 操作执行信息监控器
      */
-    private final ExecutionMonitor executionMonitor;
+    protected final ExecutionMonitor executionMonitor;
 
     /**
      * 当前连接使用的 Mysql 数据库信息监控器
      */
-    private final DatabaseMonitor databaseMonitor;
+    protected final DatabaseMonitor databaseMonitor;
 
     /**
      * SQL 执行超时时间，单位：毫秒，如果等于 0，则没有超时时间限制
      */
-    private volatile long timeout;
+    protected volatile long timeout;
 
     /**
      * 执行 Mysql 命令过慢最小时间，单位：纳秒
      */
-    private final long slowExecutionThreshold;
+    protected final long slowExecutionThreshold;
 
     /**
      * 当前连接使用的数据库名称
      */
-    private volatile String currentDatabaseName;
+    protected volatile String currentDatabaseName;
 
     /**
      * 当前连接使用的事务等级，在未实际获取前，值为 {@link Integer#MIN_VALUE}
      */
-    private volatile int transactionIsolation = Integer.MIN_VALUE;
+    protected volatile int transactionIsolation = Integer.MIN_VALUE;
 
     /**
      * 当前连接是否处于只读模式标记，在未实际获取前，值为 {@link Integer#MIN_VALUE}
      */
-    private volatile int readOnlyFlag = Integer.MIN_VALUE;
+    protected volatile int readOnlyFlag = Integer.MIN_VALUE;
 
     /**
      * 构造一个 Mysql 数据库连接。
@@ -112,14 +112,14 @@ public class MysqlConnection implements Connection {
      * @param configuration 建立 Mysql 数据库连接使用的配置信息，不允许为 {@code null}
      * @param timeout SQL 执行超时时间，单位：毫秒，如果等于 0，则没有超时时间限制，不允许设置小于 0 的值
      * @param slowExecutionThreshold 执行 Mysql 命令过慢最小时间，单位：毫秒，不能小于等于 0
-     * @param unusableServiceNotifier {@code MysqlChannel} 不可用通知器，允许为 {@code null}
+     * @param unusableServiceNotifier {@code MysqlConnection} 不可用通知器，允许为 {@code null}
      * @throws IllegalArgumentException 如果 {@code configuration} 为 {@code null}，将会抛出此异常
      * @throws IllegalArgumentException 如果 {@code timeout} 小于 0，将会抛出此异常
      * @throws IllegalArgumentException 如果 {@code slowExecutionThreshold} 小于等于 0，将会抛出此异常
      * @throws BuildSocketException 如果创建与 Mysql 服务器的 Socket 连接失败，将会抛出此异常
      */
     public MysqlConnection(ConnectionConfiguration configuration, int timeout, int slowExecutionThreshold,
-                           UnusableServiceNotifier<MysqlChannel> unusableServiceNotifier)
+                           UnusableServiceNotifier<MysqlConnection> unusableServiceNotifier)
             throws IllegalArgumentException, BuildSocketException {
         ConstructorParameterChecker checker = new ConstructorParameterChecker("MysqlConnection", LOG);
         checker.addParameter("configuration", configuration);
@@ -131,7 +131,11 @@ public class MysqlConnection implements Connection {
         checker.check("timeout", "isLessThanZero", Parameters::isLessThanZero);
         checker.check("slowExecutionThreshold", "isEqualOrLessThanZero", Parameters::isEqualOrLessThanZero);
 
-        this.mysqlChannel = new MysqlChannel(configuration, unusableServiceNotifier);
+        this.mysqlChannel = new MysqlChannel(configuration, channel -> {
+            if (unusableServiceNotifier != null) {
+                unusableServiceNotifier.onClosed(this);
+            }
+        });
         this.mysqlChannel.init();
         this.lastServerStatusInfo = new MysqlServerStatusInfo(mysqlChannel.getConnectionInfo().getServerStatusFlags());
         this.executionMonitor = ExecutionMonitorFactory.get(configuration.getHost(), configuration.getDatabaseName());
@@ -618,7 +622,7 @@ public class MysqlConnection implements Connection {
     }
 
     @Override
-    public boolean isClosed() throws SQLException {
+    public boolean isClosed() {
         return !mysqlChannel.isAvailable();
     }
 
@@ -698,6 +702,21 @@ public class MysqlConnection implements Connection {
      */
     public void setLastServerStatusInfo(MysqlServerStatusInfo lastServerStatusInfo) {
         this.lastServerStatusInfo = lastServerStatusInfo;
+    }
+
+    @Override
+    public String toString() {
+        return "MysqlConnection{" +
+                "mysqlChannel=" + mysqlChannel +
+                ", lastServerStatusInfo=" + lastServerStatusInfo +
+                ", executionMonitor=" + executionMonitor +
+                ", databaseMonitor=" + databaseMonitor +
+                ", timeout=" + timeout +
+                ", slowExecutionThreshold=" + slowExecutionThreshold +
+                ", currentDatabaseName='" + currentDatabaseName + '\'' +
+                ", transactionIsolation=" + transactionIsolation +
+                ", readOnlyFlag=" + readOnlyFlag +
+                '}';
     }
 
     /**

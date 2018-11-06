@@ -77,6 +77,19 @@ public class ConnectionConfiguration {
     private final SocketConfiguration socketConfiguration;
 
     /**
+     * 构造一个建立 Mysql 数据库连接使用的配置信息，字符集编码 ID 默认为 45（utf8mb4_general_ci），PING 命令发送时间间隔默认为 30 秒，
+     * Socket 配置信息默认使用 {@link SocketConfiguration#DEFAULT} 配置信息。
+     *
+     * @param host Mysql 地址，由主机名和端口组成，":" 符号分割，例如：localhost:3306
+     * @param databaseName Mysql 数据库名称
+     * @param username Mysql 数据库用户名
+     * @param password Mysql 数据库密码
+     */
+    public ConnectionConfiguration(String host, String databaseName, String username, String password) {
+        this(host, databaseName, username, password, 45, 0, 30, null);
+    }
+
+    /**
      * 构造一个建立 Mysql 数据库连接使用的配置信息。
      *
      * @param host Mysql 地址，由主机名和端口组成，":" 符号分割，例如：localhost:3306

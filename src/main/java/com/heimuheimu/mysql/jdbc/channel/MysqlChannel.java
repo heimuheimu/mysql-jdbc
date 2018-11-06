@@ -276,9 +276,9 @@ public class MysqlChannel implements Closeable {
     }
 
     /**
-     * 获得通用参数 {@code Map}，用于日志打印。
+     * 返回当前 {@code MysqlChannel} 相关参数信息，用于日志打印。
      *
-     * @return 通用参数 {@code Map}
+     * @return 当前 {@code MysqlChannel} 相关参数信息
      */
     private String buildLogForParameters(Map<String, Object> extendParameterMap) {
         Map<String, Object> parameterMap = new LinkedHashMap<>();
