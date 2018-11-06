@@ -26,7 +26,6 @@ package com.heimuheimu.mysql.jdbc.util;
 
 import com.heimuheimu.mysql.jdbc.ConnectionConfiguration;
 import com.heimuheimu.mysql.jdbc.MysqlConnection;
-import com.heimuheimu.mysql.jdbc.channel.MysqlChannel;
 import com.heimuheimu.mysql.jdbc.facility.UnusableServiceNotifier;
 import com.heimuheimu.mysql.jdbc.net.BuildSocketException;
 import com.heimuheimu.mysql.jdbc.net.SocketConfiguration;
@@ -140,9 +139,9 @@ public class MysqlConnectionBuildUtil {
                 slowExecutionThreshold = (int) allConnectionInfo.get(PROPERTY_SLOW_EXECUTION_THRESHOLD);
             }
 
-            UnusableServiceNotifier<MysqlChannel> notifier = null;
+            UnusableServiceNotifier<MysqlConnection> notifier = null;
             if (allConnectionInfo.containsKey(PROPERTY_UNUSABLE_SERVICE_NOTIFIER)) {
-                notifier = (UnusableServiceNotifier<MysqlChannel>) allConnectionInfo.get(PROPERTY_UNUSABLE_SERVICE_NOTIFIER);
+                notifier = (UnusableServiceNotifier<MysqlConnection>) allConnectionInfo.get(PROPERTY_UNUSABLE_SERVICE_NOTIFIER);
             }
 
             return new MysqlConnection(configuration, timeout, slowExecutionThreshold, notifier);
