@@ -28,6 +28,7 @@ import com.heimuheimu.mysql.jdbc.ConnectionConfiguration;
 import com.heimuheimu.mysql.jdbc.ConnectionInfo;
 import com.heimuheimu.mysql.jdbc.command.Command;
 import com.heimuheimu.mysql.jdbc.command.PingCommand;
+import com.heimuheimu.mysql.jdbc.command.SQLCommand;
 import com.heimuheimu.mysql.jdbc.constant.BeanStatusEnum;
 import com.heimuheimu.mysql.jdbc.facility.UnusableServiceNotifier;
 import com.heimuheimu.mysql.jdbc.facility.parameter.ConstructorParameterChecker;
@@ -38,6 +39,7 @@ import com.heimuheimu.mysql.jdbc.net.SocketBuilder;
 import com.heimuheimu.mysql.jdbc.net.SocketConfiguration;
 import com.heimuheimu.mysql.jdbc.packet.MysqlPacket;
 import com.heimuheimu.mysql.jdbc.packet.MysqlPacketReader;
+import com.heimuheimu.mysql.jdbc.packet.generic.ErrorPacket;
 import com.heimuheimu.mysql.jdbc.util.LogBuildUtil;
 import com.heimuheimu.naivemonitor.facility.MonitoredSocketOutputStream;
 import com.heimuheimu.naivemonitor.monitor.SocketMonitor;
@@ -196,7 +198,7 @@ public class MysqlChannel implements Closeable {
             String parametersLog = buildLogForParameters(extendParameterMap);
             MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `execute command timeout`.{}", parametersLog);
             LOG.error("Execute mysql command failed: `wait response packet timeout, MysqlChannel need to be closed`." + parametersLog, e);
-            close();
+            close(true);
             throw e;
         }
     }
@@ -238,9 +240,18 @@ public class MysqlChannel implements Closeable {
 
     @Override
     public synchronized void close() {
+        close(false);
+    }
+
+    private synchronized void close(boolean sendKillCommand) {
         if (state != BeanStatusEnum.CLOSED) {
             long startTime = System.currentTimeMillis();
             state = BeanStatusEnum.CLOSED;
+            if (sendKillCommand) {
+                MysqlChannelKillTask killTask = new MysqlChannelKillTask(connectionConfiguration, connectionInfo);
+                killTask.setName("mysql-channel-kill-task");
+                killTask.start();
+            }
             try {
                 //关闭 Socket 连接
                 socket.close();
@@ -397,6 +408,57 @@ public class MysqlChannel implements Closeable {
             }
             while ((command = commandQueue.poll()) != null) {
                 command.close();
+            }
+        }
+    }
+
+    private static class MysqlChannelKillTask extends Thread {
+
+        private final ConnectionConfiguration connectionConfiguration;
+
+        private final ConnectionInfo connectionInfo;
+
+        private MysqlChannelKillTask(ConnectionConfiguration connectionConfiguration, ConnectionInfo connectionInfo) {
+            this.connectionConfiguration = connectionConfiguration;
+            this.connectionInfo = connectionInfo;
+        }
+
+        @Override
+        public void run() {
+            if (connectionInfo != null) {
+                long startTime = System.currentTimeMillis();
+                ConnectionConfiguration temporaryConnectionConfiguration = new ConnectionConfiguration(
+                        connectionConfiguration.getHost(), connectionConfiguration.getDatabaseName(),
+                        connectionConfiguration.getUsername(), connectionConfiguration.getPassword()
+                );
+                try {
+                    MysqlChannel channel = new MysqlChannel(temporaryConnectionConfiguration, null);
+                    SQLCommand killCommand = new SQLCommand("KILL " + connectionInfo.getConnectionId(), channel.getConnectionInfo());
+                    channel.send(killCommand, 5000);
+                    ErrorPacket errorPacket = killCommand.getErrorPacket();
+                    if (errorPacket != null) {
+                        MYSQL_CONNECTION_LOG.error("Kill connection failed: `{}`. `cost`:`{}ms` `connectionId`:`{}`. `host`:`{}`. `databaseName`:`{}`.",
+                                errorPacket.getErrorMessage(), System.currentTimeMillis() - startTime,
+                                connectionInfo.getConnectionId(), temporaryConnectionConfiguration.getHost(),
+                                temporaryConnectionConfiguration.getDatabaseName());
+                        LOG.error("Kill connection failed: `{}`. `cost`:`{}ms` `connectionId`:`{}`. `host`:`{}`. `databaseName`:`{}`.",
+                                errorPacket.getErrorMessage(), System.currentTimeMillis() - startTime,
+                                connectionInfo.getConnectionId(), temporaryConnectionConfiguration.getHost(),
+                                temporaryConnectionConfiguration.getDatabaseName());
+                    } else {
+                        MYSQL_CONNECTION_LOG.info("Kill connection success. `cost`:`{}ms`. `connectionId`:`{}`. `host`:`{}`. `databaseName`:`{}`.",
+                                System.currentTimeMillis() - startTime, connectionInfo.getConnectionId(),
+                                temporaryConnectionConfiguration.getHost(), temporaryConnectionConfiguration.getDatabaseName());
+                    }
+                } catch (Exception e) {
+                    String errorMessage = "Kill connection failed: `unexpected error`. `cost`:`" + (System.currentTimeMillis() - startTime)
+                        + "ms` `connectionId`:`" + connectionInfo.getConnectionId() + "`. `host`:`" + temporaryConnectionConfiguration.getHost()
+                        + "`. `databaseName`:`" + temporaryConnectionConfiguration.getDatabaseName() + "`.";
+                    MYSQL_CONNECTION_LOG.error(errorMessage);
+                    LOG.error(errorMessage, e);
+                }
+            } else {
+                LOG.error("Kill connection failed: `null connection info`."); // should not happen, just for bug detection
             }
         }
     }

@@ -39,6 +39,7 @@ import com.heimuheimu.mysql.jdbc.util.LogBuildUtil;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
+import java.io.Closeable;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -57,7 +58,7 @@ import java.util.logging.Logger;
  *
  * @author heimuheimu
  */
-public class MysqlDataSource implements DataSource {
+public class MysqlDataSource implements DataSource, Closeable {
 
     private static final org.slf4j.Logger MYSQL_CONNECTION_LOG = LoggerFactory.getLogger("MYSQL_CONNECTION_LOG");
 
@@ -234,6 +235,15 @@ public class MysqlDataSource implements DataSource {
         }
     }
 
+    @Override
+    public void close() {
+        for (MysqlPooledConnection connection : connectionList) {
+            if (connection != null) {
+                connection.closePhysicalConnection();
+            }
+        }
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
@@ -363,9 +373,9 @@ public class MysqlDataSource implements DataSource {
                                     } else {
                                         Thread.sleep(500); // 还有未恢复的客户端，等待 500ms 后继续尝试
                                     }
-                                    MYSQL_CONNECTION_LOG.info("MysqlConnection rescue task has been finished. `cost`: {}ms. `host`:`{}`. `databaseName`:`{}`.",
-                                            System.currentTimeMillis() - startTime, connectionConfiguration.getHost(), connectionConfiguration.getDatabaseName());
                                 }
+                                MYSQL_CONNECTION_LOG.info("MysqlConnection rescue task has been finished. `cost`: {}ms. `host`:`{}`. `databaseName`:`{}`.",
+                                        System.currentTimeMillis() - startTime, connectionConfiguration.getHost(), connectionConfiguration.getDatabaseName());
                             } catch (Exception e) {
                                 MYSQL_CONNECTION_LOG.error("MysqlConnection rescue task execute failed: `{}`. `cost`:`{}ms`. `host`:`{}`. `databaseName`:`{}`.",
                                         e.getMessage(), System.currentTimeMillis() - startTime, connectionConfiguration.getHost(), connectionConfiguration.getDatabaseName());

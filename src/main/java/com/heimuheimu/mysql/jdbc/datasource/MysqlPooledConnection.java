@@ -152,7 +152,7 @@ public class MysqlPooledConnection extends MysqlConnection {
      *
      * @throws SQLException 如果关闭过程中发生错误，将会抛出此异常
      */
-    public void closePhysicalConnection() throws SQLException {
+    public void closePhysicalConnection() {
         super.close();
     }
 

@@ -61,7 +61,7 @@ public class DatabaseDataCollector extends AbstractFalconDataCollector {
      *
      * @param host Mysql 连接目标地址
      * @param databaseName 数据库名称
-     * @param collectorName 采集器名称，用于区分统一数据库的主库、从库
+     * @param collectorName 采集器名称，用于区分同一数据库的主库、从库
      */
     public DatabaseDataCollector(String host, String databaseName, String collectorName) {
         this.collectorName = collectorName;

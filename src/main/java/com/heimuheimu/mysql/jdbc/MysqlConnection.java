@@ -617,7 +617,7 @@ public class MysqlConnection implements Connection {
     }
 
     @Override
-    public void close() throws SQLException {
+    public void close() {
         mysqlChannel.close();
     }
 
