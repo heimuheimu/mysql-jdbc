@@ -397,7 +397,7 @@ public class MysqlChannel implements Closeable {
                 } catch (Exception e) {
                     if (connectionInfo != null) {
                         String parametersLog = buildLogForParameters(null);
-                        MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `{}`.{}", e.getMessage(), parametersLog);
+                        MYSQL_CONNECTION_LOG.error("MysqlChannel need to be closed: `{}`.{}", e.getMessage(), parametersLog);
                         LOG.error("MysqlChannel need to be closed: `" + e.getMessage() + "`." + parametersLog, e);
                     }
                     close();
