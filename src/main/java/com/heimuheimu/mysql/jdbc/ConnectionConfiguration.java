@@ -25,7 +25,11 @@
 package com.heimuheimu.mysql.jdbc;
 
 import com.heimuheimu.mysql.jdbc.net.SocketConfiguration;
+import com.heimuheimu.mysql.jdbc.util.MysqlConnectionBuildUtil;
 import com.heimuheimu.mysql.jdbc.util.StringUtil;
+
+import java.net.MalformedURLException;
+import java.util.Map;
 
 /**
  * 建立 Mysql 数据库连接使用的配置信息。
@@ -75,6 +79,32 @@ public class ConnectionConfiguration {
      * Mysql 连接使用的 Socket 配置信息，允许为 {@code null}
      */
     private final SocketConfiguration socketConfiguration;
+
+    /**
+     * 构造一个建立 Mysql 数据库连接使用的配置信息，字符集编码 ID 默认为 45（utf8mb4_general_ci），PING 命令发送时间间隔默认为 30 秒，
+     * Socket 配置信息默认使用 {@link SocketConfiguration#DEFAULT} 配置信息。
+     *
+     * @param jdbcURL Mysql JDBC URL，例如：jdbc:mysql://localhost:3306/demo
+     * @param username Mysql 数据库用户名
+     * @param password Mysql 数据库密码
+     * @throws IllegalArgumentException 如果 JDBC URL 不符合规则，将抛出此异常
+     */
+    public ConnectionConfiguration(String jdbcURL, String username, String password) throws IllegalArgumentException {
+        try {
+            Map<String, Object> properties = MysqlConnectionBuildUtil.parseURL(jdbcURL);
+            this.host = (String) properties.get(MysqlConnectionBuildUtil.PROPERTY_HOST);
+            this.databaseName = (String) properties.get(MysqlConnectionBuildUtil.PROPERTY_DATABASE_NAME);
+            this.username = username;
+            this.password = password;
+            this.characterId = 45;
+            this.capabilitiesFlags = 0;
+            this.pingPeriod = 30;
+            this.socketConfiguration = null;
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException("Create `ConnectionConfiguration` failed: `invalid jdbc url`. `jdbcURL`:`"
+                + jdbcURL + "`.", e);
+        }
+    }
 
     /**
      * 构造一个建立 Mysql 数据库连接使用的配置信息，字符集编码 ID 默认为 45（utf8mb4_general_ci），PING 命令发送时间间隔默认为 30 秒，

@@ -170,7 +170,7 @@ public class MysqlConnectionBuildUtil {
      * @param connectionInfo Mysql 数据库连接参数 Map，不允许为 {@code null}
      * @return 建立 Mysql 数据库连接使用的配置信息
      */
-    private static ConnectionConfiguration getConnectionConfiguration(Map<Object, Object> connectionInfo) {
+    public static ConnectionConfiguration getConnectionConfiguration(Map<Object, Object> connectionInfo) {
         String host = (String) connectionInfo.get(PROPERTY_HOST);
         String databaseName = "";
         if (connectionInfo.containsKey(PROPERTY_DATABASE_NAME)) {
@@ -208,7 +208,7 @@ public class MysqlConnectionBuildUtil {
      * @return Mysql 数据库连接参数 Map，不会为 {@code null}
      * @throws MalformedURLException 如果 JDBC URL 解析失败，将抛出此异常
      */
-    private static Map<String, Object> parseURL(String url) throws MalformedURLException {
+    public static Map<String, Object> parseURL(String url) throws MalformedURLException {
         Map<String, Object> urlConnectionInfo = new HashMap<>();
         if (url != null) {
             url = url.trim();
