@@ -236,10 +236,13 @@ public class MysqlDataSource implements DataSource, Closeable {
     }
 
     @Override
-    public void close() {
-        for (MysqlPooledConnection connection : connectionList) {
-            if (connection != null) {
-                connection.closePhysicalConnection();
+    public synchronized void close() {
+        if (state != BeanStatusEnum.CLOSED) {
+            state = BeanStatusEnum.CLOSED;
+            for (MysqlPooledConnection connection : connectionList) {
+                if (connection != null) {
+                    connection.closePhysicalConnection();
+                }
             }
         }
     }
