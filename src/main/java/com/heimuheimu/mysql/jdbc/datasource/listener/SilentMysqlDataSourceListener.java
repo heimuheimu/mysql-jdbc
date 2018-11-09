@@ -30,6 +30,8 @@ import org.slf4j.LoggerFactory;
 /**
  * {@link MysqlDataSourceListener} 方法静默执行封装类，监听器中的方法执行遇到异常时，仅打印日志。
  *
+ * <p><strong>说明：</strong>{@code SilentMysqlDataSourceListener} 类是线程安全的，可在多个线程中使用同一个实例。</p>
+ *
  * @author heimuheimu
  */
 public class SilentMysqlDataSourceListener implements MysqlDataSourceListener {
