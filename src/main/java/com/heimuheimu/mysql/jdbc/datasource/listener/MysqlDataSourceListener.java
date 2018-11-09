@@ -27,12 +27,14 @@ package com.heimuheimu.mysql.jdbc.datasource.listener;
 /**
  * Mysql 数据库连接池事件监听器，可监听连接池中 {@code MysqlConnection} 的创建、关闭、恢复等事件。
  *
+ * <p><strong>说明：</strong>监听器的实现类必须是线程安全的。</p>
+ *
  * @author heimuheimu
  */
 public interface MysqlDataSourceListener {
 
     /**
-     * 当 {@code MysqlConnection} 在 {@code MysqlDataSource} 初始化过程中被创建成功时，将会触发此事件。
+     * 当 {@code MysqlConnection} 在数据库连接池初始化过程中被创建成功时，将会触发此事件。
      *
      * @param host Mysql 地址，由主机名和端口组成，":" 符号分割，例如：localhost:3306
      * @param databaseName 数据库名称

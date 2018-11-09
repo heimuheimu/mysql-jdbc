@@ -24,10 +24,12 @@
 
 package com.heimuheimu.mysql.jdbc.datasource;
 
-import com.heimuheimu.mysql.jdbc.facility.parameter.ConstructorParameterChecker;
-import com.heimuheimu.mysql.jdbc.facility.parameter.Parameters;
+import com.heimuheimu.mysql.jdbc.util.LogBuildUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Mysql 数据库连接池使用的配置信息。
@@ -77,24 +79,42 @@ public class DataSourceConfiguration {
      */
     public DataSourceConfiguration(int poolSize, long checkoutTimeout, int maxOccupyTime, int timeout,
                                    int slowExecutionThreshold) throws IllegalArgumentException {
-        ConstructorParameterChecker checker = new ConstructorParameterChecker("DataSourceConfiguration", LOG);
-        checker.addParameter("poolSize", poolSize);
-        checker.addParameter("checkoutTimeout", checkoutTimeout);
-        checker.addParameter("maxOccupyTime", maxOccupyTime);
-        checker.addParameter("timeout", timeout);
-        checker.addParameter("slowExecutionThreshold", slowExecutionThreshold);
-
-        checker.check("poolSize", "isLessThanZero", Parameters::isLessThanZero);
-        checker.check("checkoutTimeout", "isLessThanZero", Parameters::isLessThanZero);
-        checker.check("maxOccupyTime", "isLessThanZero", Parameters::isLessThanZero);
-        checker.check("timeout", "isLessThanZero", Parameters::isLessThanZero);
-        checker.check("slowExecutionThreshold", "isEqualOrLessThanZero", Parameters::isEqualOrLessThanZero);
-
         this.poolSize = poolSize;
         this.checkoutTimeout = checkoutTimeout;
         this.maxOccupyTime = maxOccupyTime;
         this.timeout = timeout;
         this.slowExecutionThreshold = slowExecutionThreshold;
+
+        if (poolSize <= 0) {
+            String errorLog = "Create `DataSourceConfiguration` failed: `poolSize could not be equal or less than 0`."
+                    + buildLogForParameters();
+            LOG.error(errorLog);
+            throw new IllegalArgumentException(errorLog);
+        }
+        if (checkoutTimeout < 0) {
+            String errorLog = "Create `DataSourceConfiguration` failed: `checkoutTimeout could not be less than 0`."
+                    + buildLogForParameters();
+            LOG.error(errorLog);
+            throw new IllegalArgumentException(errorLog);
+        }
+        if (maxOccupyTime < 0) {
+            String errorLog = "Create `DataSourceConfiguration` failed: `maxOccupyTime could not be less than 0`."
+                    + buildLogForParameters();
+            LOG.error(errorLog);
+            throw new IllegalArgumentException(errorLog);
+        }
+        if (timeout < 0) {
+            String errorLog = "Create `DataSourceConfiguration` failed: `timeout could not be less than 0`."
+                    + buildLogForParameters();
+            LOG.error(errorLog);
+            throw new IllegalArgumentException(errorLog);
+        }
+        if (slowExecutionThreshold <= 0) {
+            String errorLog = "Create `DataSourceConfiguration` failed: `slowExecutionThreshold could not be equal or less than 0`."
+                    + buildLogForParameters();
+            LOG.error(errorLog);
+            throw new IllegalArgumentException(errorLog);
+        }
     }
 
     /**
@@ -140,6 +160,21 @@ public class DataSourceConfiguration {
      */
     public int getSlowExecutionThreshold() {
         return slowExecutionThreshold;
+    }
+
+    /**
+     * 返回当前 {@code DataSourceConfiguration} 相关参数信息，用于日志打印。
+     *
+     * @return 当前 {@code DataSourceConfiguration} 相关参数信息
+     */
+    private String buildLogForParameters() {
+        Map<String, Object> parameterMap = new LinkedHashMap<>();
+        parameterMap.put("poolSize", poolSize);
+        parameterMap.put("checkoutTimeout", checkoutTimeout);
+        parameterMap.put("maxOccupyTime", maxOccupyTime);
+        parameterMap.put("timeout", timeout);
+        parameterMap.put("slowExecutionThreshold", slowExecutionThreshold);
+        return LogBuildUtil.build(parameterMap);
     }
 
     @Override
