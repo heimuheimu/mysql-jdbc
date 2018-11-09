@@ -25,6 +25,8 @@
 package com.heimuheimu.mysql.jdbc.monitor.falcon;
 
 import com.heimuheimu.mysql.jdbc.constant.FalconDataCollectorConstant;
+import com.heimuheimu.mysql.jdbc.monitor.DataSourceMonitor;
+import com.heimuheimu.mysql.jdbc.monitor.DataSourceMonitorFactory;
 import com.heimuheimu.mysql.jdbc.monitor.DatabaseMonitor;
 import com.heimuheimu.mysql.jdbc.monitor.DatabaseMonitorFactory;
 import com.heimuheimu.naivemonitor.falcon.FalconData;
@@ -56,6 +58,10 @@ public class DatabaseDataCollector extends AbstractFalconDataCollector {
 
     private volatile long lastDeleteRowsCount = 0;
 
+    private final DataSourceMonitor dataSourceMonitor;
+
+    private volatile long lastGetConnectionFailedCount = 0;
+
     /**
      * 构造一个 Mysql 数据库监控信息采集器。
      *
@@ -68,6 +74,7 @@ public class DatabaseDataCollector extends AbstractFalconDataCollector {
         databaseSocketDataCollector = new DatabaseSocketDataCollector(host, databaseName, this.collectorName);
         databaseExecutionDataCollector = new DatabaseExecutionDataCollector(host, databaseName, this.collectorName);
         this.databaseMonitor = DatabaseMonitorFactory.get(host, databaseName);
+        this.dataSourceMonitor = DataSourceMonitorFactory.get(host, databaseName);
     }
 
     @Override
@@ -92,6 +99,17 @@ public class DatabaseDataCollector extends AbstractFalconDataCollector {
         long deleteRowsCount = databaseMonitor.getDeleteRowsCount();
         falconDataList.add(create("_delete_rows_count", deleteRowsCount - lastDeleteRowsCount));
         lastDeleteRowsCount = deleteRowsCount;
+
+        long acquiredConnectionCount = dataSourceMonitor.getAcquiredConnectionCount();
+        falconDataList.add(create("_datasource_acquired_connection_count", acquiredConnectionCount));
+
+        long maxAcquiredConnectionCount = dataSourceMonitor.getMaxAcquiredConnectionCount();
+        dataSourceMonitor.resetMaxAcquiredConnectionCount();
+        falconDataList.add(create("_datasource_max_acquired_connection_count", maxAcquiredConnectionCount));
+
+        long getConnectionFailedCount = dataSourceMonitor.getGetConnectionFailedCount();
+        falconDataList.add(create("_datasource_get_connection_failed_count", getConnectionFailedCount - lastGetConnectionFailedCount));
+        lastGetConnectionFailedCount = getConnectionFailedCount;
 
         return falconDataList;
     }
