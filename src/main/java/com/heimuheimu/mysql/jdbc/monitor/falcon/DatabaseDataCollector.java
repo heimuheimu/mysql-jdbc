@@ -29,11 +29,14 @@ import com.heimuheimu.mysql.jdbc.monitor.DataSourceMonitor;
 import com.heimuheimu.mysql.jdbc.monitor.DataSourceMonitorFactory;
 import com.heimuheimu.mysql.jdbc.monitor.DatabaseMonitor;
 import com.heimuheimu.mysql.jdbc.monitor.DatabaseMonitorFactory;
+import com.heimuheimu.mysql.jdbc.util.MysqlConnectionBuildUtil;
 import com.heimuheimu.naivemonitor.falcon.FalconData;
 import com.heimuheimu.naivemonitor.falcon.support.AbstractFalconDataCollector;
 
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Mysql 数据库监控信息采集器。
@@ -61,6 +64,28 @@ public class DatabaseDataCollector extends AbstractFalconDataCollector {
     private final DataSourceMonitor dataSourceMonitor;
 
     private volatile long lastGetConnectionFailedCount = 0;
+
+    /**
+     * 构造一个 Mysql 数据库监控信息采集器。
+     *
+     * @param jdbcURL Mysql JDBC URL，例如：jdbc:mysql://localhost:3306/demo
+     * @param collectorName 采集器名称，用于区分同一数据库的主库、从库
+     */
+    public DatabaseDataCollector(String jdbcURL, String collectorName) throws IllegalArgumentException {
+        try {
+            Map<String, Object> properties = MysqlConnectionBuildUtil.parseURL(jdbcURL);
+            String host = (String) properties.get(MysqlConnectionBuildUtil.PROPERTY_HOST);
+            String databaseName = (String) properties.get(MysqlConnectionBuildUtil.PROPERTY_DATABASE_NAME);
+            this.collectorName = collectorName;
+            databaseSocketDataCollector = new DatabaseSocketDataCollector(host, databaseName, this.collectorName);
+            databaseExecutionDataCollector = new DatabaseExecutionDataCollector(host, databaseName, this.collectorName);
+            this.databaseMonitor = DatabaseMonitorFactory.get(host, databaseName);
+            this.dataSourceMonitor = DataSourceMonitorFactory.get(host, databaseName);
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException("Create `DatabaseDataCollector` failed: `invalid jdbc url`. `jdbcURL`:`"
+                    + jdbcURL + "`.", e);
+        }
+    }
 
     /**
      * 构造一个 Mysql 数据库监控信息采集器。
