@@ -70,6 +70,7 @@ public class DatabaseDataCollector extends AbstractFalconDataCollector {
      *
      * @param jdbcURL Mysql JDBC URL，例如：jdbc:mysql://localhost:3306/demo
      * @param collectorName 采集器名称，用于区分同一数据库的主库、从库
+     * @throws IllegalArgumentException 如果 JDBC URL 不符合规则，将抛出此异常
      */
     public DatabaseDataCollector(String jdbcURL, String collectorName) throws IllegalArgumentException {
         try {
