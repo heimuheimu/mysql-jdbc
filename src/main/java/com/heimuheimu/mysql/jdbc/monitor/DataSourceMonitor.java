@@ -34,6 +34,11 @@ import java.util.concurrent.atomic.AtomicLong;
 public class DataSourceMonitor {
 
     /**
+     * 连接池发生连接泄漏的次数
+     */
+    private final AtomicLong connectionLeakedCount = new AtomicLong(0);
+
+    /**
      * 连接池获取不到连接的次数
      */
     private final AtomicLong getConnectionFailedCount = new AtomicLong(0);
@@ -47,6 +52,13 @@ public class DataSourceMonitor {
      * 连接池被使用的最大连接数量
      */
     private volatile long maxAcquiredConnectionCount = 0;
+
+    /**
+     * 当连接池发生连接泄漏时，调用此方法进行监控
+     */
+    public void onConnectionLeaked() {
+        connectionLeakedCount.incrementAndGet();
+    }
 
     /**
      * 当从连接池中获取连接失败时，调用此方法进行监控。
@@ -80,6 +92,15 @@ public class DataSourceMonitor {
     }
 
     /**
+     * 获得连接池发生连接泄漏的次数。
+     *
+     * @return 连接池发生连接泄漏的次数
+     */
+    public long getConnectionLeakedCount() {
+        return connectionLeakedCount.get();
+    }
+
+    /**
      * 获得连接池获取不到连接的次数。
      *
      * @return 连接池获取不到连接的次数
@@ -109,7 +130,8 @@ public class DataSourceMonitor {
     @Override
     public String toString() {
         return "DataSourceMonitor{" +
-                "getConnectionFailedCount=" + getConnectionFailedCount +
+                "connectionLeakedCount=" + connectionLeakedCount +
+                ", getConnectionFailedCount=" + getConnectionFailedCount +
                 ", acquiredConnectionCount=" + acquiredConnectionCount +
                 ", maxAcquiredConnectionCount=" + maxAcquiredConnectionCount +
                 '}';

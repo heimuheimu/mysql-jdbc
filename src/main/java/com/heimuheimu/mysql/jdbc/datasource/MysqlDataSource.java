@@ -45,6 +45,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -156,6 +157,7 @@ public class MysqlDataSource implements DataSource, Closeable {
             LOG.error(errorMessage);
             throw new IllegalStateException(errorMessage);
         }
+        LeakedConnectionDetector.register(this);
     }
 
     @Override
@@ -256,6 +258,24 @@ public class MysqlDataSource implements DataSource, Closeable {
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         return MysqlDataSource.class == iface;
+    }
+
+    /**
+     * 获得当前连接池维护的可复用数据库连接列表，该方法不会返回 {@code null}。
+     *
+     * @return 当前连接池维护的可复用数据库连接列表，不会为 {@code null}
+     */
+    List<MysqlPooledConnection> getConnectionList() {
+        return connectionList;
+    }
+
+    /**
+     * 获得 Mysql 数据库连接池信息监控器。
+     *
+     * @return Mysql 数据库连接池信息监控器
+     */
+    DataSourceMonitor getDataSourceMonitor() {
+        return dataSourceMonitor;
     }
 
     /**

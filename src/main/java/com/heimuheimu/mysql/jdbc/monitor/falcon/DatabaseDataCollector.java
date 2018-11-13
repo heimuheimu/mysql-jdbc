@@ -63,6 +63,8 @@ public class DatabaseDataCollector extends AbstractFalconDataCollector {
 
     private final DataSourceMonitor dataSourceMonitor;
 
+    private volatile long lastConnectionLeakedCount = 0;
+
     private volatile long lastGetConnectionFailedCount = 0;
 
     /**
@@ -132,6 +134,10 @@ public class DatabaseDataCollector extends AbstractFalconDataCollector {
         long maxAcquiredConnectionCount = dataSourceMonitor.getMaxAcquiredConnectionCount();
         dataSourceMonitor.resetMaxAcquiredConnectionCount();
         falconDataList.add(create("_datasource_max_acquired_connection_count", maxAcquiredConnectionCount));
+
+        long connectionLeakedCount = dataSourceMonitor.getConnectionLeakedCount();
+        falconDataList.add(create("_datasource_connection_leaked_count", connectionLeakedCount - lastConnectionLeakedCount));
+        lastConnectionLeakedCount = connectionLeakedCount;
 
         long getConnectionFailedCount = dataSourceMonitor.getGetConnectionFailedCount();
         falconDataList.add(create("_datasource_get_connection_failed_count", getConnectionFailedCount - lastGetConnectionFailedCount));
