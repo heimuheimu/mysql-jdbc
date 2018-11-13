@@ -71,7 +71,7 @@ public class DatabaseDataCollector extends AbstractFalconDataCollector {
      * 构造一个 Mysql 数据库监控信息采集器。
      *
      * @param jdbcURL Mysql JDBC URL，例如：jdbc:mysql://localhost:3306/demo
-     * @param collectorName 采集器名称，用于区分同一数据库的主库、从库
+     * @param collectorName 采集器名称，生成 Falcon 的 Metric 名称时使用，每个库唯一
      * @throws IllegalArgumentException 如果 JDBC URL 不符合规则，将抛出此异常
      */
     public DatabaseDataCollector(String jdbcURL, String collectorName) throws IllegalArgumentException {
