@@ -143,6 +143,7 @@ log4j.appender.MYSQL_EXECUTION_DEBUG_LOG.layout.ConversionPattern=%d{ISO8601} : 
  * mysql_jdbc_demo_master_invalid_parameter/module=mysql_jdbc &nbsp;&nbsp;&nbsp;&nbsp; 30 秒内组装 SQL 发生的参数值设置不正确的次数
  * mysql_jdbc_demo_master_result_error/module=mysql_jdbc &nbsp;&nbsp;&nbsp;&nbsp; 30 秒内发生的 ResultSet 操作错误的次数
  * mysql_jdbc_demo_master_unexpected_error/module=mysql_jdbc &nbsp;&nbsp;&nbsp;&nbsp; 30 秒内执行 SQL 发生的预期外错误次数
+ * mysql_jdbc_demo_master_sql_slow_execution/module=mysql_jdbc &nbsp;&nbsp;&nbsp;&nbsp; 30 秒内执行 SQL 发生的慢查次数
 
 ### SQL 执行数据项：
  * mysql_jdbc_demo_master_avg_exec_time/module=mysql_jdbc &nbsp;&nbsp;&nbsp;&nbsp; 30 秒内 SQL 执行平均时间，单位：纳秒

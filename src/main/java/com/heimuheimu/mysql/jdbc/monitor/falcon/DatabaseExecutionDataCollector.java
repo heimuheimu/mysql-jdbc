@@ -49,6 +49,7 @@ class DatabaseExecutionDataCollector extends AbstractExecutionDataCollector {
         ERROR_METRIC_SUFFIX_MAP.put(ExecutionMonitorFactory.ERROR_CODE_INVALID_PARAMETER, "_invalid_parameter");
         ERROR_METRIC_SUFFIX_MAP.put(ExecutionMonitorFactory.ERROR_CODE_RESULTSET_ERROR, "_result_error");
         ERROR_METRIC_SUFFIX_MAP.put(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR, "_unexpected_error");
+        ERROR_METRIC_SUFFIX_MAP.put(ExecutionMonitorFactory.ERROR_CODE_SLOW_EXECUTION, "_sql_slow_execution");
     }
 
     private final List<ExecutionMonitor> executionMonitors;
