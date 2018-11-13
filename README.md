@@ -16,6 +16,7 @@
 * 自动关闭泄漏的连接。
 * 在慢查日志中可通过 MySQL 服务端状态信息中的 "isQueryNoGoodIndexUsed"、"isQueryNoIndexUsed"、"isSlow" 值判断是 SQL 语句问题还是网络传输问题。
 * 完善的监控信息。
+* 连接不可用或恢复时，实时报警。
 
 ## Maven 配置
 ```xml
