@@ -34,6 +34,8 @@ import java.io.Closeable;
 
 /**
  * {@link MysqlDataSource} Spring 工厂类，兼容 Spring 4.0 以下版本不支持 lambda 语法问题。
+ *
+ * @author heimuheimu
  */
 public class MysqlDataSourceFactory implements FactoryBean<MysqlDataSource>, Closeable {
 
