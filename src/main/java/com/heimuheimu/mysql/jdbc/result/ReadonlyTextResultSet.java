@@ -284,11 +284,16 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
         return getByte(findColumn(columnLabel));
     }
 
-    private <T extends Number> T parseNumber(int columnIndex, Function<String, T> numberParser, T nullValue) throws SQLException {
+    private <T extends Number> T parseNumber(int columnIndex, Function<String, T> numberParser, T nullValue, boolean includeFraction) throws SQLException {
         String value = getString(columnIndex);
         if (value != null) {
             try {
-                return numberParser.apply(value);
+                int pointIndex = value.indexOf('.');
+                if (!includeFraction && pointIndex != -1) {
+                    return numberParser.apply(value.substring(0, pointIndex));
+                } else {
+                    return numberParser.apply(value);
+                }
             } catch (Exception e) {
                 executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_RESULTSET_ERROR);
                 String errorMessage = "Get column number value failed: `parse number error`. Column index: `" + columnIndex
@@ -304,7 +309,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
 
     @Override
     public short getShort(int columnIndex) throws SQLException {
-        return parseNumber(columnIndex, Short::parseShort, (short) 0);
+        return parseNumber(columnIndex, Short::parseShort, (short) 0, false);
     }
 
     @Override
@@ -314,7 +319,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
 
     @Override
     public int getInt(int columnIndex) throws SQLException {
-        return parseNumber(columnIndex, Integer::parseInt, 0);
+        return parseNumber(columnIndex, Integer::parseInt, 0, false);
     }
 
     @Override
@@ -324,7 +329,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
 
     @Override
     public long getLong(int columnIndex) throws SQLException {
-        return parseNumber(columnIndex, Long::parseLong, 0L);
+        return parseNumber(columnIndex, Long::parseLong, 0L, false);
     }
 
     @Override
@@ -334,7 +339,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
 
     @Override
     public float getFloat(int columnIndex) throws SQLException {
-        return parseNumber(columnIndex, Float::parseFloat, 0F);
+        return parseNumber(columnIndex, Float::parseFloat, 0F, true);
     }
 
     @Override
@@ -344,7 +349,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
 
     @Override
     public double getDouble(int columnIndex) throws SQLException {
-        return parseNumber(columnIndex, Double::parseDouble, 0D);
+        return parseNumber(columnIndex, Double::parseDouble, 0D, true);
     }
 
     @Override
@@ -354,7 +359,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
 
     @Override
     public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
-        return parseNumber(columnIndex, BigDecimal::new, null);
+        return parseNumber(columnIndex, BigDecimal::new, null, true);
     }
 
     @Override
@@ -365,7 +370,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
     @Override
     @Deprecated
     public BigDecimal getBigDecimal(int columnIndex, int scale) throws SQLException {
-        return parseNumber(columnIndex, value -> new BigDecimal(value).setScale(scale, BigDecimal.ROUND_FLOOR), null);
+        return parseNumber(columnIndex, value -> new BigDecimal(value).setScale(scale, BigDecimal.ROUND_FLOOR), null, true);
     }
 
     @Override
