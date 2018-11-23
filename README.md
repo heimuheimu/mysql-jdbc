@@ -153,9 +153,13 @@ log4j.appender.MYSQL_EXECUTION_DEBUG_LOG.layout.ConversionPattern=%d{ISO8601} : 
  
 ### SQL 行数数据项：
  * mysql_jdbc_demo_master_insert_rows_count/module=mysql_jdbc &nbsp;&nbsp;&nbsp;&nbsp; 30 秒内 SQL 新增的数据行数
+ * mysql_jdbc_demo_master_max_insert_rows_count/module=mysql_jdbc &nbsp;&nbsp;&nbsp;&nbsp; 30 秒内单条 SQL 新增的最大数据行数
  * mysql_jdbc_demo_master_delete_rows_count/module=mysql_jdbc &nbsp;&nbsp;&nbsp;&nbsp; 30 秒内 SQL 删除的数据行数
+ * mysql_jdbc_demo_master_max_delete_rows_count/module=mysql_jdbc &nbsp;&nbsp;&nbsp;&nbsp; 30 秒内单条 SQL 删除的最大数据行数
  * mysql_jdbc_demo_master_update_rows_count/module=mysql_jdbc &nbsp;&nbsp;&nbsp;&nbsp; 30 秒内 SQL 更新的数据行数
+ * mysql_jdbc_demo_master_max_update_rows_count/module=mysql_jdbc &nbsp;&nbsp;&nbsp;&nbsp; 30 秒内单条 SQL 更新的最大数据行数
  * mysql_jdbc_demo_master_select_rows_count/module=mysql_jdbc &nbsp;&nbsp;&nbsp;&nbsp; 30 秒内 SQL 查询的数据行数
+ * mysql_jdbc_demo_master_max_select_rows_count/module=mysql_jdbc &nbsp;&nbsp;&nbsp;&nbsp; 30 秒内单条 SQL 查询的最大数据行数
 
 ### SQL 执行 Socket 数据项：
  * mysql_jdbc_demo_master_socket_avg_read_bytes/module=mysql_jdbc &nbsp;&nbsp;&nbsp;&nbsp; 30 秒内 Socket 平均每次读取的平均字节数

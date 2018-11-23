@@ -116,17 +116,33 @@ public class DatabaseDataCollector extends AbstractFalconDataCollector {
         falconDataList.add(create("_select_rows_count", selectRowsCount - lastSelectRowsCount));
         lastSelectRowsCount = selectRowsCount;
 
+        long maxSelectRowsCount = databaseMonitor.getMaxSelectRowsCount();
+        databaseMonitor.resetMaxSelectRowsCount();
+        falconDataList.add(create("_max_select_rows_count", maxSelectRowsCount));
+
         long insertRowsCount = databaseMonitor.getInsertRowsCount();
         falconDataList.add(create("_insert_rows_count", insertRowsCount - lastInsertRowsCount));
         lastInsertRowsCount = insertRowsCount;
+
+        long maxInsertRowsCount = databaseMonitor.getMaxInsertRowsCount();
+        databaseMonitor.resetMaxInsertRowsCount();
+        falconDataList.add(create("_max_insert_rows_count", maxInsertRowsCount));
 
         long updateRowsCount = databaseMonitor.getUpdateRowsCount();
         falconDataList.add(create("_update_rows_count", updateRowsCount - lastUpdateRowsCount));
         lastUpdateRowsCount = updateRowsCount;
 
+        long maxUpdateRowsCount = databaseMonitor.getMaxUpdateRowsCount();
+        databaseMonitor.resetMaxUpdateRowsCount();
+        falconDataList.add(create("_max_update_rows_count", maxUpdateRowsCount));
+
         long deleteRowsCount = databaseMonitor.getDeleteRowsCount();
         falconDataList.add(create("_delete_rows_count", deleteRowsCount - lastDeleteRowsCount));
         lastDeleteRowsCount = deleteRowsCount;
+
+        long maxDeleteRowsCount = databaseMonitor.getMaxDeleteRowsCount();
+        databaseMonitor.resetMaxDeleteRowsCount();
+        falconDataList.add(create("_max_delete_rows_count", maxDeleteRowsCount));
 
         long acquiredConnectionCount = dataSourceMonitor.getAcquiredConnectionCount();
         falconDataList.add(create("_datasource_acquired_connection_count", acquiredConnectionCount));
