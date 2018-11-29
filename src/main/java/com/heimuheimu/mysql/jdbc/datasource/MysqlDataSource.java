@@ -354,7 +354,7 @@ public class MysqlDataSource implements DataSource, Closeable {
                 }
             }
         }
-        if (isRemoveSuccess) {
+        if (isRemoveSuccess && (state != BeanStatusEnum.CLOSED)) {
             startRescueTask();
             listener.onClosed(connectionConfiguration.getHost(), connectionConfiguration.getDatabaseName());
         }
