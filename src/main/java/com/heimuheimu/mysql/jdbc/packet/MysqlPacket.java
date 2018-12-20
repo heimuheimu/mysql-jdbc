@@ -182,7 +182,7 @@ public class MysqlPacket {
         } else if (magicValue == 0xFE) {
             return readFixedLengthInteger(8);
         } else {
-            return magicValue;
+            return magicValue == 0XFB ? -1 : magicValue;
         }
     }
 

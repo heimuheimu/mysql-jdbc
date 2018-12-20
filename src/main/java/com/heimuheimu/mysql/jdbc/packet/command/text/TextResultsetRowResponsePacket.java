@@ -100,7 +100,7 @@ public class TextResultsetRowResponsePacket {
             TextResultsetRowResponsePacket textResultsetRowResponsePacket = new TextResultsetRowResponsePacket();
             while (packet.hasRemaining()) {
                 int valueBytesLength = (int) packet.readLengthEncodedInteger();
-                if (valueBytesLength != 0xFB) {
+                if (valueBytesLength != -1) {
                     textResultsetRowResponsePacket.addColumnValue(packet.readFixedLengthBytes(valueBytesLength));
                 } else {
                     textResultsetRowResponsePacket.addColumnValue(null);

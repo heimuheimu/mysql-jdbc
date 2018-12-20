@@ -29,7 +29,7 @@ import com.heimuheimu.mysql.jdbc.packet.MysqlPacket;
 
 /**
  * "TextResultset" 数据包信息，Mysql 服务端在收到 "COM_QUERY" 数据包后，可能会发送该响应数据包至客户端，更多信息请参考：
- * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_connection_phase_packets_protocol_handshake_response.html">
+ * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_com_query_response_text_resultset.html">
  *     TextResultset
  * </a>
  *
@@ -80,7 +80,7 @@ public class TextResultsetResponsePacket {
 
     /**
      * 对 Mysql "TextResultset" 数据包进行解析，生成对应的 {@code TextResultsetResponsePacket} 实例，"TextResultset" 数据包格式定义：
-     * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_connection_phase_packets_protocol_handshake_response.html">
+     * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_com_query_response_text_resultset.html">
      *     TextResultset
      * </a>
      *
