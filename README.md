@@ -59,7 +59,7 @@ log4j.appender.MYSQL_SLOW_EXECUTION_LOG.DatePattern=_yyyy-MM-dd
 log4j.appender.MYSQL_SLOW_EXECUTION_LOG.layout=org.apache.log4j.PatternLayout
 log4j.appender.MYSQL_SLOW_EXECUTION_LOG.layout.ConversionPattern=%d{ISO8601} : %m%n
 
-# 调用 MySQL JDCB 不支持的方法错误日志
+# 调用 MySQL JDBC 不支持的方法错误日志
 log4j.logger.SQL_FEATURE_NOT_SUPPORTED_LOG=ERROR, SQL_FEATURE_NOT_SUPPORTED_LOG
 log4j.additivity.SQL_FEATURE_NOT_SUPPORTED_LOG=false
 log4j.appender.SQL_FEATURE_NOT_SUPPORTED_LOG=org.apache.log4j.DailyRollingFileAppender
