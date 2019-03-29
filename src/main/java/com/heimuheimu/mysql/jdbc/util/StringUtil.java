@@ -27,9 +27,9 @@ package com.heimuheimu.mysql.jdbc.util;
 import java.util.Arrays;
 
 /**
- * {@code BytesUtil} 提供字符串转换的工具方法，例如将对 MYSQL 特殊字符进行转义。
+ * {@code StringUtil} 提供字符串转换的工具方法，例如将对 MYSQL 特殊字符进行转义。
  *
- * <p><strong>说明：</strong>{@code BytesUtil} 类是线程安全的，可在多个线程中使用同一个实例。</p>
+ * <p><strong>说明：</strong>{@code StringUtil} 类是线程安全的，可在多个线程中使用同一个实例。</p>
  *
  * @author heimuheimu
  */
