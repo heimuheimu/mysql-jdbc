@@ -167,7 +167,7 @@ public class TextStatement implements Statement {
 
     @Override
     public void setQueryTimeout(int seconds) throws SQLException {
-        setQueryMillisecondsTimeout(seconds * 1000);
+        setQueryMillisecondsTimeout(seconds * 1000L);
     }
 
     /**
