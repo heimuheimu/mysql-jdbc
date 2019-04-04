@@ -87,7 +87,7 @@ public class BytesUtil {
             throw new ArrayIndexOutOfBoundsException("Convert bytes to unsigned integer failed: `index is greater than or equal to the size of the array`. `src`:`"
                     + Arrays.toString(src) + "`. `offset`:`" + offset + "`. `length`:`" + length + "`.");
         }
-        if (length == 8 && src[offset + 7] < 0) {
+        if (length == 8 && src[offset + 7] < 0) { // lgtm [java/index-out-of-bounds]
             throw new IllegalArgumentException("Convert bytes to unsigned integer failed: `the most significant byte is less than zero`. `src`:`"
                     + Arrays.toString(src) + "`. `offset`:`" + offset + "`. `length`:`" + length + "`.");
         }

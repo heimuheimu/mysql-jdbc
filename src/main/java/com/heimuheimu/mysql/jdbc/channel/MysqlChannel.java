@@ -177,7 +177,6 @@ public class MysqlChannel implements Closeable {
         if (command == null) {
             Map<String, Object> extendParameterMap = new HashMap<>();
             extendParameterMap.put("timeout", timeout);
-            extendParameterMap.put("command", command);
             throw new NullPointerException("Execute mysql command failed: `command could not be null`." + buildLogForParameters(extendParameterMap));
         }
         if (state == BeanStatusEnum.NORMAL) {

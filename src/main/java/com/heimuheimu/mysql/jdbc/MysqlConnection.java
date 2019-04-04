@@ -158,7 +158,7 @@ public class MysqlConnection implements Connection {
     }
 
     @Override
-    public boolean isValid(int timeout) throws SQLException {
+    public boolean isValid(int timeout) {
         return getMysqlChannel().isAvailable();
     }
 
@@ -177,8 +177,8 @@ public class MysqlConnection implements Connection {
     @Override
     public void setSchema(String schema) throws SQLException {
         checkClosed("setSchema(String schema)");
-        try {
-            createStatement().execute("USE " + schema);
+        try (Statement statement = createStatement()) {
+            statement.execute("USE " + schema);
             this.currentDatabaseName = schema;
         } catch (Exception e) {
             executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
@@ -266,11 +266,11 @@ public class MysqlConnection implements Connection {
         checkClosed("setAutoCommit(boolean autoCommit)");
         boolean currentIsAutoCommit = getAutoCommit();
         if (autoCommit != currentIsAutoCommit) {
-            try {
+            try (Statement statement = createStatement()) {
                 if (autoCommit) {
-                    createStatement().execute("SET autocommit=1");
+                    statement.execute("SET autocommit=1");
                 } else {
-                    createStatement().execute("SET autocommit=0");
+                    statement.execute("SET autocommit=0");
                 }
             } catch (Exception e) {
                 executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
@@ -300,11 +300,10 @@ public class MysqlConnection implements Connection {
                     variableName = "@@session.tx_read_only";
                 }
                 int transactionReadOnly = -1;
-                try {
-                    ResultSet resultSet = createStatement().executeQuery("SELECT " + variableName);
-                    while (resultSet.next()) {
+                try (Statement statement = createStatement();
+                     ResultSet resultSet = statement.executeQuery("SELECT " + variableName)) {
+                    if (resultSet.next()) {
                         transactionReadOnly = resultSet.getInt(1);
-                        break;
                     }
                 } catch (Exception e) {
                     executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
@@ -340,12 +339,12 @@ public class MysqlConnection implements Connection {
         boolean currentIsReadOnly = isReadOnly();
         if (readOnly != currentIsReadOnly) {
             if (mysqlChannel.getConnectionInfo().versionMeetsMinimum(5, 6, 5)) {
-                try {
+                try (Statement statement = createStatement()) {
                     if (readOnly) {
-                        createStatement().execute("SET SESSION TRANSACTION READ ONLY");
+                        statement.execute("SET SESSION TRANSACTION READ ONLY");
                         this.readOnlyFlag = 1;
                     } else {
-                        createStatement().execute("SET SESSION TRANSACTION READ WRITE");
+                        statement.execute("SET SESSION TRANSACTION READ WRITE");
                         this.readOnlyFlag = 0;
                     }
                 } catch (Exception e) {
@@ -362,7 +361,7 @@ public class MysqlConnection implements Connection {
                 if (readOnly) {
                     executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
                     Map<String, Object> parameterMap = new LinkedHashMap<>();
-                    parameterMap.put("readOnly", readOnly);
+                    parameterMap.put("readOnly", true);
                     parameterMap.putAll(getCommonParameterMap());
                     String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#setReadOnly(boolean readOnly)",
                             "mysql version too low, minimal version: 5.6.5", parameterMap);
@@ -387,11 +386,10 @@ public class MysqlConnection implements Connection {
                 variableName = "@@session.tx_isolation";
             }
             String transactionIsolationName = "";
-            try {
-                ResultSet resultSet = createStatement().executeQuery("SELECT " + variableName);
-                while (resultSet.next()) {
+            try (Statement statement = createStatement();
+                 ResultSet resultSet = statement.executeQuery("SELECT " + variableName)) {
+                if (resultSet.next()) {
                     transactionIsolationName = resultSet.getString(1);
-                    break;
                 }
             } catch (Exception e) {
                 executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
@@ -422,12 +420,14 @@ public class MysqlConnection implements Connection {
                     throw new SQLException(errorMessage);
             }
         }
+        //noinspection MagicConstant
         return transactionIsolation;
     }
 
     @Override
     public void setTransactionIsolation(int level) throws SQLException {
         checkClosed("setTransactionIsolation(int level)");
+        //noinspection MagicConstant
         if (level != transactionIsolation) {
             String sql;
             switch (level) {
@@ -453,8 +453,8 @@ public class MysqlConnection implements Connection {
                     LOG.error(errorMessage);
                     throw new SQLException(errorMessage);
             }
-            try {
-                createStatement().execute(sql);
+            try (Statement statement = createStatement()) {
+                statement.execute(sql);
             } catch (Exception e) {
                 transactionIsolation = Integer.MIN_VALUE; // 无法完全确定当前连接事务等级，将本地的事务等级设置为未初始化状态
                 executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
@@ -484,8 +484,8 @@ public class MysqlConnection implements Connection {
         Savepoint savepoint = new MysqlSavepoint(name);
         checkSavepointName(methodName, savepoint);
         checkInAutoCommitMode(methodName, name);
-        try {
-            createStatement().execute("SAVEPOINT `" + name + "`");
+        try (Statement statement = createStatement()) {
+            statement.execute("SAVEPOINT `" + name + "`");
             return savepoint;
         } catch (Exception e) {
             executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
@@ -505,8 +505,8 @@ public class MysqlConnection implements Connection {
         checkClosed(methodName);
         checkSavepointName(methodName, savepoint);
         checkInAutoCommitMode(methodName, savepoint.getSavepointName());
-        try {
-            createStatement().execute("ROLLBACK TO SAVEPOINT `" + savepoint.getSavepointName() + "`");
+        try (Statement statement = createStatement()) {
+            statement.execute("ROLLBACK TO SAVEPOINT `" + savepoint.getSavepointName() + "`");
         } catch (Exception e) {
             executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
             Map<String, Object> parameterMap = new LinkedHashMap<>();
@@ -525,8 +525,8 @@ public class MysqlConnection implements Connection {
         checkClosed(methodName);
         checkSavepointName(methodName, savepoint);
         checkInAutoCommitMode(methodName, savepoint.getSavepointName());
-        try {
-            createStatement().execute("RELEASE SAVEPOINT `" + savepoint.getSavepointName() + "`");
+        try (Statement statement = createStatement()) {
+            statement.execute("RELEASE SAVEPOINT `" + savepoint.getSavepointName() + "`");
         } catch (Exception e) {
             executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
             Map<String, Object> parameterMap = new LinkedHashMap<>();
@@ -586,8 +586,8 @@ public class MysqlConnection implements Connection {
     @Override
     public void commit() throws SQLException {
         checkClosed("commit()");
-        try {
-            createStatement().execute("COMMIT");
+        try (Statement statement = createStatement()) {
+            statement.execute("COMMIT");
         } catch (Exception e) {
             executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
             String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#commit()",
@@ -600,8 +600,8 @@ public class MysqlConnection implements Connection {
     @Override
     public void rollback() throws SQLException {
         checkClosed("rollback()");
-        try {
-            createStatement().execute("ROLLBACK");
+        try (Statement statement = createStatement()) {
+            statement.execute("ROLLBACK");
         } catch (Exception e) {
             executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR);
             String errorMessage = LogBuildUtil.buildMethodExecuteFailedLog("MysqlConnection#rollback()",
@@ -612,7 +612,7 @@ public class MysqlConnection implements Connection {
     }
 
     @Override
-    public void abort(Executor executor) throws SQLException {
+    public void abort(Executor executor) {
         close();
     }
 
@@ -627,53 +627,53 @@ public class MysqlConnection implements Connection {
     }
 
     @Override
-    public void setCatalog(String catalog) throws SQLException {
+    public void setCatalog(String catalog) {
         // this is a no-op
     }
 
     @Override
-    public String getCatalog() throws SQLException {
+    public String getCatalog() {
         return "def";
     }
 
     @Override
-    public SQLWarning getWarnings() throws SQLException {
+    public SQLWarning getWarnings() {
         return null;
     }
 
     @Override
-    public void clearWarnings() throws SQLException {
+    public void clearWarnings() {
         // this is a no-op
     }
 
     @Override
-    public void setClientInfo(String name, String value) throws SQLClientInfoException {
+    public void setClientInfo(String name, String value) {
         // this is a no-op
     }
 
     @Override
-    public void setClientInfo(Properties properties) throws SQLClientInfoException {
+    public void setClientInfo(Properties properties) {
         // this is a no-op
     }
 
     @Override
-    public String getClientInfo(String name) throws SQLException {
+    public String getClientInfo(String name) {
         return null;
     }
 
     @Override
-    public Properties getClientInfo() throws SQLException {
+    public Properties getClientInfo() {
         return null;
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T unwrap(Class<T> iface) throws SQLException {
+    public <T> T unwrap(Class<T> iface) {
         return (T) this;
     }
 
     @Override
-    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+    public boolean isWrapperFor(Class<?> iface) {
         return MysqlConnection.class == iface;
     }
 

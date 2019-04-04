@@ -29,8 +29,6 @@ import com.heimuheimu.mysql.jdbc.MysqlConnection;
 import com.heimuheimu.mysql.jdbc.facility.UnusableServiceNotifier;
 import com.heimuheimu.mysql.jdbc.net.BuildSocketException;
 
-import java.sql.SQLException;
-
 /**
  * 可复用 Mysql 数据库连接，通过 {@link MysqlDataSource} 进行管理。
  *
@@ -66,7 +64,7 @@ public class MysqlPooledConnection extends MysqlConnection {
     /**
      * 获取当前数据库连接私有锁
      */
-    private Object acquireLock = new Object();
+    private final Object acquireLock = new Object();
 
     /**
      * 构造一个可重复使用的 Mysql 数据库连接。
@@ -149,8 +147,6 @@ public class MysqlPooledConnection extends MysqlConnection {
 
     /**
      * 关闭数据库物理连接，释放资源。
-     *
-     * @throws SQLException 如果关闭过程中发生错误，将会抛出此异常
      */
     public void closePhysicalConnection() {
         super.close();

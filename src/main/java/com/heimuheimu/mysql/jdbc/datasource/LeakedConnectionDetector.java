@@ -81,6 +81,7 @@ public class LeakedConnectionDetector {
         public void run() {
             MYSQL_CONNECTION_LOG.info("Leaked connection detect task started.");
             try {
+                //noinspection InfiniteLoopStatement
                 while (true) {
                     for (MysqlDataSource dataSource : DATASOURCE_LIST) {
                         List<MysqlPooledConnection> connectionList = dataSource.getConnectionList();
