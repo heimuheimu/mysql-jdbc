@@ -43,8 +43,8 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.*;
 import java.sql.Date;
+import java.sql.*;
 import java.util.*;
 import java.util.function.Function;
 
@@ -59,11 +59,6 @@ import java.util.function.Function;
 public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
     
     private static final Logger LOG = LoggerFactory.getLogger(ReadonlyTextResultSet.class);
-
-    /**
-     * "TextResultset" 数据包信息
-     */
-    private final TextResultsetResponsePacket textResultsetResponsePacket;
 
     /**
      * "ColumnDefinition41" 数据包列表
@@ -119,7 +114,8 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
         this.statement = statement;
         this.executionMonitor = executionMonitor;
         int i = 0;
-        this.textResultsetResponsePacket = TextResultsetResponsePacket.parse(mysqlPackets.get(i++),
+        // "TextResultset" 数据包信息
+        TextResultsetResponsePacket textResultsetResponsePacket = TextResultsetResponsePacket.parse(mysqlPackets.get(i++),
                 connectionInfo.getCapabilitiesFlags());
         // 列定义解析
         columnIndexMap = new HashMap<>();
@@ -149,17 +145,17 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
     }
 
     @Override
-    public void close() throws SQLException {
+    public void close() {
         // no resource need to be released
     }
 
     @Override
-    public boolean isClosed() throws SQLException {
+    public boolean isClosed() {
         return false;
     }
 
     @Override
-    public boolean wasNull() throws SQLException {
+    public boolean wasNull() {
         return wasNull;
     }
 
@@ -747,33 +743,33 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
     }
 
     @Override
-    public Statement getStatement() throws SQLException {
+    public Statement getStatement() {
         return statement;
     }
 
     @Override
-    public ResultSetMetaData getMetaData() throws SQLException {
+    public ResultSetMetaData getMetaData() {
         return new TextResultSetMetaData(columnDefinition41ResponsePacketList);
     }
 
     @Override
-    public SQLWarning getWarnings() throws SQLException {
+    public SQLWarning getWarnings() {
         return null;
     }
 
     @Override
-    public void clearWarnings() throws SQLException {
+    public void clearWarnings() {
         // this is a no-op
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> T unwrap(Class<T> iface) throws SQLException {
+    public <T> T unwrap(Class<T> iface) {
         return (T) this;
     }
 
     @Override
-    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+    public boolean isWrapperFor(Class<?> iface) {
         return ReadonlyTextResultSet.class == iface;
     }
 

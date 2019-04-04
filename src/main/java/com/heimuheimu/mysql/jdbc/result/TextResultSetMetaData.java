@@ -85,7 +85,7 @@ public class TextResultSetMetaData implements ResultSetMetaData {
     }
 
     @Override
-    public boolean isSearchable(int column) throws SQLException {
+    public boolean isSearchable(int column) {
         return true;
     }
 
@@ -206,17 +206,17 @@ public class TextResultSetMetaData implements ResultSetMetaData {
     }
 
     @Override
-    public boolean isReadOnly(int column) throws SQLException {
+    public boolean isReadOnly(int column) {
         return true;
     }
 
     @Override
-    public boolean isWritable(int column) throws SQLException {
+    public boolean isWritable(int column) {
         return false;
     }
 
     @Override
-    public boolean isDefinitelyWritable(int column) throws SQLException {
+    public boolean isDefinitelyWritable(int column) {
         return false;
     }
 
@@ -227,12 +227,12 @@ public class TextResultSetMetaData implements ResultSetMetaData {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> T unwrap(Class<T> iface) throws SQLException {
+    public <T> T unwrap(Class<T> iface) {
         return (T) this;
     }
 
     @Override
-    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+    public boolean isWrapperFor(Class<?> iface) {
         return TextResultSetMetaData.class == iface;
     }
 

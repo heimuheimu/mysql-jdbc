@@ -194,7 +194,7 @@ public class MysqlDataSource implements DataSource, Closeable {
                 }
             }
         } catch (Exception e) {
-            String errorMessage = "Get available `MysqlConnection` failed: `unexpected error`." + buildLogForParameters(null);
+            String errorMessage = "Get available `MysqlConnection` failed: `unexpected error`." + buildLogForParameters();
             LOG.error(errorMessage, e);
             throw new SQLException(errorMessage, e);
         }
@@ -208,7 +208,7 @@ public class MysqlDataSource implements DataSource, Closeable {
             return connection;
         } else {
             dataSourceMonitor.onGetConnectionFailed();
-            String errorMessage = "Get available `MysqlConnection` failed: `no available connection`." + buildLogForParameters(null);
+            String errorMessage = "Get available `MysqlConnection` failed: `no available connection`." + buildLogForParameters();
             LOG.error(errorMessage);
             throw new SQLException(errorMessage);
         }
@@ -228,7 +228,7 @@ public class MysqlDataSource implements DataSource, Closeable {
     }
 
     @Override
-    public int getLoginTimeout() throws SQLException {
+    public int getLoginTimeout() {
         SocketConfiguration socketConfiguration = connectionConfiguration.getSocketConfiguration();
         if (socketConfiguration == null) {
             return SocketConfiguration.DEFAULT.getConnectionTimeout() / 1000;
@@ -251,12 +251,12 @@ public class MysqlDataSource implements DataSource, Closeable {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> T unwrap(Class<T> iface) throws SQLException {
+    public <T> T unwrap(Class<T> iface) {
         return (T) this;
     }
 
     @Override
-    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+    public boolean isWrapperFor(Class<?> iface) {
         return MysqlDataSource.class == iface;
     }
 
@@ -335,13 +335,14 @@ public class MysqlDataSource implements DataSource, Closeable {
      */
     private void removeUnavailableClient(MysqlConnection unavailableConnection) {
         if (unavailableConnection == null) { // should not happen, just for bug detection
-            String errorMessage = "Remove unavailable mysql connection failed: `null client`." + buildLogForParameters(null);
+            String errorMessage = "Remove unavailable mysql connection failed: `null client`." + buildLogForParameters();
             LOG.error(errorMessage);
             throw new NullPointerException(errorMessage);
         }
         boolean isRemoveSuccess = false;
         int clientIndex;
         synchronized (connectionListUpdateLock) {
+            //noinspection SuspiciousMethodCalls
             clientIndex = connectionList.indexOf(unavailableConnection);
             if (clientIndex >= 0) {
                 connectionList.set(clientIndex, null);
@@ -350,7 +351,7 @@ public class MysqlDataSource implements DataSource, Closeable {
                 unavailablePooledConnection.close();
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Remove `MysqlConnection` from connection list success. `clientIndex`:`{}`.{}", clientIndex,
-                            buildLogForParameters(null));
+                            buildLogForParameters());
                 }
             }
         }
@@ -427,14 +428,9 @@ public class MysqlDataSource implements DataSource, Closeable {
 
     /**
      * 返回当前 {@code MysqlDataSource} 相关参数信息，用于日志打印。
-     *
-     * @return 当前 {@code MysqlDataSource} 相关参数信息
      */
-    private String buildLogForParameters(Map<String, Object> extendParameterMap) {
+    private String buildLogForParameters() {
         Map<String, Object> parameterMap = new LinkedHashMap<>();
-        if (extendParameterMap != null && !extendParameterMap.isEmpty()) {
-            parameterMap.putAll(extendParameterMap);
-        }
         parameterMap.put("connectionConfiguration", connectionConfiguration);
         parameterMap.put("dataSourceConfiguration", dataSourceConfiguration);
         return LogBuildUtil.build(parameterMap);

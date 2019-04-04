@@ -49,7 +49,7 @@ public class TestMysqlConnection {
     private static List<MysqlConnection> MYSQL_CONNECTION_LIST;
 
     @BeforeClass
-    public static void init() throws SQLException {
+    public static void init() {
         MYSQL_CONNECTION_LIST = new CopyOnWriteArrayList<>();
         for (Map<String, String> databaseInfo : DatabaseInfoProvider.getDatabaseInfoList()) {
             String host = databaseInfo.get("host");
@@ -64,7 +64,7 @@ public class TestMysqlConnection {
     }
 
     @AfterClass
-    public static void clean() throws SQLException {
+    public static void clean() {
         for (MysqlConnection connection : MYSQL_CONNECTION_LIST) {
             connection.close();
         }

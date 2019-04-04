@@ -140,22 +140,22 @@ public class TextStatement implements Statement {
     }
 
     @Override
-    public long getLargeMaxRows() throws SQLException {
+    public long getLargeMaxRows() {
         return 0; // no limit
     }
 
     @Override
-    public int getMaxRows() throws SQLException {
+    public int getMaxRows() {
         return 0; // no limit
     }
 
     @Override
-    public int getMaxFieldSize() throws SQLException {
+    public int getMaxFieldSize() {
         return 0; // no limit
     }
 
     @Override
-    public int getQueryTimeout() throws SQLException {
+    public int getQueryTimeout() {
         if (queryMillisecondsTimeout == Long.MAX_VALUE) { // 如果没有超时时间，则返回 0
             return 0;
         } else {
@@ -318,7 +318,7 @@ public class TextStatement implements Statement {
     }
 
     @Override
-    public ResultSet getResultSet() throws SQLException {
+    public ResultSet getResultSet() {
         return resultSet;
     }
 
@@ -352,52 +352,52 @@ public class TextStatement implements Statement {
     }
 
     @Override
-    public ResultSet getGeneratedKeys() throws SQLException {
+    public ResultSet getGeneratedKeys() {
         return new AutoGenerateKeysResultSet(lastInsertId, this);
     }
 
     @Override
-    public long getLargeUpdateCount() throws SQLException {
+    public long getLargeUpdateCount() {
         return affectedRows;
     }
 
     @Override
-    public int getUpdateCount() throws SQLException {
+    public int getUpdateCount() {
         return affectedRows > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) affectedRows;
     }
 
     @Override
-    public void close() throws SQLException {
+    public void close() {
         reset();
     }
 
     @Override
-    public void cancel() throws SQLException {
+    public void cancel() {
         reset();
     }
 
     @Override
-    public void setEscapeProcessing(boolean enable) throws SQLException {
+    public void setEscapeProcessing(boolean enable) {
         // this is a no-op
     }
 
     @Override
-    public SQLWarning getWarnings() throws SQLException {
+    public SQLWarning getWarnings() {
         return null;
     }
 
     @Override
-    public void clearWarnings() throws SQLException {
+    public void clearWarnings() {
         // this is a no-op
     }
 
     @Override
-    public void setCursorName(String name) throws SQLException {
+    public void setCursorName(String name) {
         // this is a no-op
     }
 
     @Override
-    public void setFetchDirection(int direction) throws SQLException {
+    public void setFetchDirection(int direction) {
         if (direction == ResultSet.FETCH_REVERSE) {
             fetchDirection = ResultSet.FETCH_REVERSE;
         } else {
@@ -406,73 +406,73 @@ public class TextStatement implements Statement {
     }
 
     @Override
-    public int getFetchDirection() throws SQLException {
+    public int getFetchDirection() {
         return fetchDirection;
     }
 
     @Override
-    public void setFetchSize(int rows) throws SQLException {
+    public void setFetchSize(int rows) {
         // this is a no-op
     }
 
     @Override
-    public int getFetchSize() throws SQLException {
+    public int getFetchSize() {
         return Integer.MAX_VALUE;
     }
 
     @Override
-    public int getResultSetConcurrency() throws SQLException {
+    public int getResultSetConcurrency() {
         return ResultSet.CONCUR_READ_ONLY;
     }
 
     @Override
-    public int getResultSetType() throws SQLException {
+    public int getResultSetType() {
         return ResultSet.TYPE_SCROLL_INSENSITIVE;
     }
 
     @Override
-    public Connection getConnection() throws SQLException {
+    public Connection getConnection() {
         return mysqlConnection;
     }
 
     @Override
-    public boolean getMoreResults() throws SQLException {
+    public boolean getMoreResults() {
         return false; // always false
     }
 
     @Override
-    public boolean getMoreResults(int current) throws SQLException {
+    public boolean getMoreResults(int current) {
         return false; // always false
     }
 
     @Override
-    public void closeOnCompletion() throws SQLException {
+    public void closeOnCompletion() {
         // this is a no-op
     }
 
     @Override
-    public boolean isClosed() throws SQLException {
+    public boolean isClosed() {
         return false;
     }
 
     @Override
-    public boolean isPoolable() throws SQLException {
+    public boolean isPoolable() {
         return false;
     }
 
     @Override
-    public boolean isCloseOnCompletion() throws SQLException {
+    public boolean isCloseOnCompletion() {
         return false;
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T unwrap(Class<T> iface) throws SQLException {
+    public <T> T unwrap(Class<T> iface) {
         return (T) this;
     }
 
     @Override
-    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+    public boolean isWrapperFor(Class<?> iface) {
         return TextStatement.class == iface;
     }
 

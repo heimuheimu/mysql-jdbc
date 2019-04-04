@@ -430,9 +430,7 @@ public class MysqlChannel implements Closeable {
                         connectionConfiguration.getHost(), connectionConfiguration.getDatabaseName(),
                         connectionConfiguration.getUsername(), connectionConfiguration.getPassword()
                 );
-                MysqlChannel channel = null;
-                try {
-                    channel = new MysqlChannel(temporaryConnectionConfiguration, null);
+                try (MysqlChannel channel = new MysqlChannel(temporaryConnectionConfiguration, null)) {
                     channel.init();
                     SQLCommand killCommand = new SQLCommand("KILL " + connectionInfo.getConnectionId(), channel.getConnectionInfo());
                     channel.send(killCommand, 5000);
@@ -453,14 +451,10 @@ public class MysqlChannel implements Closeable {
                     }
                 } catch (Exception e) {
                     String errorMessage = "Kill connection failed: `unexpected error`. `cost`:`" + (System.currentTimeMillis() - startTime)
-                        + "ms` `connectionId`:`" + connectionInfo.getConnectionId() + "`. `host`:`" + temporaryConnectionConfiguration.getHost()
-                        + "`. `databaseName`:`" + temporaryConnectionConfiguration.getDatabaseName() + "`.";
+                            + "ms` `connectionId`:`" + connectionInfo.getConnectionId() + "`. `host`:`" + temporaryConnectionConfiguration.getHost()
+                            + "`. `databaseName`:`" + temporaryConnectionConfiguration.getDatabaseName() + "`.";
                     MYSQL_CONNECTION_LOG.error(errorMessage);
                     LOG.error(errorMessage, e);
-                } finally {
-                    if (channel != null) {
-                        channel.close();
-                    }
                 }
             } else {
                 LOG.error("Kill connection failed: `null connection info`."); // should not happen, just for bug detection

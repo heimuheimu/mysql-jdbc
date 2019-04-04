@@ -69,7 +69,7 @@ public class MysqlSavepoint implements Savepoint {
     }
 
     @Override
-    public String getSavepointName() throws SQLException {
+    public String getSavepointName() {
         return savepointName;
     }
 

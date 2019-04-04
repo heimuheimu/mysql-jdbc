@@ -41,8 +41,8 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.*;
 import java.sql.Date;
+import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -523,14 +523,14 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
     }
 
     @Override
-    public void clearParameters() throws SQLException {
+    public void clearParameters() {
         for (int i = 0; i < parameterValues.length(); i++) {
             parameterValues.set(i, null);
         }
     }
 
     @Override
-    public ResultSetMetaData getMetaData() throws SQLException {
+    public ResultSetMetaData getMetaData() {
         if (resultSet != null) {
             return resultSet.getMetaData();
         } else {

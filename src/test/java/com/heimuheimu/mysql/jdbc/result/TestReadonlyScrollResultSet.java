@@ -99,37 +99,33 @@ public class TestReadonlyScrollResultSet {
 
     @Test
     public void testAbsolute() {
-        try {
-            SimpleReadonlyScrollResultSet resultSet = new SimpleReadonlyScrollResultSet(0);
-            Assert.assertFalse(resultSet.absolute(0));
-            Assert.assertFalse(resultSet.absolute(-1));
-            Assert.assertFalse(resultSet.absolute(1));
+        SimpleReadonlyScrollResultSet resultSet = new SimpleReadonlyScrollResultSet(0);
+        Assert.assertFalse(resultSet.absolute(0));
+        Assert.assertFalse(resultSet.absolute(-1));
+        Assert.assertFalse(resultSet.absolute(1));
 
-            int rowsSize = 10;
-            resultSet = new SimpleReadonlyScrollResultSet(rowsSize);
+        int rowsSize = 10;
+        resultSet = new SimpleReadonlyScrollResultSet(rowsSize);
 
-            for (int i = 1; i <= rowsSize; i++) {
-                Assert.assertTrue("Test #absolute(int row) failed. row: " + i, resultSet.absolute(i));
-                Assert.assertEquals("Test #absolute(int row) failed. row: " + i, i, resultSet.getRow());
-            }
-            Assert.assertFalse(resultSet.absolute(0));
-            Assert.assertTrue(resultSet.isBeforeFirst());
-            Assert.assertFalse(resultSet.absolute(rowsSize + 1));
-            Assert.assertTrue(resultSet.isAfterLast());
-            Assert.assertFalse(resultSet.absolute(rowsSize + 2));
-            Assert.assertTrue(resultSet.isAfterLast());
-
-            for (int i = -1; i >= -rowsSize; i--) {
-                Assert.assertTrue("Test #absolute() failed. row: " + i, resultSet.absolute(i));
-                Assert.assertEquals("Test #absolute() failed. row: " + i, rowsSize + 1 + i, resultSet.getRow());
-            }
-            Assert.assertFalse(resultSet.absolute(-rowsSize - 1));
-            Assert.assertTrue(resultSet.isBeforeFirst());
-            Assert.assertFalse(resultSet.absolute(-rowsSize - 2));
-            Assert.assertTrue(resultSet.isBeforeFirst());
-        } catch (SQLException e) {
-            Assert.fail("Test #absolute(int row) failed.");
+        for (int i = 1; i <= rowsSize; i++) {
+            Assert.assertTrue("Test #absolute(int row) failed. row: " + i, resultSet.absolute(i));
+            Assert.assertEquals("Test #absolute(int row) failed. row: " + i, i, resultSet.getRow());
         }
+        Assert.assertFalse(resultSet.absolute(0));
+        Assert.assertTrue(resultSet.isBeforeFirst());
+        Assert.assertFalse(resultSet.absolute(rowsSize + 1));
+        Assert.assertTrue(resultSet.isAfterLast());
+        Assert.assertFalse(resultSet.absolute(rowsSize + 2));
+        Assert.assertTrue(resultSet.isAfterLast());
+
+        for (int i = -1; i >= -rowsSize; i--) {
+            Assert.assertTrue("Test #absolute() failed. row: " + i, resultSet.absolute(i));
+            Assert.assertEquals("Test #absolute() failed. row: " + i, rowsSize + 1 + i, resultSet.getRow());
+        }
+        Assert.assertFalse(resultSet.absolute(-rowsSize - 1));
+        Assert.assertTrue(resultSet.isBeforeFirst());
+        Assert.assertFalse(resultSet.absolute(-rowsSize - 2));
+        Assert.assertTrue(resultSet.isBeforeFirst());
     }
 
     @Test
@@ -269,20 +265,16 @@ public class TestReadonlyScrollResultSet {
 
     @Test
     public void testAfterLast() {
-        try {
-            SimpleReadonlyScrollResultSet resultSet = new SimpleReadonlyScrollResultSet(0);
-            Assert.assertFalse(resultSet.isAfterLast());
-            resultSet.afterLast();
-            Assert.assertFalse(resultSet.isAfterLast());
+        SimpleReadonlyScrollResultSet resultSet = new SimpleReadonlyScrollResultSet(0);
+        Assert.assertFalse(resultSet.isAfterLast());
+        resultSet.afterLast();
+        Assert.assertFalse(resultSet.isAfterLast());
 
-            int rowsSize = 10;
-            resultSet = new SimpleReadonlyScrollResultSet(rowsSize);
-            Assert.assertFalse(resultSet.isAfterLast());
-            resultSet.afterLast();
-            Assert.assertTrue(resultSet.isAfterLast());
-        } catch (SQLException e) {
-            Assert.fail("Test #afterLast() failed.");
-        }
+        int rowsSize = 10;
+        resultSet = new SimpleReadonlyScrollResultSet(rowsSize);
+        Assert.assertFalse(resultSet.isAfterLast());
+        resultSet.afterLast();
+        Assert.assertTrue(resultSet.isAfterLast());
     }
 
     private static class SimpleReadonlyScrollResultSet extends ReadonlyScrollResultSet {
@@ -299,402 +291,402 @@ public class TestReadonlyScrollResultSet {
         }
 
         @Override
-        public void close() throws SQLException {
+        public void close() {
 
         }
 
         @Override
-        public boolean wasNull() throws SQLException {
+        public boolean wasNull() {
             return false;
         }
 
         @Override
-        public String getString(int columnIndex) throws SQLException {
+        public String getString(int columnIndex) {
             return null;
         }
 
         @Override
-        public boolean getBoolean(int columnIndex) throws SQLException {
+        public boolean getBoolean(int columnIndex) {
             return false;
         }
 
         @Override
-        public byte getByte(int columnIndex) throws SQLException {
+        public byte getByte(int columnIndex) {
             return 0;
         }
 
         @Override
-        public short getShort(int columnIndex) throws SQLException {
+        public short getShort(int columnIndex) {
             return 0;
         }
 
         @Override
-        public int getInt(int columnIndex) throws SQLException {
+        public int getInt(int columnIndex) {
             return 0;
         }
 
         @Override
-        public long getLong(int columnIndex) throws SQLException {
+        public long getLong(int columnIndex) {
             return 0;
         }
 
         @Override
-        public float getFloat(int columnIndex) throws SQLException {
+        public float getFloat(int columnIndex) {
             return 0;
         }
 
         @Override
-        public double getDouble(int columnIndex) throws SQLException {
+        public double getDouble(int columnIndex) {
             return 0;
         }
 
         @Override
-        public BigDecimal getBigDecimal(int columnIndex, int scale) throws SQLException {
+        public BigDecimal getBigDecimal(int columnIndex, int scale) {
             return null;
         }
 
         @Override
-        public byte[] getBytes(int columnIndex) throws SQLException {
+        public byte[] getBytes(int columnIndex) {
             return new byte[0];
         }
 
         @Override
-        public Date getDate(int columnIndex) throws SQLException {
+        public Date getDate(int columnIndex) {
             return null;
         }
 
         @Override
-        public Time getTime(int columnIndex) throws SQLException {
+        public Time getTime(int columnIndex) {
             return null;
         }
 
         @Override
-        public Timestamp getTimestamp(int columnIndex) throws SQLException {
+        public Timestamp getTimestamp(int columnIndex) {
             return null;
         }
 
         @Override
-        public InputStream getAsciiStream(int columnIndex) throws SQLException {
+        public InputStream getAsciiStream(int columnIndex) {
             return null;
         }
 
         @Override
-        public InputStream getUnicodeStream(int columnIndex) throws SQLException {
+        public InputStream getUnicodeStream(int columnIndex) {
             return null;
         }
 
         @Override
-        public InputStream getBinaryStream(int columnIndex) throws SQLException {
+        public InputStream getBinaryStream(int columnIndex) {
             return null;
         }
 
         @Override
-        public String getString(String columnLabel) throws SQLException {
+        public String getString(String columnLabel) {
             return null;
         }
 
         @Override
-        public boolean getBoolean(String columnLabel) throws SQLException {
+        public boolean getBoolean(String columnLabel) {
             return false;
         }
 
         @Override
-        public byte getByte(String columnLabel) throws SQLException {
+        public byte getByte(String columnLabel) {
             return 0;
         }
 
         @Override
-        public short getShort(String columnLabel) throws SQLException {
+        public short getShort(String columnLabel) {
             return 0;
         }
 
         @Override
-        public int getInt(String columnLabel) throws SQLException {
+        public int getInt(String columnLabel) {
             return 0;
         }
 
         @Override
-        public long getLong(String columnLabel) throws SQLException {
+        public long getLong(String columnLabel) {
             return 0;
         }
 
         @Override
-        public float getFloat(String columnLabel) throws SQLException {
+        public float getFloat(String columnLabel) {
             return 0;
         }
 
         @Override
-        public double getDouble(String columnLabel) throws SQLException {
+        public double getDouble(String columnLabel) {
             return 0;
         }
 
         @Override
-        public BigDecimal getBigDecimal(String columnLabel, int scale) throws SQLException {
+        public BigDecimal getBigDecimal(String columnLabel, int scale) {
             return null;
         }
 
         @Override
-        public byte[] getBytes(String columnLabel) throws SQLException {
+        public byte[] getBytes(String columnLabel) {
             return new byte[0];
         }
 
         @Override
-        public Date getDate(String columnLabel) throws SQLException {
+        public Date getDate(String columnLabel) {
             return null;
         }
 
         @Override
-        public Time getTime(String columnLabel) throws SQLException {
+        public Time getTime(String columnLabel) {
             return null;
         }
 
         @Override
-        public Timestamp getTimestamp(String columnLabel) throws SQLException {
+        public Timestamp getTimestamp(String columnLabel) {
             return null;
         }
 
         @Override
-        public InputStream getAsciiStream(String columnLabel) throws SQLException {
+        public InputStream getAsciiStream(String columnLabel) {
             return null;
         }
 
         @Override
-        public InputStream getUnicodeStream(String columnLabel) throws SQLException {
+        public InputStream getUnicodeStream(String columnLabel) {
             return null;
         }
 
         @Override
-        public InputStream getBinaryStream(String columnLabel) throws SQLException {
+        public InputStream getBinaryStream(String columnLabel) {
             return null;
         }
 
         @Override
-        public SQLWarning getWarnings() throws SQLException {
+        public SQLWarning getWarnings() {
             return null;
         }
 
         @Override
-        public void clearWarnings() throws SQLException {
+        public void clearWarnings() {
 
         }
 
         @Override
-        public String getCursorName() throws SQLException {
+        public String getCursorName() {
             return null;
         }
 
         @Override
-        public ResultSetMetaData getMetaData() throws SQLException {
+        public ResultSetMetaData getMetaData() {
             return null;
         }
 
         @Override
-        public Object getObject(int columnIndex) throws SQLException {
+        public Object getObject(int columnIndex) {
             return null;
         }
 
         @Override
-        public Object getObject(String columnLabel) throws SQLException {
+        public Object getObject(String columnLabel) {
             return null;
         }
 
         @Override
-        public int findColumn(String columnLabel) throws SQLException {
+        public int findColumn(String columnLabel) {
             return 0;
         }
 
         @Override
-        public Reader getCharacterStream(int columnIndex) throws SQLException {
+        public Reader getCharacterStream(int columnIndex) {
             return null;
         }
 
         @Override
-        public Reader getCharacterStream(String columnLabel) throws SQLException {
+        public Reader getCharacterStream(String columnLabel) {
             return null;
         }
 
         @Override
-        public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
+        public BigDecimal getBigDecimal(int columnIndex) {
             return null;
         }
 
         @Override
-        public BigDecimal getBigDecimal(String columnLabel) throws SQLException {
+        public BigDecimal getBigDecimal(String columnLabel) {
             return null;
         }
 
         @Override
-        public Statement getStatement() throws SQLException {
+        public Statement getStatement() {
             return null;
         }
 
         @Override
-        public Object getObject(int columnIndex, Map<String, Class<?>> map) throws SQLException {
+        public Object getObject(int columnIndex, Map<String, Class<?>> map) {
             return null;
         }
 
         @Override
-        public Ref getRef(int columnIndex) throws SQLException {
+        public Ref getRef(int columnIndex) {
             return null;
         }
 
         @Override
-        public Blob getBlob(int columnIndex) throws SQLException {
+        public Blob getBlob(int columnIndex) {
             return null;
         }
 
         @Override
-        public Clob getClob(int columnIndex) throws SQLException {
+        public Clob getClob(int columnIndex) {
             return null;
         }
 
         @Override
-        public Array getArray(int columnIndex) throws SQLException {
+        public Array getArray(int columnIndex) {
             return null;
         }
 
         @Override
-        public Object getObject(String columnLabel, Map<String, Class<?>> map) throws SQLException {
+        public Object getObject(String columnLabel, Map<String, Class<?>> map) {
             return null;
         }
 
         @Override
-        public Ref getRef(String columnLabel) throws SQLException {
+        public Ref getRef(String columnLabel) {
             return null;
         }
 
         @Override
-        public Blob getBlob(String columnLabel) throws SQLException {
+        public Blob getBlob(String columnLabel) {
             return null;
         }
 
         @Override
-        public Clob getClob(String columnLabel) throws SQLException {
+        public Clob getClob(String columnLabel) {
             return null;
         }
 
         @Override
-        public Array getArray(String columnLabel) throws SQLException {
+        public Array getArray(String columnLabel) {
             return null;
         }
 
         @Override
-        public Date getDate(int columnIndex, Calendar cal) throws SQLException {
+        public Date getDate(int columnIndex, Calendar cal) {
             return null;
         }
 
         @Override
-        public Date getDate(String columnLabel, Calendar cal) throws SQLException {
+        public Date getDate(String columnLabel, Calendar cal) {
             return null;
         }
 
         @Override
-        public Time getTime(int columnIndex, Calendar cal) throws SQLException {
+        public Time getTime(int columnIndex, Calendar cal) {
             return null;
         }
 
         @Override
-        public Time getTime(String columnLabel, Calendar cal) throws SQLException {
+        public Time getTime(String columnLabel, Calendar cal) {
             return null;
         }
 
         @Override
-        public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
+        public Timestamp getTimestamp(int columnIndex, Calendar cal) {
             return null;
         }
 
         @Override
-        public Timestamp getTimestamp(String columnLabel, Calendar cal) throws SQLException {
+        public Timestamp getTimestamp(String columnLabel, Calendar cal) {
             return null;
         }
 
         @Override
-        public URL getURL(int columnIndex) throws SQLException {
+        public URL getURL(int columnIndex) {
             return null;
         }
 
         @Override
-        public URL getURL(String columnLabel) throws SQLException {
+        public URL getURL(String columnLabel) {
             return null;
         }
 
         @Override
-        public RowId getRowId(int columnIndex) throws SQLException {
+        public RowId getRowId(int columnIndex) {
             return null;
         }
 
         @Override
-        public RowId getRowId(String columnLabel) throws SQLException {
+        public RowId getRowId(String columnLabel) {
             return null;
         }
 
         @Override
-        public int getHoldability() throws SQLException {
+        public int getHoldability() {
             return 0;
         }
 
         @Override
-        public boolean isClosed() throws SQLException {
+        public boolean isClosed() {
             return false;
         }
 
         @Override
-        public NClob getNClob(int columnIndex) throws SQLException {
+        public NClob getNClob(int columnIndex) {
             return null;
         }
 
         @Override
-        public NClob getNClob(String columnLabel) throws SQLException {
+        public NClob getNClob(String columnLabel) {
             return null;
         }
 
         @Override
-        public SQLXML getSQLXML(int columnIndex) throws SQLException {
+        public SQLXML getSQLXML(int columnIndex) {
             return null;
         }
 
         @Override
-        public SQLXML getSQLXML(String columnLabel) throws SQLException {
+        public SQLXML getSQLXML(String columnLabel) {
             return null;
         }
 
         @Override
-        public String getNString(int columnIndex) throws SQLException {
+        public String getNString(int columnIndex) {
             return null;
         }
 
         @Override
-        public String getNString(String columnLabel) throws SQLException {
+        public String getNString(String columnLabel) {
             return null;
         }
 
         @Override
-        public Reader getNCharacterStream(int columnIndex) throws SQLException {
+        public Reader getNCharacterStream(int columnIndex) {
             return null;
         }
 
         @Override
-        public Reader getNCharacterStream(String columnLabel) throws SQLException {
+        public Reader getNCharacterStream(String columnLabel) {
             return null;
         }
 
         @Override
-        public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
+        public <T> T getObject(int columnIndex, Class<T> type) {
             return null;
         }
 
         @Override
-        public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
+        public <T> T getObject(String columnLabel, Class<T> type) {
             return null;
         }
 
         @Override
-        public <T> T unwrap(Class<T> iface) throws SQLException {
+        public <T> T unwrap(Class<T> iface) {
             return null;
         }
 
         @Override
-        public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        public boolean isWrapperFor(Class<?> iface) {
             return false;
         }
     }

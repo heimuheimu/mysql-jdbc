@@ -42,7 +42,7 @@ import java.sql.*;
 public abstract class ReadonlyResultSet implements ResultSet {
 
     @Override
-    public int getConcurrency() throws SQLException {
+    public int getConcurrency() {
         return ResultSet.CONCUR_READ_ONLY;
     }
 

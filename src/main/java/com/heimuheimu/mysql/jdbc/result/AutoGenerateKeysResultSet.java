@@ -74,7 +74,7 @@ public class AutoGenerateKeysResultSet extends ReadonlyScrollResultSet {
     }
 
     @Override
-    public void close() throws SQLException {
+    public void close() {
         // no resource need to be released
     }
 
@@ -91,7 +91,7 @@ public class AutoGenerateKeysResultSet extends ReadonlyScrollResultSet {
     }
 
     @Override
-    public boolean wasNull() throws SQLException {
+    public boolean wasNull() {
         return false;
     }
 
@@ -176,12 +176,12 @@ public class AutoGenerateKeysResultSet extends ReadonlyScrollResultSet {
     }
 
     @Override
-    public int findColumn(String columnLabel) throws SQLException {
+    public int findColumn(String columnLabel) {
         return 1; // always 1
     }
 
     @Override
-    public Statement getStatement() throws SQLException {
+    public Statement getStatement() {
         return statement;
     }
 
@@ -461,28 +461,28 @@ public class AutoGenerateKeysResultSet extends ReadonlyScrollResultSet {
     }
 
     @Override
-    public SQLWarning getWarnings() throws SQLException {
+    public SQLWarning getWarnings() {
         return null;
     }
 
     @Override
-    public void clearWarnings() throws SQLException {
+    public void clearWarnings() {
 
     }
 
     @Override
-    public boolean isClosed() throws SQLException {
+    public boolean isClosed() {
         return false;
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> T unwrap(Class<T> iface) throws SQLException {
+    public <T> T unwrap(Class<T> iface) {
         return (T) this;
     }
 
     @Override
-    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+    public boolean isWrapperFor(Class<?> iface) {
         return AutoGenerateKeysResultSet.class == iface;
     }
 }

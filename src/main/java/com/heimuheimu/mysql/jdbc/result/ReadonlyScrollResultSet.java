@@ -53,7 +53,7 @@ public abstract class ReadonlyScrollResultSet extends ReadonlyResultSet {
     }
 
     @Override
-    public boolean isBeforeFirst() throws SQLException {
+    public boolean isBeforeFirst() {
         int rowsSize = getRowsSize();
         if (rowsSize > 0) {
             return currentRow == 0;
@@ -63,7 +63,7 @@ public abstract class ReadonlyScrollResultSet extends ReadonlyResultSet {
     }
 
     @Override
-    public boolean isAfterLast() throws SQLException {
+    public boolean isAfterLast() {
         int rowsSize = getRowsSize();
         if (rowsSize > 0) {
             return currentRow == (rowsSize + 1);
@@ -73,12 +73,12 @@ public abstract class ReadonlyScrollResultSet extends ReadonlyResultSet {
     }
 
     @Override
-    public boolean isFirst() throws SQLException {
+    public boolean isFirst() {
         return currentRow == 1;
     }
 
     @Override
-    public boolean isLast() throws SQLException {
+    public boolean isLast() {
         int rowsSize = getRowsSize();
         if (rowsSize > 0) {
             return currentRow == rowsSize;
@@ -88,7 +88,7 @@ public abstract class ReadonlyScrollResultSet extends ReadonlyResultSet {
     }
 
     @Override
-    public void beforeFirst() throws SQLException {
+    public void beforeFirst() {
         int rowsSize = getRowsSize();
         if (rowsSize > 0) {
             currentRow = 0;
@@ -96,7 +96,7 @@ public abstract class ReadonlyScrollResultSet extends ReadonlyResultSet {
     }
 
     @Override
-    public void afterLast() throws SQLException {
+    public void afterLast() {
         int rowsSize = getRowsSize();
         if (rowsSize > 0) {
             currentRow = rowsSize + 1;
@@ -114,7 +114,7 @@ public abstract class ReadonlyScrollResultSet extends ReadonlyResultSet {
     }
 
     @Override
-    public int getRow() throws SQLException {
+    public int getRow() {
         int rowsSize = getRowsSize();
         if (currentRow > 0 && currentRow <= rowsSize) {
             return currentRow;
@@ -124,7 +124,7 @@ public abstract class ReadonlyScrollResultSet extends ReadonlyResultSet {
     }
 
     @Override
-    public boolean absolute(int row) throws SQLException {
+    public boolean absolute(int row) {
         int rowsSize = getRowsSize();
         if (rowsSize > 0) {
             if (row < 0) {
@@ -152,7 +152,7 @@ public abstract class ReadonlyScrollResultSet extends ReadonlyResultSet {
     }
 
     @Override
-    public void setFetchDirection(int direction) throws SQLException {
+    public void setFetchDirection(int direction) {
         if (direction == ResultSet.FETCH_REVERSE) {
             fetchDirection = ResultSet.FETCH_REVERSE;
         } else {
@@ -161,22 +161,22 @@ public abstract class ReadonlyScrollResultSet extends ReadonlyResultSet {
     }
 
     @Override
-    public int getFetchDirection() throws SQLException {
+    public int getFetchDirection() {
         return fetchDirection;
     }
 
     @Override
-    public void setFetchSize(int rows) throws SQLException {
+    public void setFetchSize(int rows) {
         // do nothing
     }
 
     @Override
-    public int getFetchSize() throws SQLException {
+    public int getFetchSize() {
         return getRowsSize();
     }
 
     @Override
-    public int getType() throws SQLException {
+    public int getType() {
         return ResultSet.TYPE_SCROLL_INSENSITIVE;
     }
 

@@ -55,7 +55,7 @@ public class MysqlDataSourceFactory implements FactoryBean<MysqlDataSource>, Clo
     }
 
     @Override
-    public MysqlDataSource getObject() throws Exception {
+    public MysqlDataSource getObject() {
         return mysqlDataSource;
     }
 

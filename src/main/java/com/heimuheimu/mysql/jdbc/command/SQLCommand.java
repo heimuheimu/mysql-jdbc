@@ -183,6 +183,7 @@ public class SQLCommand extends AbstractCommand {
             }
             return true;
         } else if (EOFPacket.isEOFPacket(responsePacket)) {
+            //noinspection NonAtomicOperationOnVolatileField
             receivedEOFPacketCount ++;
             if (receivedEOFPacketCount == 2) {
                 EOFPacket eofPacket = EOFPacket.parse(responsePacket, connectionInfo.getCapabilitiesFlags());
