@@ -241,44 +241,51 @@ public class TestColumnTypeMappingUtil {
 
     @BeforeClass
     public static void init() throws SQLException {
-        MYSQL_CHANNEL_LIST = new CopyOnWriteArrayList<>();
-        for (Map<String, String> databaseInfo : DatabaseInfoProvider.getDatabaseInfoList()) {
-            String host = databaseInfo.get("host");
-            String databaseName = databaseInfo.get("databaseName");
-            String username = databaseInfo.get("username");
-            String password = databaseInfo.get("password");
-            ConnectionConfiguration connectionConfiguration = new ConnectionConfiguration(host, databaseName, username, password,
-                    45, 0, 30, null);
-            MysqlChannel mysqlChannel = new MysqlChannel(connectionConfiguration, null);
-            mysqlChannel.init();
-            SQLCommand createTableCommand = new SQLCommand(CREATE_TABLE_SQL, mysqlChannel.getConnectionInfo());
-            List<MysqlPacket> mysqlPacketList = mysqlChannel.send(createTableCommand, 5000);
-            if (!OKPacket.isOkPacket(mysqlPacketList.get(0))) {
-                ErrorPacket errorPacket = null;
-                if (ErrorPacket.isErrorPacket(mysqlPacketList.get(0))) {
-                    errorPacket = ErrorPacket.parse(mysqlPacketList.get(0), mysqlChannel.getConnectionInfo().getJavaCharset());
+        List<Map<String, String>> databaseInfoList = DatabaseInfoProvider.getDatabaseInfoList();
+        if (databaseInfoList == null || databaseInfoList.isEmpty()) {
+            Assume.assumeTrue("TestColumnTypeMappingUtil will be ignored: `empty mysql host`.", false);
+        } else {
+            MYSQL_CHANNEL_LIST = new CopyOnWriteArrayList<>();
+            for (Map<String, String> databaseInfo : databaseInfoList) {
+                String host = databaseInfo.get("host");
+                String databaseName = databaseInfo.get("databaseName");
+                String username = databaseInfo.get("username");
+                String password = databaseInfo.get("password");
+                ConnectionConfiguration connectionConfiguration = new ConnectionConfiguration(host, databaseName, username, password,
+                        45, 0, 30, null);
+                MysqlChannel mysqlChannel = new MysqlChannel(connectionConfiguration, null);
+                mysqlChannel.init();
+                SQLCommand createTableCommand = new SQLCommand(CREATE_TABLE_SQL, mysqlChannel.getConnectionInfo());
+                List<MysqlPacket> mysqlPacketList = mysqlChannel.send(createTableCommand, 5000);
+                if (!OKPacket.isOkPacket(mysqlPacketList.get(0))) {
+                    ErrorPacket errorPacket = null;
+                    if (ErrorPacket.isErrorPacket(mysqlPacketList.get(0))) {
+                        errorPacket = ErrorPacket.parse(mysqlPacketList.get(0), mysqlChannel.getConnectionInfo().getJavaCharset());
+                    }
+                    Assert.fail("Create table `heimuheimu_columns_type_test` failed. Error packet: " + errorPacket + ". Database info: "
+                            + databaseInfo);
                 }
-                Assert.fail("Create table `heimuheimu_columns_type_test` failed. Error packet: " + errorPacket + ". Database info: "
-                    + databaseInfo);
+                MYSQL_CHANNEL_LIST.add(mysqlChannel);
             }
-            MYSQL_CHANNEL_LIST.add(mysqlChannel);
         }
     }
 
     @AfterClass
     public static void clean() throws SQLException {
-        for (MysqlChannel mysqlChannel : MYSQL_CHANNEL_LIST) {
-            SQLCommand deleteTableCommand = new SQLCommand(DELETE_TABLE_SQL, mysqlChannel.getConnectionInfo());
-            List<MysqlPacket> mysqlPacketList = mysqlChannel.send(deleteTableCommand, 5000);
-            if (!OKPacket.isOkPacket(mysqlPacketList.get(0))) {
-                ErrorPacket errorPacket = null;
-                if (ErrorPacket.isErrorPacket(mysqlPacketList.get(0))) {
-                    errorPacket = ErrorPacket.parse(mysqlPacketList.get(0), mysqlChannel.getConnectionInfo().getJavaCharset());
+        if (MYSQL_CHANNEL_LIST != null) {
+            for (MysqlChannel mysqlChannel : MYSQL_CHANNEL_LIST) {
+                SQLCommand deleteTableCommand = new SQLCommand(DELETE_TABLE_SQL, mysqlChannel.getConnectionInfo());
+                List<MysqlPacket> mysqlPacketList = mysqlChannel.send(deleteTableCommand, 5000);
+                if (!OKPacket.isOkPacket(mysqlPacketList.get(0))) {
+                    ErrorPacket errorPacket = null;
+                    if (ErrorPacket.isErrorPacket(mysqlPacketList.get(0))) {
+                        errorPacket = ErrorPacket.parse(mysqlPacketList.get(0), mysqlChannel.getConnectionInfo().getJavaCharset());
+                    }
+                    Assert.fail("Delete table `heimuheimu_columns_type_test` failed. Error packet: " + errorPacket + ". MysqlChannel: "
+                            + mysqlChannel);
                 }
-                Assert.fail("Delete table `heimuheimu_columns_type_test` failed. Error packet: " + errorPacket + ". MysqlChannel: "
-                    + mysqlChannel);
+                mysqlChannel.close();
             }
-            mysqlChannel.close();
         }
     }
 

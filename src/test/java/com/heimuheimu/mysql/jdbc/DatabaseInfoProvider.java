@@ -37,7 +37,8 @@ import java.util.Map;
 public class DatabaseInfoProvider {
 
     /**
-     * 获得用于测试使用的 Mysql 数据库信息列表，返回的 Map 包含以下 Key：`host`、`databaseName`、`username`、`password`。
+     * 获得用于测试使用的 Mysql 数据库信息列表，返回的 Map 包含以下 Key：`host`、`databaseName`、`username`、`password`，
+     * 如果该方法返回 {@code null} 或空 Map，则需要访问 Mysql 数据库才可执行的测试用例将不会执行。
      *
      * @return 用于测试使用的 Mysql 数据库信息列表，不会返回 {@code null}
      */
