@@ -1,5 +1,7 @@
 # mysql-jdbc: 为高并发应用量身定制的 MySQL 数据库驱动，同时集成适用于生产环境的数据库连接池。
 
+[![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/heimuheimu/mysql-jdbc.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/heimuheimu/mysql-jdbc/context:java)
+
 ## 使用要求
 * JDK 版本：1.8+ 
 * 依赖类库：
