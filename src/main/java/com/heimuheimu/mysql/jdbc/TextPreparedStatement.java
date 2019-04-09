@@ -74,14 +74,14 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
     private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss.SSS");
 
     /**
-     * MYSQL 支持的最小时间：'1000-01-02 00:00:00'（往后推移一天，防止由于时区不同导致越界）
+     * MYSQL 支持的最小 GMT 时间：'1000-01-07 00:00:00'
      */
-    private static final long MYSQL_MIN_TIME = -30609734400000L;
+    private static final long MYSQL_MIN_TIME = -30609705600000L;
 
     /**
-     * MYSQL 支持的最大时间：'9999-12-30 23:59:59'（往前推移一天，防止由于时区不同导致越界）
+     * MYSQL 支持的最大 GMT 时间：'9999-12-30 23:59:59'
      */
-    private static final long MYSQL_MAX_TIME = 253402185599000L;
+    private static final long MYSQL_MAX_TIME = 253402214399000L;
 
     /**
      * {@code TextPreparedStatement} 错误信息日志
