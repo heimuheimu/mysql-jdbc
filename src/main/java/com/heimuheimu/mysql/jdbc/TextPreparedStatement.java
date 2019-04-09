@@ -61,7 +61,7 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
     /**
      * {@link java.sql.Date} 类型数据格式化器
      */
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("uuuu-MM-dd");
 
     /**
      * {@link java.sql.Time} 类型数据格式化
@@ -71,7 +71,17 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
     /**
      * {@link java.sql.Timestamp} 类型数据格式化
      */
-    private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+    private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss.SSS");
+
+    /**
+     * MYSQL 支持的最小时间：'1000-01-02 00:00:00'（往后推移一天，防止由于时区不同导致越界）
+     */
+    private static final long MYSQL_MIN_TIME = -30609734400000L;
+
+    /**
+     * MYSQL 支持的最大时间：'9999-12-30 23:59:59'（往前推移一天，防止由于时区不同导致越界）
+     */
+    private static final long MYSQL_MAX_TIME = 253402185599000L;
 
     /**
      * {@code TextPreparedStatement} 错误信息日志
@@ -275,7 +285,7 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
                 if (cal == null) {
                     cal = Calendar.getInstance();
                 }
-                cal.setTimeInMillis(x.getTime());
+                cal.setTimeInMillis(getSafeTime(x));
                 LocalDateTime ldt = LocalDateTime.ofInstant(cal.toInstant(), cal.getTimeZone().toZoneId());
                 parameterValues.set(parameterIndex - 1, "'" + ldt.format(DATE_FORMATTER) + "'");
             } catch (Exception e) {
@@ -305,7 +315,7 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
                 if (cal == null) {
                     cal = Calendar.getInstance();
                 }
-                cal.setTimeInMillis(x.getTime());
+                cal.setTimeInMillis(getSafeTime(x));
                 LocalDateTime ldt = LocalDateTime.ofInstant(cal.toInstant(), cal.getTimeZone().toZoneId());
                 parameterValues.set(parameterIndex - 1, "'" + ldt.format(TIME_FORMATTER) + "'");
             } catch (Exception e) {
@@ -335,7 +345,7 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
                 if (cal == null) {
                     cal = Calendar.getInstance();
                 }
-                cal.setTimeInMillis(x.getTime());
+                cal.setTimeInMillis(getSafeTime(x));
                 LocalDateTime ldt = LocalDateTime.ofInstant(cal.toInstant(), cal.getTimeZone().toZoneId());
                 parameterValues.set(parameterIndex - 1, "'" + ldt.format(TIMESTAMP_FORMATTER) + "'");
             } catch (Exception e) {
@@ -603,6 +613,22 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
         parameterMap.put("mysqlChannel", mysqlChannel);
         return LogBuildUtil.buildMethodExecuteFailedLog("TextPreparedStatement#" + methodName,
                 desc, parameterMap);
+    }
+
+    /**
+     * 获取日期对应的毫秒时间戳，该方法不会返回大于 {@link #MYSQL_MAX_TIME} 的值或小于 {@link #MYSQL_MIN_TIME} 的值。
+     *
+     * @param date 日期
+     * @return 允许范围内的时间戳
+     */
+    private long getSafeTime(java.util.Date date) {
+        long time = date.getTime();
+        if (time > MYSQL_MAX_TIME) {
+            time = MYSQL_MAX_TIME;
+        } else if (time < MYSQL_MIN_TIME) {
+            time = MYSQL_MIN_TIME;
+        }
+        return time;
     }
 
     /**
