@@ -186,6 +186,11 @@ public class AutoGenerateKeysResultSet extends ReadonlyScrollResultSet {
     }
 
     @Override
+    public ResultSetMetaData getMetaData() {
+        return new AutoGenerateKeysResultSetMetaData();
+    }
+
+    @Override
     public boolean getBoolean(int columnIndex) throws SQLException {
         throw SQLFeatureNotSupportedExceptionBuilder.build("AutoGenerateKeysResultSet#getBoolean(int columnIndex)");
     }
@@ -278,11 +283,6 @@ public class AutoGenerateKeysResultSet extends ReadonlyScrollResultSet {
     @Override
     public String getCursorName() throws SQLException {
         throw SQLFeatureNotSupportedExceptionBuilder.build("AutoGenerateKeysResultSet#getCursorName()");
-    }
-
-    @Override
-    public ResultSetMetaData getMetaData() throws SQLException {
-        throw SQLFeatureNotSupportedExceptionBuilder.build("AutoGenerateKeysResultSet#getMetaData()");
     }
 
     @Override
