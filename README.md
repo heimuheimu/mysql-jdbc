@@ -13,6 +13,15 @@
 * MySQL 用户认证插件应使用 [mysql_native_password](https://dev.mysql.com/doc/refman/8.0/en/native-pluggable-authentication.html)（MySQL 版本 >= 8.0.4 时，默认认证插件为 "caching_sha2_password"，需修改配置）
 * mysql-jdbc 不支持存储过程调用以及批量 SQL 执行相关 API 接口。
 
+## 注意事项
+### 1、affected rows
+在执行 UPDATE 语句时，MYSQL 默认返回的 affected-rows 值为实际变更的行数，如果开启 "CLIENT_FOUND_ROWS" 特性，则返回的值为匹配的行数，
+MYSQL 官方 JDBC 默认开启该特性，在 mysql-jdbc 中，可通过 "capabilitiesFlags" 参数进行开启，例如：
+```
+jdbc:mysql://localhost:3306/demo?capabilitiesFlags=2
+```
+更多信息请参考：[https://dev.mysql.com/doc/refman/8.0/en/mysql-affected-rows.html](https://dev.mysql.com/doc/refman/8.0/en/mysql-affected-rows.html)
+
 ## mysql-jdbc 特色：
 * SQL 执行超时时，会自动执行 KILL 命令，防止慢查长时间占用数据库资源。
 * 自动关闭泄漏的连接。
