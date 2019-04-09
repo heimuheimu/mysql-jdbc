@@ -97,7 +97,7 @@ public class ConnectionConfiguration {
             this.username = username;
             this.password = password;
             this.characterId = (int) properties.getOrDefault(MysqlConnectionBuildUtil.PROPERTY_CHARACTER_ID, 45);
-            this.capabilitiesFlags = (long) properties.getOrDefault(MysqlConnectionBuildUtil.PROPERTY_CAPABILITIES_FLAGS, 0);
+            this.capabilitiesFlags = (long) properties.getOrDefault(MysqlConnectionBuildUtil.PROPERTY_CAPABILITIES_FLAGS, 0L);
             this.pingPeriod = (int) properties.getOrDefault(MysqlConnectionBuildUtil.PROPERTY_PING_PERIOD, 30);
             this.socketConfiguration = null;
         } catch (MalformedURLException e) {
