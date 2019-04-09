@@ -96,9 +96,9 @@ public class ConnectionConfiguration {
             this.databaseName = (String) properties.get(MysqlConnectionBuildUtil.PROPERTY_DATABASE_NAME);
             this.username = username;
             this.password = password;
-            this.characterId = 45;
-            this.capabilitiesFlags = 0;
-            this.pingPeriod = 30;
+            this.characterId = (int) properties.getOrDefault(MysqlConnectionBuildUtil.PROPERTY_CHARACTER_ID, 45);
+            this.capabilitiesFlags = (long) properties.getOrDefault(MysqlConnectionBuildUtil.PROPERTY_CAPABILITIES_FLAGS, 0);
+            this.pingPeriod = (int) properties.getOrDefault(MysqlConnectionBuildUtil.PROPERTY_PING_PERIOD, 30);
             this.socketConfiguration = null;
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("Create `ConnectionConfiguration` failed: `invalid jdbc url`. `jdbcURL`:`"
