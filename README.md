@@ -14,13 +14,29 @@
 * mysql-jdbc 不支持存储过程调用以及批量 SQL 执行相关 API 接口。
 
 ## 注意事项
-### 1、affected rows
+### 1、字符集编码
+MYSQL 允许在创建连接时指定 Character Set，mysql-jdbc 在创建连接时，默认使用的编码为 "utf8mb4_general_ci"（支持 EMOJI），
+由于 MYSQL 会自动对字符集编码进行转换，通常情况下，无需改变此设置（即使表或字段的字符集为 "ascii_general_ci"、"gbk_chinese_ci" 等），
+如果有特殊需求，可通过 "characterId" 参数进行设置，例如将编码设置为 "utf8_general_ci"：
+```
+jdbc:mysql://localhost:3306/demo?characterId=33
+```
+编码及编码 ID 映射关系可通过下面的 SQL 语句进行查询：
+```
+SELECT id, collation_name FROM information_schema.collations ORDER BY id;
+```
+
+MYSQL Character Set 更多信息请参考：[https://dev.mysql.com/doc/refman/8.0/en/charset.html](https://dev.mysql.com/doc/refman/8.0/en/charset.html)
+
+### 2、affected rows
 在执行 UPDATE 语句时，MYSQL 默认返回的 affected-rows 值为实际变更的行数，如果开启 "CLIENT_FOUND_ROWS" 特性，则返回的值为匹配的行数，
 MYSQL 官方 JDBC 默认开启该特性，在 mysql-jdbc 中，可通过 "capabilitiesFlags" 参数进行开启，例如：
 ```
 jdbc:mysql://localhost:3306/demo?capabilitiesFlags=2
 ```
-更多信息请参考：[https://dev.mysql.com/doc/refman/8.0/en/mysql-affected-rows.html](https://dev.mysql.com/doc/refman/8.0/en/mysql-affected-rows.html)
+affected-rows 更多信息请参考：[https://dev.mysql.com/doc/refman/8.0/en/mysql-affected-rows.html](https://dev.mysql.com/doc/refman/8.0/en/mysql-affected-rows.html)
+
+capabilitiesFlags 的更多信息请参考：[CapabilitiesFlagsUtil](https://github.com/heimuheimu/mysql-jdbc/blob/master/src/main/java/com/heimuheimu/mysql/jdbc/packet/CapabilitiesFlagsUtil.java)
 
 ## mysql-jdbc 特色：
 * SQL 执行超时时，会自动执行 KILL 命令，防止慢查长时间占用数据库资源。
