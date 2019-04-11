@@ -279,6 +279,16 @@ public class MysqlDataSource implements DataSource, Closeable {
     }
 
     /**
+     * 在数据库连接创建完成后，将会调用此方法，子类可继承此方法，对数据库连接执行自定义初始化操作，例如设置数据库时区。
+     *
+     * @param pooledConnection Mysql 数据库连接
+     */
+    @SuppressWarnings("EmptyMethod")
+    protected void prepareConnection(MysqlPooledConnection pooledConnection) {
+        // this is a no-op
+    }
+
+    /**
      * 创建一个数据库连接，并将其放入列表指定索引位置，如果索引位置小于 0，则在列表中新增该数据库连接。
      *
      * @param connectionIndex 索引位置，如果为 -1，则在列表中添加
@@ -292,6 +302,7 @@ public class MysqlDataSource implements DataSource, Closeable {
         try {
             connection = new MysqlPooledConnection(connectionIndex, connectionConfiguration, dataSourceConfiguration.getTimeout(),
                     dataSourceConfiguration.getSlowExecutionThreshold(), this::removeUnavailableClient, this::onPooledConnectionClosed);
+            prepareConnection(connection);
         } catch (Exception ignored) {}
 
         synchronized (connectionListUpdateLock) {
