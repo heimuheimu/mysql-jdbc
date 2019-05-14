@@ -394,12 +394,12 @@ public class MysqlChannel implements Closeable {
                 } catch (InterruptedException ignored) { // do nothing
 
                 } catch (Exception e) {
-                    if (connectionInfo != null) {
+                    if (state != BeanStatusEnum.CLOSED) {
                         String parametersLog = buildLogForParameters(null);
                         MYSQL_CONNECTION_LOG.error("MysqlChannel need to be closed: `{}`.{}", e.getMessage(), parametersLog);
                         LOG.error("MysqlChannel need to be closed: `" + e.getMessage() + "`." + parametersLog, e);
+                        close();
                     }
-                    close();
                 }
             }
             while ((command = waitingQueue.poll()) != null) {
