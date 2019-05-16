@@ -331,7 +331,7 @@ public class MysqlChannel implements Closeable {
         @Override
         public void run() {
             int pingPeriod = connectionConfiguration.getPingPeriod();
-            Command command;
+            Command command = null;
             while (!stopSignal) {
                 try {
                     if (pingPeriod <= 0) {
@@ -347,17 +347,21 @@ public class MysqlChannel implements Closeable {
                                         LOG.debug("Execute `PingCommand` success. `cost`:`{}ms`.{}",
                                                 System.currentTimeMillis() - pingCommandStartTime,
                                                 buildLogForParameters(null));
-                                    } else { // should not happen
-                                        String parametersLog = buildLogForParameters(null);
-                                        MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `execute PingCommand failed`.{}", parametersLog);
-                                        LOG.error("MysqlChannel need to be closed: `execute PingCommand failed`.{}", parametersLog);
-                                        MysqlChannel.this.close();
+                                    } else {
+                                        if (state != BeanStatusEnum.CLOSED) {
+                                            String parametersLog = buildLogForParameters(null);
+                                            MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `execute PingCommand failed`.{}", parametersLog);
+                                            LOG.error("MysqlChannel need to be closed: `execute PingCommand failed`.{}", parametersLog);
+                                            MysqlChannel.this.close();
+                                        }
                                     }
                                 } catch (Exception e) {
-                                    String parametersLog = buildLogForParameters(null);
-                                    MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `execute PingCommand failed`.{}", parametersLog);
-                                    LOG.error("MysqlChannel need to be closed: `execute PingCommand failed`." + parametersLog, e);
-                                    MysqlChannel.this.close();
+                                    if (state != BeanStatusEnum.CLOSED) {
+                                        String parametersLog = buildLogForParameters(null);
+                                        MYSQL_CONNECTION_LOG.info("MysqlChannel need to be closed: `execute PingCommand failed`.{}", parametersLog);
+                                        LOG.error("MysqlChannel need to be closed: `execute PingCommand failed`." + parametersLog, e);
+                                        MysqlChannel.this.close();
+                                    }
                                 }
                             });
                             String socketAddress = connectionConfiguration.getHost() + "/" + socket.getLocalPort();
@@ -401,6 +405,9 @@ public class MysqlChannel implements Closeable {
                         close();
                     }
                 }
+            }
+            if (command != null) {
+                command.close();
             }
             while ((command = waitingQueue.poll()) != null) {
                 command.close();
