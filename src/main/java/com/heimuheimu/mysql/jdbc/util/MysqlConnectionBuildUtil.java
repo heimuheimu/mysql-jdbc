@@ -302,7 +302,7 @@ public class MysqlConnectionBuildUtil {
                             }
                         case PROPERTY_CAPABILITIES_FLAGS:
                             try {
-                                params.put(PROPERTY_CAPABILITIES_FLAGS, Long.parseLong(parameterValue));
+                                params.put(PROPERTY_CAPABILITIES_FLAGS, Integer.parseInt(parameterValue));
                                 break;
                             } catch (Exception e) {
                                 throw new MalformedURLException("invalid capabilitiesFlags");
