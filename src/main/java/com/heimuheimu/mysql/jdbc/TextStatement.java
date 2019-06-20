@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -231,7 +232,16 @@ public class TextStatement implements Statement {
                             if (i > 1) {
                                 queryResult.append(", ");
                             }
-                            queryResult.append("`").append(resultSet.getObject(i)).append("`");
+                            Object value = resultSet.getObject(i);
+                            if (value == null) {
+                                queryResult.append("null");
+                            } else {
+                                if (value instanceof byte[]) {
+                                    queryResult.append("`").append(Arrays.toString((byte[]) value)).append("`");
+                                } else {
+                                    queryResult.append("`").append(value).append("`");
+                                }
+                            }
                         }
                         queryResult.append("]\n\r");
                     }
