@@ -185,9 +185,9 @@ public class MysqlConnectionBuildUtil {
         if (connectionInfo.containsKey(PROPERTY_CHARACTER_ID)) {
             characterId = (int) connectionInfo.get(PROPERTY_CHARACTER_ID);
         }
-        int capabilitiesFlags = 0; // 默认为 0
+        long capabilitiesFlags = 0; // 默认为 0
         if (connectionInfo.containsKey(PROPERTY_CAPABILITIES_FLAGS)) {
-            capabilitiesFlags = (int) connectionInfo.get(PROPERTY_CAPABILITIES_FLAGS);
+            capabilitiesFlags = (long) connectionInfo.get(PROPERTY_CAPABILITIES_FLAGS);
         }
         int pingPeriod = 30; // 默认为 30 秒
         if (connectionInfo.containsKey(PROPERTY_PING_PERIOD)) {
@@ -302,7 +302,7 @@ public class MysqlConnectionBuildUtil {
                             }
                         case PROPERTY_CAPABILITIES_FLAGS:
                             try {
-                                params.put(PROPERTY_CAPABILITIES_FLAGS, Integer.parseInt(parameterValue));
+                                params.put(PROPERTY_CAPABILITIES_FLAGS, Long.parseLong(parameterValue));
                                 break;
                             } catch (Exception e) {
                                 throw new MalformedURLException("invalid capabilitiesFlags");
