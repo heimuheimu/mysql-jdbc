@@ -59,7 +59,12 @@ public class SQLCommand extends AbstractCommand {
     private final byte[] requestByteArray;
 
     /**
-     * 已接受的 EOF 数据包数量
+     * 已接收的数据包数量
+     */
+    private volatile int receivedPacketCount = 0;
+
+    /**
+     * 已接收的 EOF 数据包数量
      */
     private volatile int receivedEOFPacketCount = 0;
 
@@ -174,30 +179,47 @@ public class SQLCommand extends AbstractCommand {
 
     @Override
     protected boolean isLastPacket(MysqlPacket responsePacket) throws IllegalStateException {
-        if (OKPacket.isOkPacket(responsePacket)) {
-            OKPacket okPacket = OKPacket.parse(responsePacket, connectionInfo.getCapabilitiesFlags(), connectionInfo.getJavaCharset());
-            affectedRows = okPacket.getAffectedRows();
-            lastInsertId = okPacket.getLastInsertId();
-            if (okPacket.getServerStatusFlags() != -1) {
-                serverStatusInfo = new MysqlServerStatusInfo(okPacket.getServerStatusFlags());
-            }
-            return true;
-        } else if (EOFPacket.isEOFPacket(responsePacket)) {
-            //noinspection NonAtomicOperationOnVolatileField
-            receivedEOFPacketCount ++;
-            if (receivedEOFPacketCount == 2) {
-                EOFPacket eofPacket = EOFPacket.parse(responsePacket, connectionInfo.getCapabilitiesFlags());
-                if (eofPacket.getServerStatusFlags() != -1) {
-                    serverStatusInfo = new MysqlServerStatusInfo(eofPacket.getServerStatusFlags());
+        //noinspection NonAtomicOperationOnVolatileField
+        receivedPacketCount++;
+        if (receivedPacketCount == 1) { // 接收到的第一个数据包
+            if ((responsePacket.getPayload()[0] & 0xFF) == 0xFB) {
+                throw new IllegalStateException("Receive response packet for `SQLCommand` failed: `LOCAL INFILE Request is not supported`. Sql: `" +
+                        sql + "`. ConnectionInfo:`" + connectionInfo + "`. Invalid response packet:`" + responsePacket + "`.");
+            } else if (OKPacket.isOkPacket(responsePacket)) {
+                OKPacket okPacket = OKPacket.parse(responsePacket, connectionInfo.getCapabilitiesFlags(), connectionInfo.getJavaCharset());
+                affectedRows = okPacket.getAffectedRows();
+                lastInsertId = okPacket.getLastInsertId();
+                if (okPacket.getServerStatusFlags() != -1) {
+                    serverStatusInfo = new MysqlServerStatusInfo(okPacket.getServerStatusFlags());
                 }
-                hasTextResultSet = true;
                 return true;
+            } else if (ErrorPacket.isErrorPacket(responsePacket)) {
+                errorPacket = ErrorPacket.parse(responsePacket, connectionInfo.getJavaCharset());
+                return true;
+            } else {
+                hasTextResultSet = true;
+                return false;
             }
-        } else if (ErrorPacket.isErrorPacket(responsePacket)) {
-            errorPacket = ErrorPacket.parse(responsePacket, connectionInfo.getJavaCharset());
-            return true;
+        } else {
+            if (EOFPacket.isEOFPacket(responsePacket)) {
+                //noinspection NonAtomicOperationOnVolatileField
+                receivedEOFPacketCount ++;
+                if (receivedEOFPacketCount == 2) {
+                    EOFPacket eofPacket = EOFPacket.parse(responsePacket, connectionInfo.getCapabilitiesFlags());
+                    if (eofPacket.getServerStatusFlags() != -1) {
+                        serverStatusInfo = new MysqlServerStatusInfo(eofPacket.getServerStatusFlags());
+                    }
+                    return true;
+                } else {
+                    return false;
+                }
+            } else if (receivedEOFPacketCount == 1 && ErrorPacket.isErrorPacket(responsePacket)) {
+                errorPacket = ErrorPacket.parse(responsePacket, connectionInfo.getJavaCharset());
+                return true;
+            } else {
+                return false;
+            }
         }
-        return false;
     }
 
     @Override
@@ -209,6 +231,7 @@ public class SQLCommand extends AbstractCommand {
     public String toString() {
         return "SQLCommand{" +
                 "sql='" + sql + '\'' +
+                ", receivedPacketCount=" + receivedPacketCount +
                 ", receivedEOFPacketCount=" + receivedEOFPacketCount +
                 ", hasTextResultSet=" + hasTextResultSet +
                 ", affectedRows=" + affectedRows +
