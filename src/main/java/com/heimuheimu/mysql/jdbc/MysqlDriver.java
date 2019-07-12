@@ -46,6 +46,14 @@ public class MysqlDriver implements Driver {
 
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(MysqlDriver.class);
 
+    static {
+        try {
+            DriverManager.registerDriver(new MysqlDriver());
+        } catch (SQLException e) { // should not happen
+            throw new UnsupportedOperationException("Could not register `MysqlDriver`.", e);
+        }
+    }
+
     @Override
     public Connection connect(String url, Properties info) throws SQLException {
         if (acceptsURL(url)) {
