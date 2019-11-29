@@ -106,6 +106,7 @@ public class ReadonlyTextResultSet extends ReadonlyScrollResultSet {
      * @param mysqlPackets SQL 查询语句返回的响应数据包列表
      * @param connectionInfo 接收响应数据的 Mysql 数据库连接信息
      * @param statement SQL 语句执行器
+     * @param executionMonitor Mysql 命令执行信息监控器
      * @throws IllegalArgumentException 如果解析响应数据包时出现错误，将会抛出此异常
      */
     public ReadonlyTextResultSet(List<MysqlPacket> mysqlPackets, ConnectionInfo connectionInfo,

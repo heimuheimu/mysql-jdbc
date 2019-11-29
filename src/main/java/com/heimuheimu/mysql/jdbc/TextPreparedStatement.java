@@ -111,8 +111,10 @@ public class TextPreparedStatement extends TextStatement implements PreparedStat
     /**
      * 构造一个 {@code TextStatement} 实例。
      *
+     * @param sqlTemplate SQL 语句模版，参数值在模版中使用 "?" 作为占位符
      * @param mysqlConnection 创建当前 {@code TextStatement} 实例的 Mysql 数据库连接
      * @param executionMonitor Mysql 命令执行信息监控器，不允许为 {@code null}
+     * @param databaseMonitor Mysql 数据库信息监控器
      * @param slowExecutionThreshold 执行 Mysql 命令过慢最小时间，单位：纳秒，不能小于等于 0
      */
     public TextPreparedStatement(String sqlTemplate, MysqlConnection mysqlConnection, ExecutionMonitor executionMonitor,

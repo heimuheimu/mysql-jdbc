@@ -101,6 +101,8 @@ public class BytesUtil {
     /**
      * 将无符号整数转换为指定长度的字节数组后写入目标字节数组的指定位置中，字节数组的顺序应为 {@link java.nio.ByteOrder#LITTLE_ENDIAN}
      *
+     * @param target 目标字节数组
+     * @param offset 在目标字节数组中开始写入的索引位置
      * @param length 字节数组长度，允许的范围为: [1, 8]
      * @param value 无符号整数，不允许小于 0
      * @throws IllegalArgumentException 如果 {@code length} 的值没有在允许的范围内，将会抛出此异常

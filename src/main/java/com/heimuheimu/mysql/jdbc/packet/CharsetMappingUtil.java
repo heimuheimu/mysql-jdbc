@@ -37,7 +37,7 @@ import java.util.Map;
  * <a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_character_set.html">
  * Character Set
  * </a>
- * <p>
+ *
  * <p><strong>说明：</strong>{@code CharsetMappingUtil} 类是线程安全的，可在多个线程中使用同一个实例。</p>
  *
  * @author heimuheimu
