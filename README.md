@@ -50,7 +50,7 @@ capabilitiesFlags 的更多信息请参考：[CapabilitiesFlagsUtil](https://git
     <dependency>
         <groupId>com.heimuheimu</groupId>
         <artifactId>mysql-jdbc</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0</version>
     </dependency>
 ```
 
