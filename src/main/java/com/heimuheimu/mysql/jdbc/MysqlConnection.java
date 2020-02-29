@@ -116,7 +116,7 @@ public class MysqlConnection implements Connection {
      * @throws IllegalArgumentException 如果 {@code configuration} 为 {@code null}，将会抛出此异常
      * @throws IllegalArgumentException 如果 {@code timeout} 小于 0，将会抛出此异常
      * @throws IllegalArgumentException 如果 {@code slowExecutionThreshold} 小于等于 0，将会抛出此异常
-     * @throws BuildSocketException 如果创建与 Mysql 服务器的 Socket 连接失败，将会抛出此异常
+     * @throws IllegalStateException 如果创建或初始化 MysqlChannel 失败，将会抛出此异常
      */
     public MysqlConnection(ConnectionConfiguration configuration, int timeout, int slowExecutionThreshold,
                            UnusableServiceNotifier<MysqlConnection> unusableServiceNotifier)
@@ -131,12 +131,25 @@ public class MysqlConnection implements Connection {
         checker.check("timeout", "isLessThanZero", Parameters::isLessThanZero);
         checker.check("slowExecutionThreshold", "isEqualOrLessThanZero", Parameters::isEqualOrLessThanZero);
 
-        this.mysqlChannel = new MysqlChannel(configuration, channel -> {
-            if (unusableServiceNotifier != null) {
-                unusableServiceNotifier.onClosed(this);
-            }
-        });
+        try {
+            this.mysqlChannel = new MysqlChannel(configuration, channel -> {
+                if (unusableServiceNotifier != null) {
+                    unusableServiceNotifier.onClosed(this);
+                }
+            });
+        } catch (Exception e) {
+            String errorMessage = "Create `MysqlConnection` failed: `create MysqlChannel failed`. `configuration`:`"
+                    + configuration + "`.";
+            LOG.error(errorMessage, e);
+            throw new IllegalStateException(errorMessage, e);
+        }
         this.mysqlChannel.init();
+        if (!this.mysqlChannel.isAvailable()) {
+            String errorMessage = "Create `MysqlConnection` failed: `MysqlChannel is not available`. `configuration`:`"
+                    + configuration + "`.";
+            LOG.error(errorMessage);
+            throw new IllegalStateException(errorMessage);
+        }
         this.lastServerStatusInfo = new MysqlServerStatusInfo(mysqlChannel.getConnectionInfo().getServerStatusFlags());
         this.executionMonitor = ExecutionMonitorFactory.get(configuration.getHost(), configuration.getDatabaseName());
         this.databaseMonitor = DatabaseMonitorFactory.get(configuration.getHost(), configuration.getDatabaseName());

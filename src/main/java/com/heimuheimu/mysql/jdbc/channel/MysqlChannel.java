@@ -34,7 +34,6 @@ import com.heimuheimu.mysql.jdbc.facility.UnusableServiceNotifier;
 import com.heimuheimu.mysql.jdbc.facility.parameter.ConstructorParameterChecker;
 import com.heimuheimu.mysql.jdbc.facility.parameter.Parameters;
 import com.heimuheimu.mysql.jdbc.monitor.SocketMonitorFactory;
-import com.heimuheimu.mysql.jdbc.net.BuildSocketException;
 import com.heimuheimu.mysql.jdbc.net.SocketBuilder;
 import com.heimuheimu.mysql.jdbc.net.SocketConfiguration;
 import com.heimuheimu.mysql.jdbc.packet.MysqlPacket;
@@ -119,10 +118,10 @@ public class MysqlChannel implements Closeable {
      * @param unusableServiceNotifier {@code MysqlChannel} 不可用通知器，允许为 {@code null}
      * @throws IllegalArgumentException 如果 {@code configuration} 为 {@code null}，将会抛出此异常
      * @throws IllegalArgumentException 如果 Mysql 地址不符合规则，将会抛出此异常
-     * @throws BuildSocketException 如果创建 {@link Socket} 过程中发生错误，将会抛出此异常
+     * @throws IllegalStateException 如果创建 {@link Socket} 过程中发生错误，将会抛出此异常
      */
     public MysqlChannel(ConnectionConfiguration configuration, UnusableServiceNotifier<MysqlChannel> unusableServiceNotifier)
-            throws IllegalArgumentException, BuildSocketException {
+            throws IllegalArgumentException, IllegalStateException {
         ConstructorParameterChecker checker = new ConstructorParameterChecker("MysqlChannel", LOG);
         checker.addParameter("connectionConfiguration", configuration);
         checker.addParameter("unusableServiceNotifier", unusableServiceNotifier);
@@ -130,7 +129,13 @@ public class MysqlChannel implements Closeable {
         checker.check("connectionConfiguration", "isNull", Parameters::isNull);
 
         this.connectionConfiguration = configuration;
-        this.socket = SocketBuilder.create(configuration.getHost(), configuration.getSocketConfiguration());
+        try {
+            this.socket = SocketBuilder.create(configuration.getHost(), configuration.getSocketConfiguration());
+        } catch (Exception e) {
+            MYSQL_CONNECTION_LOG.error("Create `MysqlChannel` failed: `{}`. `configuration`:`{}`", e.getMessage(), configuration);
+            LOG.error("Create `MysqlChannel` failed: `build socket failed`. `configuration`:`" + configuration + "`", e);
+            throw new IllegalStateException("Create `MysqlChannel` failed: `build socket failed`. `configuration`:`" + configuration + "`", e);
+        }
         this.socketMonitor = SocketMonitorFactory.get(configuration.getHost(), configuration.getDatabaseName());
         this.unusableServiceNotifier = unusableServiceNotifier;
     }
@@ -324,8 +329,15 @@ public class MysqlChannel implements Closeable {
             receiveBufferSize = receiveBufferSize != null ? receiveBufferSize : 64 * 1024;
             this.reader = new MysqlPacketReader(socket.getInputStream(), receiveBufferSize, socketMonitor);
 
-            HandshakeProcessor handshakeProcessor = new HandshakeProcessor(connectionConfiguration, outputStream, reader);
-            connectionInfo = handshakeProcessor.doHandshake();
+            try {
+                int soTimeout = socket.getSoTimeout();
+                socket.setSoTimeout(connectionConfiguration.getPingPeriod());
+                HandshakeProcessor handshakeProcessor = new HandshakeProcessor(connectionConfiguration, outputStream, reader);
+                connectionInfo = handshakeProcessor.doHandshake();
+                socket.setSoTimeout(soTimeout);
+            } catch (Exception e) {
+                throw new IOException("Create `MysqlIOTask` failed: `handshake failed`.", e);
+            }
         }
 
         @Override
