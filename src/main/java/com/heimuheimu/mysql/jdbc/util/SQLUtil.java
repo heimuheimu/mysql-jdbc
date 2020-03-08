@@ -45,48 +45,47 @@ public class SQLUtil {
      */
     public static SQLType getSQLType(String sql) {
         int firstKeywordIndex = -1;
-        char[] chars = sql.toCharArray();
-        for (int i = 0; i < chars.length; i++) {
-            if (!isWhitespaceChar(chars[i])) {
+        for (int i = 0; i < sql.length(); i++) {
+            if (!isWhitespaceChar(sql.charAt(i))) {
                 firstKeywordIndex = i;
                 break;
             }
         }
         if (firstKeywordIndex >= 0) {
-            if ((chars[firstKeywordIndex] == 'i' || chars[firstKeywordIndex] == 'I') &&
-                    firstKeywordIndex + 5 < chars.length) {
-                if ((chars[firstKeywordIndex + 1] == 'n' || chars[firstKeywordIndex + 1] == 'N') &&
-                        (chars[firstKeywordIndex + 2] == 's' || chars[firstKeywordIndex + 2] == 'S') &&
-                        (chars[firstKeywordIndex + 3] == 'e' || chars[firstKeywordIndex + 3] == 'E') &&
-                        (chars[firstKeywordIndex + 4] == 'r' || chars[firstKeywordIndex + 4] == 'R') &&
-                        (chars[firstKeywordIndex + 5] == 't' || chars[firstKeywordIndex + 5] == 'T')) {
+            if ((sql.charAt(firstKeywordIndex) == 'i' || sql.charAt(firstKeywordIndex) == 'I') &&
+                    firstKeywordIndex + 5 < sql.length()) {
+                if ((sql.charAt(firstKeywordIndex + 1) == 'n' || sql.charAt(firstKeywordIndex + 1) == 'N') &&
+                        (sql.charAt(firstKeywordIndex + 2) == 's' || sql.charAt(firstKeywordIndex + 2) == 'S') &&
+                        (sql.charAt(firstKeywordIndex + 3) == 'e' || sql.charAt(firstKeywordIndex + 3) == 'E') &&
+                        (sql.charAt(firstKeywordIndex + 4) == 'r' || sql.charAt(firstKeywordIndex + 4) == 'R') &&
+                        (sql.charAt(firstKeywordIndex + 5) == 't' || sql.charAt(firstKeywordIndex + 5) == 'T')) {
                     return SQLType.INSERT;
                 }
-            } else if ((chars[firstKeywordIndex] == 'u' || chars[firstKeywordIndex] == 'U') &&
-                    firstKeywordIndex + 5 < chars.length) {
-                if ((chars[firstKeywordIndex + 1] == 'p' || chars[firstKeywordIndex + 1] == 'P') &&
-                        (chars[firstKeywordIndex + 2] == 'd' || chars[firstKeywordIndex + 2] == 'D') &&
-                        (chars[firstKeywordIndex + 3] == 'a' || chars[firstKeywordIndex + 3] == 'A') &&
-                        (chars[firstKeywordIndex + 4] == 't' || chars[firstKeywordIndex + 4] == 'T') &&
-                        (chars[firstKeywordIndex + 5] == 'e' || chars[firstKeywordIndex + 5] == 'E')) {
+            } else if ((sql.charAt(firstKeywordIndex) == 'u' || sql.charAt(firstKeywordIndex) == 'U') &&
+                    firstKeywordIndex + 5 < sql.length()) {
+                if ((sql.charAt(firstKeywordIndex + 1) == 'p' || sql.charAt(firstKeywordIndex + 1) == 'P') &&
+                        (sql.charAt(firstKeywordIndex + 2) == 'd' || sql.charAt(firstKeywordIndex + 2) == 'D') &&
+                        (sql.charAt(firstKeywordIndex + 3) == 'a' || sql.charAt(firstKeywordIndex + 3) == 'A') &&
+                        (sql.charAt(firstKeywordIndex + 4) == 't' || sql.charAt(firstKeywordIndex + 4) == 'T') &&
+                        (sql.charAt(firstKeywordIndex + 5) == 'e' || sql.charAt(firstKeywordIndex + 5) == 'E')) {
                     return SQLType.UPDATE;
                 }
-            } else if ((chars[firstKeywordIndex] == 'd' || chars[firstKeywordIndex] == 'D') &&
-                    firstKeywordIndex + 5 < chars.length) {
-                if ((chars[firstKeywordIndex + 1] == 'e' || chars[firstKeywordIndex + 1] == 'E') &&
-                        (chars[firstKeywordIndex + 2] == 'l' || chars[firstKeywordIndex + 2] == 'L') &&
-                        (chars[firstKeywordIndex + 3] == 'e' || chars[firstKeywordIndex + 3] == 'E') &&
-                        (chars[firstKeywordIndex + 4] == 't' || chars[firstKeywordIndex + 4] == 'T') &&
-                        (chars[firstKeywordIndex + 5] == 'e' || chars[firstKeywordIndex + 5] == 'E')) {
+            } else if ((sql.charAt(firstKeywordIndex) == 'd' || sql.charAt(firstKeywordIndex) == 'D') &&
+                    firstKeywordIndex + 5 < sql.length()) {
+                if ((sql.charAt(firstKeywordIndex + 1) == 'e' || sql.charAt(firstKeywordIndex + 1) == 'E') &&
+                        (sql.charAt(firstKeywordIndex + 2) == 'l' || sql.charAt(firstKeywordIndex + 2) == 'L') &&
+                        (sql.charAt(firstKeywordIndex + 3) == 'e' || sql.charAt(firstKeywordIndex + 3) == 'E') &&
+                        (sql.charAt(firstKeywordIndex + 4) == 't' || sql.charAt(firstKeywordIndex + 4) == 'T') &&
+                        (sql.charAt(firstKeywordIndex + 5) == 'e' || sql.charAt(firstKeywordIndex + 5) == 'E')) {
                     return SQLType.DELETE;
                 }
-            } else if ((chars[firstKeywordIndex] == 's' || chars[firstKeywordIndex] == 'S') &&
-                    firstKeywordIndex + 5 < chars.length) {
-                if ((chars[firstKeywordIndex + 1] == 'e' || chars[firstKeywordIndex + 1] == 'E') &&
-                        (chars[firstKeywordIndex + 2] == 'l' || chars[firstKeywordIndex + 2] == 'L') &&
-                        (chars[firstKeywordIndex + 3] == 'e' || chars[firstKeywordIndex + 3] == 'E') &&
-                        (chars[firstKeywordIndex + 4] == 'c' || chars[firstKeywordIndex + 4] == 'C') &&
-                        (chars[firstKeywordIndex + 5] == 't' || chars[firstKeywordIndex + 5] == 'T')) {
+            } else if ((sql.charAt(firstKeywordIndex) == 's' || sql.charAt(firstKeywordIndex) == 'S') &&
+                    firstKeywordIndex + 5 < sql.length()) {
+                if ((sql.charAt(firstKeywordIndex + 1) == 'e' || sql.charAt(firstKeywordIndex + 1) == 'E') &&
+                        (sql.charAt(firstKeywordIndex + 2) == 'l' || sql.charAt(firstKeywordIndex + 2) == 'L') &&
+                        (sql.charAt(firstKeywordIndex + 3) == 'e' || sql.charAt(firstKeywordIndex + 3) == 'E') &&
+                        (sql.charAt(firstKeywordIndex + 4) == 'c' || sql.charAt(firstKeywordIndex + 4) == 'C') &&
+                        (sql.charAt(firstKeywordIndex + 5) == 't' || sql.charAt(firstKeywordIndex + 5) == 'T')) {
                     return SQLType.SELECT;
                 }
             }
