@@ -29,11 +29,18 @@ import com.heimuheimu.mysql.jdbc.constant.SQLType;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Mysql 数据库信息监控器。
+ * Mysql 数据库 SQL 语句统计信息监控器。
  *
  * @author heimuheimu
  */
 public class DatabaseMonitor {
+
+    /**
+     * SELECT 语句执行总次数
+     *
+     * @since 1.1
+     */
+    private final AtomicLong selectCount = new AtomicLong(0);
 
     /**
      * SELECT 语句返回的记录总数
@@ -46,6 +53,13 @@ public class DatabaseMonitor {
     private volatile long maxSelectRowsCount = 0;
 
     /**
+     * INSERT 语句执行总次数
+     *
+     * @since 1.1
+     */
+    private final AtomicLong insertCount = new AtomicLong(0);
+
+    /**
      * INSERT 语句插入的记录总数
      */
     private final AtomicLong insertRowsCount = new AtomicLong(0);
@@ -56,6 +70,13 @@ public class DatabaseMonitor {
     private volatile long maxInsertRowsCount = 0;
 
     /**
+     * UPDATE 语句执行总次数
+     *
+     * @since 1.1
+     */
+    private final AtomicLong updateCount = new AtomicLong(0);
+
+    /**
      * UPDATE 语句更新的记录总数
      */
     private final AtomicLong updateRowsCount = new AtomicLong(0);
@@ -64,6 +85,13 @@ public class DatabaseMonitor {
      * 单条 UPDATE 语句更新的最大记录数
      */
     private volatile long maxUpdateRowsCount = 0;
+
+    /**
+     * DELETE 语句执行总次数
+     *
+     * @since 1.1
+     */
+    private final AtomicLong deleteCount = new AtomicLong(0);
 
     /**
      * DELETE 语句删除的记录总数
@@ -81,6 +109,7 @@ public class DatabaseMonitor {
      * @param rowsCount SELECT 语句返回的记录总数
      */
     public void onSelectExecuted(long rowsCount) {
+        selectCount.incrementAndGet();
         selectRowsCount.addAndGet(rowsCount);
         if (maxSelectRowsCount < rowsCount) {
             maxSelectRowsCount = rowsCount;
@@ -96,6 +125,7 @@ public class DatabaseMonitor {
     public void onExecuted(SQLType sqlType, long rowsCount) {
         switch (sqlType) {
             case INSERT:
+                insertCount.incrementAndGet();
                 insertRowsCount.addAndGet(rowsCount);
                 //仅使用了 volatile 来保证可见性，并没有保证操作的原子性，极端情况下，真正的最大值可能会被覆盖
                 if (maxInsertRowsCount < rowsCount) {
@@ -103,12 +133,14 @@ public class DatabaseMonitor {
                 }
                 break;
             case UPDATE:
+                updateCount.incrementAndGet();
                 updateRowsCount.addAndGet(rowsCount);
                 if (maxUpdateRowsCount < rowsCount) {
                     maxUpdateRowsCount = rowsCount;
                 }
                 break;
             case DELETE:
+                deleteCount.incrementAndGet();
                 deleteRowsCount.addAndGet(rowsCount);
                 if (maxDeleteRowsCount < rowsCount) {
                     maxDeleteRowsCount = rowsCount;
@@ -120,6 +152,16 @@ public class DatabaseMonitor {
             default:
                 break;
         }
+    }
+
+    /**
+     * 获得 SELECT 语句执行总次数。
+     *
+     * @return SELECT 语句执行总次数
+     * @since 1.1
+     */
+    public long getSelectCount() {
+        return selectCount.get();
     }
 
     /**
@@ -148,6 +190,16 @@ public class DatabaseMonitor {
     }
 
     /**
+     * 获得 INSERT 语句执行总次数。
+     *
+     * @return INSERT 语句执行总次数
+     * @since 1.1
+     */
+    public long getInsertCount() {
+        return insertCount.get();
+    }
+
+    /**
      * 获得 INSERT 语句插入的记录总数。
      *
      * @return INSERT 语句插入的记录总数
@@ -173,6 +225,16 @@ public class DatabaseMonitor {
     }
 
     /**
+     * 获得 UPDATE 语句执行总次数。
+     *
+     * @return UPDATE 语句执行总次数
+     * @since 1.1
+     */
+    public long getUpdateCount() {
+        return updateCount.get();
+    }
+
+    /**
      * 获得 UPDATE 语句更新的记录总数。
      *
      * @return UPDATE 语句更新的记录总数
@@ -195,6 +257,16 @@ public class DatabaseMonitor {
      */
     public void resetMaxUpdateRowsCount() {
         this.maxUpdateRowsCount = 0;
+    }
+
+    /**
+     * 获得 DELETE 语句执行总次数。
+     *
+     * @return DELETE 语句执行总次数
+     * @since 1.1
+     */
+    public long getDeleteCount() {
+        return deleteCount.get();
     }
 
     /**
@@ -225,12 +297,16 @@ public class DatabaseMonitor {
     @Override
     public String toString() {
         return "DatabaseMonitor{" +
-                "selectRowsCount=" + selectRowsCount +
+                "selectCount=" + selectCount +
+                ", selectRowsCount=" + selectRowsCount +
                 ", maxSelectRowsCount=" + maxSelectRowsCount +
+                ", insertCount=" + insertCount +
                 ", insertRowsCount=" + insertRowsCount +
                 ", maxInsertRowsCount=" + maxInsertRowsCount +
+                ", updateCount=" + updateCount +
                 ", updateRowsCount=" + updateRowsCount +
                 ", maxUpdateRowsCount=" + maxUpdateRowsCount +
+                ", deleteCount=" + deleteCount +
                 ", deleteRowsCount=" + deleteRowsCount +
                 ", maxDeleteRowsCount=" + maxDeleteRowsCount +
                 '}';
