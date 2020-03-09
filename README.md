@@ -38,6 +38,42 @@ affected-rows 更多信息请参考：[https://dev.mysql.com/doc/refman/8.0/en/m
 
 capabilitiesFlags 的更多信息请参考：[CapabilitiesFlagsUtil](https://github.com/heimuheimu/mysql-jdbc/blob/master/src/main/java/com/heimuheimu/mysql/jdbc/packet/CapabilitiesFlagsUtil.java)
 
+### 3、类型自动映射
+在执行 java.sql.ResultSet#getObject(int columnIndex) 等类型自动映射方法时，为简化实现，mysql-jdbc 未完全按照[JDBC 规范](https://download.oracle.com/otndocs/jcp/jdbc-4_2-mrel2-spec/index.html)
+中的附录 B.1 进行实现， 同时与 MYSQL 官方 JDBC 提供的映射关系也存在部分不一致，例如 tinyint(1) 在官方 JDBC 中映射为 Boolean, mysql-jdbc 映射为 Integer，
+mysql-jdbc 映射关系如下：
+
+MYSQL 字段类型 | Java 类型
+------------ | -------------
+TINYINT | Integer
+SMALLINT | Integer
+MEDIUMINT | Integer
+INT | Integer
+BIGINT | Long
+DECIMAL | java.math.BigDecimal
+FLOAT | Double
+DOUBLE | Double
+BIT | Boolean
+DATE | java.sql.Date
+DATETIME | java.sql.Timestamp
+TIMESTAMP | java.sql.Timestamp
+TIME | java.sql.Time
+YEAR | java.sql.Date
+CHAR | String
+VARCHAR | String
+BINARY | byte[]
+VARBINARY | byte[]
+BLOB | byte[]
+MEDIUMBLOB | byte[]
+LONGBLOB | byte[]
+TINYTEXT | String
+TEXT | String
+MEDIUMTEXT | String
+LONGTEXT | String
+ENUM | String
+SET | String
+
+
 ## mysql-jdbc 特色：
 * SQL 执行超时时，会自动执行 KILL 命令，防止慢查长时间占用数据库资源。
 * 自动关闭泄漏的连接。
