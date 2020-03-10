@@ -111,33 +111,33 @@ public class DatabasePrometheusCollector implements PrometheusCollector {
             String databaseAlias = databaseAliasList.get(i);
             DatabaseMonitor monitor = monitorList.get(i);
             // add samples for select
-            selectCountData.addSample(PrometheusSample.build(deltaCalculator.delta("selectCount", monitor.getSelectCount()))
+            selectCountData.addSample(PrometheusSample.build(deltaCalculator.delta("selectCount_" + i, monitor.getSelectCount()))
                     .addSampleLabel("database", databaseAlias));
-            selectRowsCountData.addSample(PrometheusSample.build(deltaCalculator.delta("selectRowsCount", monitor.getSelectRowsCount()))
+            selectRowsCountData.addSample(PrometheusSample.build(deltaCalculator.delta("selectRowsCount_" + i, monitor.getSelectRowsCount()))
                     .addSampleLabel("database", databaseAlias));
             maxSelectRowsCountData.addSample(PrometheusSample.build(monitor.getMaxSelectRowsCount())
                     .addSampleLabel("database", databaseAlias));
             monitor.resetMaxSelectRowsCount();
             // add samples for insert
-            insertCountData.addSample(PrometheusSample.build(deltaCalculator.delta("insertCount", monitor.getInsertCount()))
+            insertCountData.addSample(PrometheusSample.build(deltaCalculator.delta("insertCount_" + i, monitor.getInsertCount()))
                     .addSampleLabel("database", databaseAlias));
-            insertRowsCountData.addSample(PrometheusSample.build(deltaCalculator.delta("insertRowsCount", monitor.getInsertRowsCount()))
+            insertRowsCountData.addSample(PrometheusSample.build(deltaCalculator.delta("insertRowsCount_" + i, monitor.getInsertRowsCount()))
                     .addSampleLabel("database", databaseAlias));
             maxInsertRowsCountData.addSample(PrometheusSample.build(monitor.getMaxInsertRowsCount())
                     .addSampleLabel("database", databaseAlias));
             monitor.resetMaxInsertRowsCount();
             // add samples for update
-            updateCountData.addSample(PrometheusSample.build(deltaCalculator.delta("updateCount", monitor.getUpdateCount()))
+            updateCountData.addSample(PrometheusSample.build(deltaCalculator.delta("updateCount_" + i, monitor.getUpdateCount()))
                     .addSampleLabel("database", databaseAlias));
-            updateRowsCountData.addSample(PrometheusSample.build(deltaCalculator.delta("updateRowsCount", monitor.getUpdateRowsCount()))
+            updateRowsCountData.addSample(PrometheusSample.build(deltaCalculator.delta("updateRowsCount_" + i, monitor.getUpdateRowsCount()))
                     .addSampleLabel("database", databaseAlias));
             maxUpdateRowsCountData.addSample(PrometheusSample.build(monitor.getMaxUpdateRowsCount())
                     .addSampleLabel("database", databaseAlias));
             monitor.resetMaxUpdateRowsCount();
             // add samples for delete
-            deleteCountData.addSample(PrometheusSample.build(deltaCalculator.delta("deleteCount", monitor.getDeleteCount()))
+            deleteCountData.addSample(PrometheusSample.build(deltaCalculator.delta("deleteCount_" + i, monitor.getDeleteCount()))
                     .addSampleLabel("database", databaseAlias));
-            deleteRowsCountData.addSample(PrometheusSample.build(deltaCalculator.delta("deleteRowsCount", monitor.getDeleteRowsCount()))
+            deleteRowsCountData.addSample(PrometheusSample.build(deltaCalculator.delta("deleteRowsCount_" + i, monitor.getDeleteRowsCount()))
                     .addSampleLabel("database", databaseAlias));
             maxDeleteRowsCountData.addSample(PrometheusSample.build(monitor.getMaxDeleteRowsCount())
                     .addSampleLabel("database", databaseAlias));

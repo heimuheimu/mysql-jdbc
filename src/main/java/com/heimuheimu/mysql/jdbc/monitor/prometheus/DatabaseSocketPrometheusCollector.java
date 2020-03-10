@@ -88,6 +88,11 @@ public class DatabaseSocketPrometheusCollector extends AbstractSocketPrometheusC
     }
 
     @Override
+    protected String getMonitorId(SocketMonitor monitor, int index) {
+        return String.valueOf(index);
+    }
+
+    @Override
     protected void afterAddSample(int monitorIndex, PrometheusData data, PrometheusSample sample) {
         sample.addSampleLabel("database", databaseAliasList.get(monitorIndex));
     }

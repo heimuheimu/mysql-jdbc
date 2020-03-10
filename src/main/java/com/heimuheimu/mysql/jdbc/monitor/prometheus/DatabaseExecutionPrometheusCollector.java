@@ -86,6 +86,11 @@ public class DatabaseExecutionPrometheusCollector extends AbstractExecutionProme
     }
 
     @Override
+    protected String getMonitorId(ExecutionMonitor monitor, int index) {
+        return String.valueOf(index);
+    }
+
+    @Override
     protected void afterAddSample(int monitorIndex, PrometheusData data, PrometheusSample sample) {
         sample.addSampleLabel("database", databaseAliasList.get(monitorIndex));
     }

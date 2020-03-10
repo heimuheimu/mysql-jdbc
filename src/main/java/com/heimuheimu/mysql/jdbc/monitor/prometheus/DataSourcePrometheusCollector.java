@@ -100,11 +100,11 @@ public class DataSourcePrometheusCollector implements PrometheusCollector {
             monitor.resetMaxAcquiredConnectionCount();
 
             // add mysql_jdbc_datasource_connection_leaked_count sample
-            connectionLeakedCountData.addSample(PrometheusSample.build(deltaCalculator.delta("connectionLeakedCount",
+            connectionLeakedCountData.addSample(PrometheusSample.build(deltaCalculator.delta("connectionLeakedCount_" + i,
                     monitor.getConnectionLeakedCount())).addSampleLabel("database", databaseAlias));
 
             // add mysql_jdbc_datasource_get_connection_failed_count sample
-            getConnectionFailedCountData.addSample(PrometheusSample.build(deltaCalculator.delta("getConnectionFailedCount",
+            getConnectionFailedCountData.addSample(PrometheusSample.build(deltaCalculator.delta("getConnectionFailedCount_" + i,
                     monitor.getGetConnectionFailedCount())).addSampleLabel("database", databaseAlias));
         }
         List<PrometheusData> dataList = new ArrayList<>();
