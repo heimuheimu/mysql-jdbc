@@ -36,8 +36,8 @@ import java.nio.charset.Charset;
  *
  * <p>
  * Mysql 服务端错误代码和消息定义请参考（建议选择与 Mysql 服务端版本一致的手册进行参考）：
- * <a href="https://dev.mysql.com/doc/refman/8.0/en/error-messages-server.html">
- *     Server Error Codes and Messages
+ * <a href="https://dev.mysql.com/doc/refman/8.0/en/server-error-reference.html">
+ *     Server Error Message Reference
  * </a>
  * </p>
  *
