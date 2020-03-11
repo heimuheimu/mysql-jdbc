@@ -31,7 +31,9 @@ import com.heimuheimu.naivemonitor.prometheus.PrometheusSample;
 import com.heimuheimu.naivemonitor.prometheus.support.AbstractExecutionPrometheusCollector;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Mysql 命令执行信息采集器，采集时会返回以下数据：
@@ -40,6 +42,7 @@ import java.util.List;
  *     <li>mysql_jdbc_exec_peak_tps_count{database="$databaseAlias"} 相邻两次采集周期内每秒最大 SQL 语句执行次数</li>
  *     <li>mysql_jdbc_avg_exec_time_millisecond{database="$databaseAlias"} 相邻两次采集周期内每条 SQL 语句平均执行时间，单位：毫秒</li>
  *     <li>mysql_jdbc_max_exec_time_millisecond{database="$databaseAlias"} 相邻两次采集周期内单条 SQL 语句最大执行时间，单位：毫秒</li>
+ *     <li>mysql_jdbc_exec_error_count{errorCode="$errorCode",errorType="$errorType",database="$databaseAlias"} 相邻两次采集周期内特定类型 SQL 语句执行失败次数</li>
  * </ul>
  *
  * @author heimuheimu
@@ -78,6 +81,20 @@ public class DatabaseExecutionPrometheusCollector extends AbstractExecutionProme
     @Override
     protected String getMetricPrefix() {
         return "mysql_jdbc";
+    }
+
+    @Override
+    protected Map<Integer, String> getErrorTypeMap() {
+        Map<Integer, String> errorTypeMap = new HashMap<>();
+        errorTypeMap.put(ExecutionMonitorFactory.ERROR_CODE_MYSQL_ERROR, "MysqlError");
+        errorTypeMap.put(ExecutionMonitorFactory.ERROR_CODE_ILLEGAL_STATE, "IllegalState");
+        errorTypeMap.put(ExecutionMonitorFactory.ERROR_CODE_TIMEOUT, "Timeout");
+        errorTypeMap.put(ExecutionMonitorFactory.ERROR_CODE_INVALID_PARAMETER, "InvalidParameter");
+        errorTypeMap.put(ExecutionMonitorFactory.ERROR_CODE_RESULTSET_ERROR, "ResultError");
+        errorTypeMap.put(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR, "UnexpectedError");
+        errorTypeMap.put(ExecutionMonitorFactory.ERROR_CODE_SLOW_EXECUTION, "SlowExecution");
+        errorTypeMap.put(ExecutionMonitorFactory.ERROR_CODE_DUPLICATE_ENTRY_FOR_KEY, "DuplicateEntryForKey");
+        return errorTypeMap;
     }
 
     @Override
