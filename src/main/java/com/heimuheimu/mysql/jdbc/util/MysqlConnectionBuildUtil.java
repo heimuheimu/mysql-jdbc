@@ -123,9 +123,10 @@ public class MysqlConnectionBuildUtil {
     public static MysqlConnection build(String url, Map<Object, Object> connectionInfo) throws MalformedURLException,
             IllegalArgumentException, BuildSocketException {
         try {
-            Map<Object, Object> allConnectionInfo = new HashMap<>();
-            allConnectionInfo.putAll(parseURL(url));
-            allConnectionInfo.putAll(connectionInfo);
+            Map<Object, Object> allConnectionInfo = new HashMap<>(parseURL(url));
+            if (connectionInfo != null) {
+                allConnectionInfo.putAll(connectionInfo);
+            }
 
             ConnectionConfiguration configuration = getConnectionConfiguration(allConnectionInfo);
 
