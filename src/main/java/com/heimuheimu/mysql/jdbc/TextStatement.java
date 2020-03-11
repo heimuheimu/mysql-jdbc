@@ -277,7 +277,11 @@ public class TextStatement implements Statement {
                     + "`. Host: `" + mysqlChannel.getConnectionConfiguration().getHost() + "`.", e);
             throw e;
         } catch (SQLException e) {
-            executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_MYSQL_ERROR);
+            if (e.getErrorCode() == 1062) { // 单独统计主键或唯一索引冲突错误，部分业务可能允许该错误偶现
+                executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_DUPLICATE_ENTRY_FOR_KEY);
+            } else {
+                executionMonitor.onError(ExecutionMonitorFactory.ERROR_CODE_MYSQL_ERROR);
+            }
             LOG.error("Execute sql failed: `sql exception`. Cost: `" + (System.nanoTime() - startTime) + "ns`. Sql: `"
                     + sql + "`. Connection info: `" + connectionInfo + "`. Host: `"
                     + mysqlChannel.getConnectionConfiguration().getHost() + "`.", e);

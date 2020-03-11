@@ -66,9 +66,14 @@ public class ExecutionMonitorFactory {
     public static final int ERROR_CODE_UNEXPECTED_ERROR = -6;
 
     /**
-     * Mysql 命令执行错误码： 慢查
+     * Mysql 命令执行错误码：慢查
      */
     public static final int ERROR_CODE_SLOW_EXECUTION = -7;
+
+    /**
+     * Mysql 命令执行错误码：主键或唯一索引冲突
+     */
+    public static final int ERROR_CODE_DUPLICATE_ENTRY_FOR_KEY = -8;
 
     private static final ConcurrentHashMap<String, ExecutionMonitor> MYSQL_EXECUTION_MONITOR_MAP = new ConcurrentHashMap<>();
 
