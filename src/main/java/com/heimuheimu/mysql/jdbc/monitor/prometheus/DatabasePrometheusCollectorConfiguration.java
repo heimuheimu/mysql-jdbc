@@ -53,7 +53,7 @@ public class DatabasePrometheusCollectorConfiguration {
     private final String databaseAlias;
 
     /**
-     * 构造一个 PrometheusCollectorConfiguration 实例。
+     * 构造一个 DatabasePrometheusCollectorConfiguration 实例。
      *
      * @param jdbcURL Mysql JDBC URL，例如：jdbc:mysql://localhost:3306/demo
      * @param databaseAlias 数据库名称别名，通常情况下与数据库名称一致，如存在主、从，则需要通过别名进行区分，不允许为 {@code null} 或空
@@ -76,7 +76,7 @@ public class DatabasePrometheusCollectorConfiguration {
     }
 
     /**
-     * 构造一个 PrometheusCollectorConfiguration 实例。
+     * 构造一个 DatabasePrometheusCollectorConfiguration 实例。
      *
      * @param host Mysql 连接目标地址，例如：localhost:3306
      * @param databaseName 数据库名称
@@ -121,7 +121,7 @@ public class DatabasePrometheusCollectorConfiguration {
 
     @Override
     public String toString() {
-        return "PrometheusCollectorConfiguration{" +
+        return "DatabasePrometheusCollectorConfiguration{" +
                 "host='" + host + '\'' +
                 ", databaseName='" + databaseName + '\'' +
                 ", databaseAlias='" + databaseAlias + '\'' +
