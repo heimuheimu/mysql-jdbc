@@ -42,7 +42,14 @@ import java.util.Map;
  *     <li>mysql_jdbc_exec_peak_tps_count{database="$databaseAlias"} 相邻两次采集周期内每秒最大 SQL 语句执行次数</li>
  *     <li>mysql_jdbc_avg_exec_time_millisecond{database="$databaseAlias"} 相邻两次采集周期内每条 SQL 语句平均执行时间，单位：毫秒</li>
  *     <li>mysql_jdbc_max_exec_time_millisecond{database="$databaseAlias"} 相邻两次采集周期内单条 SQL 语句最大执行时间，单位：毫秒</li>
- *     <li>mysql_jdbc_exec_error_count{errorCode="$errorCode",errorType="$errorType",database="$databaseAlias"} 相邻两次采集周期内特定类型 SQL 语句执行失败次数</li>
+ *     <li>mysql_jdbc_exec_error_count{errorCode="-1",errorType="MysqlError",database="$databaseAlias"} 相邻两次采集周期内 SQL 语句执行出现 MYSQL 服务端执行异常的错误次数</li>
+ *     <li>mysql_jdbc_exec_error_count{errorCode="-2",errorType="IllegalState",database="$databaseAlias"} 相邻两次采集周期内 SQL 语句执行出现管道或命令已关闭的错误次数</li>
+ *     <li>mysql_jdbc_exec_error_count{errorCode="-3",errorType="Timeout",database="$databaseAlias"} 相邻两次采集周期内 SQL 语句执行出现执行超时的错误次数</li>
+ *     <li>mysql_jdbc_exec_error_count{errorCode="-4",errorType="InvalidParameter",database="$databaseAlias"} 相邻两次采集周期内 SQL 语句执行出现参数值设置不正确的错误次数</li>
+ *     <li>mysql_jdbc_exec_error_count{errorCode="-5",errorType="ResultSetError",database="$databaseAlias"} 相邻两次采集周期内查询结果集 ResultSet 操作异常的错误次数</li>
+ *     <li>mysql_jdbc_exec_error_count{errorCode="-6",errorType="UnexpectedError",database="$databaseAlias"} 相邻两次采集周期内 SQL 语句执行出现预期外异常的错误次数</li>
+ *     <li>mysql_jdbc_exec_error_count{errorCode="-7",errorType="SlowExecution",database="$databaseAlias"} 相邻两次采集周期内 SQL 语句执行出现执行过慢的错误次数</li>
+ *     <li>mysql_jdbc_exec_error_count{errorCode="-8",errorType="DuplicateEntryForKey",database="$databaseAlias"} 相邻两次采集周期内 SQL 语句执行出现主键或唯一索引冲突的错误次数</li>
  * </ul>
  *
  * @author heimuheimu
@@ -90,7 +97,7 @@ public class DatabaseExecutionPrometheusCollector extends AbstractExecutionProme
         errorTypeMap.put(ExecutionMonitorFactory.ERROR_CODE_ILLEGAL_STATE, "IllegalState");
         errorTypeMap.put(ExecutionMonitorFactory.ERROR_CODE_TIMEOUT, "Timeout");
         errorTypeMap.put(ExecutionMonitorFactory.ERROR_CODE_INVALID_PARAMETER, "InvalidParameter");
-        errorTypeMap.put(ExecutionMonitorFactory.ERROR_CODE_RESULTSET_ERROR, "ResultError");
+        errorTypeMap.put(ExecutionMonitorFactory.ERROR_CODE_RESULTSET_ERROR, "ResultSetError");
         errorTypeMap.put(ExecutionMonitorFactory.ERROR_CODE_UNEXPECTED_ERROR, "UnexpectedError");
         errorTypeMap.put(ExecutionMonitorFactory.ERROR_CODE_SLOW_EXECUTION, "SlowExecution");
         errorTypeMap.put(ExecutionMonitorFactory.ERROR_CODE_DUPLICATE_ENTRY_FOR_KEY, "DuplicateEntryForKey");
