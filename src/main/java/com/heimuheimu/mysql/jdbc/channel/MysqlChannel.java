@@ -331,7 +331,7 @@ public class MysqlChannel implements Closeable {
 
             try {
                 int soTimeout = socket.getSoTimeout();
-                socket.setSoTimeout(connectionConfiguration.getPingPeriod());
+                socket.setSoTimeout(connectionConfiguration.getPingPeriod() * 1000);
                 HandshakeProcessor handshakeProcessor = new HandshakeProcessor(connectionConfiguration, outputStream, reader);
                 connectionInfo = handshakeProcessor.doHandshake();
                 socket.setSoTimeout(soTimeout);
