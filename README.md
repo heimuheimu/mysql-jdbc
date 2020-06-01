@@ -132,8 +132,8 @@ log4j.appender.SQL_FEATURE_NOT_SUPPORTED_LOG.DatePattern=_yyyy-MM-dd
 log4j.appender.SQL_FEATURE_NOT_SUPPORTED_LOG.layout=org.apache.log4j.PatternLayout
 log4j.appender.SQL_FEATURE_NOT_SUPPORTED_LOG.layout.ConversionPattern=%d{ISO8601} : %m%n
 
-# SQL 执行 DEBUG 日志（请勿在生产环境中开启）
-log4j.logger.MYSQL_EXECUTION_DEBUG_LOG=DEBUG, MYSQL_EXECUTION_DEBUG_LOG
+# SQL 执行 DEBUG 日志（当级别为 DEBUG 时，将会打印每一条执行的 SQL 以及执行结果，请勿在生产环境中开启）
+log4j.logger.MYSQL_EXECUTION_DEBUG_LOG=WARN, MYSQL_EXECUTION_DEBUG_LOG
 log4j.additivity.MYSQL_EXECUTION_DEBUG_LOG=false
 log4j.appender.MYSQL_EXECUTION_DEBUG_LOG=org.apache.log4j.DailyRollingFileAppender
 log4j.appender.MYSQL_EXECUTION_DEBUG_LOG.file=${log.output.directory}/mysql-jdbc/sql_execution_debug.log
@@ -194,6 +194,7 @@ public class PrometheusMetricsController {
     }
 }
 ```
+
 #### 2. 在 Spring 中配置 PrometheusExporter 实例
 ```xml
     <bean name="prometheusExporter" class="com.heimuheimu.naivemonitor.prometheus.PrometheusExporter">
@@ -367,7 +368,7 @@ groups:
   * mysql_jdbc_delete_rows_count{database="user_master"}    &nbsp;&nbsp;&nbsp;&nbsp; 相邻两次采集周期内所有 DELETE 语句删除的记录总数
   * mysql_jdbc_max_delete_rows_count{database="user_master"}    &nbsp;&nbsp;&nbsp;&nbsp; 相邻两次采集周期内单条 DELETE 语句删除的最大记录数
   
-  通过 util-grafana 项目可以为 mysql-jdbc 快速生成 Grafana 监控图表，项目地址：[https://github.com/heimuheimu/util-grafana](https://github.com/heimuheimu/util-grafana)
+  通过 util-grafana 项目可以为 mysql-jdbc 监控指标快速生成 Grafana 监控图表，项目地址：[https://github.com/heimuheimu/util-grafana](https://github.com/heimuheimu/util-grafana)
 
 ## Falcon 监控系统数据采集
 #### 1. 在 Spring 中配置 Falcon 数据推送：
