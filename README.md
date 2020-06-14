@@ -10,7 +10,9 @@
 * MySQL 版本：5.5+
 
 ## 使用限制
-* MySQL 用户认证插件应使用 [mysql_native_password](https://dev.mysql.com/doc/refman/8.0/en/native-pluggable-authentication.html) （MySQL 版本 >= 8.0.4 时，默认认证插件为 "caching_sha2_password"，需修改配置，例如执行以下 SQL：ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';）
+* MySQL 用户认证插件应使用 [mysql_native_password](https://dev.mysql.com/doc/refman/8.0/en/native-pluggable-authentication.html) ，当 MySQL 版本 >= 8.0.4 时，默认认证插件为 "caching_sha2_password"，需执行以下步骤进行修改：
+  * 在配置文件 my.cnf 中添加 \[mysqld\] 组配置：default-authentication-plugin = mysql_native_password
+  * 执行 SQL 修改相应用户密码：ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';
 * mysql-jdbc 不支持存储过程调用以及批量 SQL 执行相关 API 接口。
 
 ## 注意事项
