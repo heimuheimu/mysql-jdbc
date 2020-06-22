@@ -246,6 +246,18 @@ public class MysqlConnection implements Connection {
     }
 
     @Override
+    public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
+        checkClosed("prepareStatement(String sql, int[] columnIndexes)");
+        return prepareStatement(sql);
+    }
+
+    @Override
+    public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
+        checkClosed("prepareStatement(String sql, String[] columnNames)");
+        return prepareStatement(sql);
+    }
+
+    @Override
     public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         checkClosed("prepareStatement(String sql, int resultSetType, int resultSetConcurrency)");
         if (resultSetType != ResultSet.TYPE_SCROLL_INSENSITIVE || resultSetConcurrency != ResultSet.CONCUR_READ_ONLY) {
@@ -810,16 +822,6 @@ public class MysqlConnection implements Connection {
     @Override
     public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         throw SQLFeatureNotSupportedExceptionBuilder.build("MysqlConnection#prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability)");
-    }
-
-    @Override
-    public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
-        throw SQLFeatureNotSupportedExceptionBuilder.build("MysqlConnection#prepareStatement(String sql, int[] columnIndexes)");
-    }
-
-    @Override
-    public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
-        throw SQLFeatureNotSupportedExceptionBuilder.build("MysqlConnection#prepareStatement(String sql, String[] columnNames)");
     }
 
     @Override
