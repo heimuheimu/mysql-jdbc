@@ -56,8 +56,8 @@ public class LeakedConnectionDetector {
 
     static {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            IS_SHUTDOWN = true;
             synchronized (LOCK) {
+                IS_SHUTDOWN = true;
                 if (DETECT_TASK != null) {
                     DETECT_TASK.interrupt();
                 }
@@ -75,7 +75,7 @@ public class LeakedConnectionDetector {
      */
     private static void startDetectTask() {
         synchronized (LOCK) {
-            if (DETECT_TASK == null) {
+            if (DETECT_TASK == null && !IS_SHUTDOWN) {
                 DETECT_TASK = new LeakedConnectionDetectTask();
                 DETECT_TASK.setName("leaked-mysql-connection-detector");
                 DETECT_TASK.setDaemon(true);
