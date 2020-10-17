@@ -46,14 +46,27 @@ public class LeakedConnectionDetector {
 
     private static final Logger MYSQL_CONNECTION_LOG = LoggerFactory.getLogger("MYSQL_CONNECTION_LOG");
 
-    private static final CopyOnWriteArrayList<MysqlDataSource> DATASOURCE_LIST = new CopyOnWriteArrayList<>();
+    private static final CopyOnWriteArrayList<MysqlDataSource> DATA_SOURCE_LIST = new CopyOnWriteArrayList<>();
 
     private static final Object LOCK = new Object();
 
-    private static volatile boolean IS_DETECT_TASK_RUNNING = false;
+    private static LeakedConnectionDetectTask DETECT_TASK = null;
+
+    private static volatile boolean IS_SHUTDOWN = false;
+
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            IS_SHUTDOWN = true;
+            synchronized (LOCK) {
+                if (DETECT_TASK != null) {
+                    DETECT_TASK.interrupt();
+                }
+            }
+        }));
+    }
 
     public static void register(MysqlDataSource dataSource) {
-        DATASOURCE_LIST.add(dataSource);
+        DATA_SOURCE_LIST.add(dataSource);
         startDetectTask();
     }
 
@@ -62,12 +75,11 @@ public class LeakedConnectionDetector {
      */
     private static void startDetectTask() {
         synchronized (LOCK) {
-            if (!IS_DETECT_TASK_RUNNING) {
-                IS_DETECT_TASK_RUNNING = true;
-                LeakedConnectionDetectTask detectTask = new LeakedConnectionDetectTask();
-                detectTask.setName("leaked-mysql-connection-detector");
-                detectTask.setDaemon(true);
-                detectTask.start();
+            if (DETECT_TASK == null) {
+                DETECT_TASK = new LeakedConnectionDetectTask();
+                DETECT_TASK.setName("leaked-mysql-connection-detector");
+                DETECT_TASK.setDaemon(true);
+                DETECT_TASK.start();
             }
         }
     }
@@ -79,11 +91,10 @@ public class LeakedConnectionDetector {
 
         @Override
         public void run() {
-            MYSQL_CONNECTION_LOG.info("Leaked connection detect task started.");
+            MYSQL_CONNECTION_LOG.info("Leaked connection detect task has been started.");
             try {
-                //noinspection InfiniteLoopStatement
-                while (true) {
-                    for (MysqlDataSource dataSource : DATASOURCE_LIST) {
+                while (!IS_SHUTDOWN) {
+                    for (MysqlDataSource dataSource : DATA_SOURCE_LIST) {
                         List<MysqlPooledConnection> connectionList = dataSource.getConnectionList();
                         DataSourceMonitor dataSourceMonitor = dataSource.getDataSourceMonitor();
                         for (int i = 0; i < connectionList.size(); i++) {
@@ -105,8 +116,12 @@ public class LeakedConnectionDetector {
                             }
                         }
                     }
+                    //noinspection BusyWait
                     Thread.sleep(5000);
                 }
+                MYSQL_CONNECTION_LOG.info("Leaked connection detect task has been stopped.");
+            } catch(InterruptedException e) {
+                MYSQL_CONNECTION_LOG.info("Leaked connection detect task has been stopped.");
             } catch (Exception e) { // should not happen, just for bug detect
                 LOG.error("Leaked connection detect task execute failed: `unexpected error`.", e);
                 MYSQL_CONNECTION_LOG.error("Leaked connection detect task stopped: `unexpected error`.");
